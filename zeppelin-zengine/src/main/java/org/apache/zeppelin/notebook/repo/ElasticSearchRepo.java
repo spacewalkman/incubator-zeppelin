@@ -1,21 +1,25 @@
 package org.apache.zeppelin.notebook.repo;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,47 +63,53 @@ public class ElasticSearchRepo implements NotebookRepo {
 
     @Override
     public List<NoteInfo> list() throws IOException {
-        return null;
+        return new ArrayList<NoteInfo>(1);
     }
 
     @Override
     public Note get(String noteId) throws IOException {
-        return null;
+        if (null == noteId || noteId.isEmpty()) {
+            LOG.error("noteId cannot be null");
+            return null;
+        }
+
+
+        TermQueryBuilder qb=QueryBuilders.termQuery(ID_FIELD, noteId);
+        LOG.debug(qb.toString());
+
+        SearchResponse response = client.prepareSearch(indexName)
+                .setTypes(typeName)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setQuery(qb)
+                .execute()
+                .actionGet();
+
+        SearchHits hits = response.getHits();
+        String sourceDocString = hits.getAt(0).getSourceAsString();
+        LOG.debug("源doc={}", sourceDocString);
+
+        Gson gson = getGson();
+        return  gson.fromJson(sourceDocString,Note.class);
+
     }
 
     @Override
     public void save(Note note) throws IOException {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder()
-                    .startObject();
+        Gson gson = getGson();
 
-            builder.field(SEARCH_FILED_TITLE, note.getName()).field(INDEX_FILED_USER, org.apache.shiro.SecurityUtils.getSubject());
-            for (Paragraph para : note.getParagraphs()) {
-                if (para == null || para.getText() == null) {
-                    LOG.debug("Skipping empty paragraph");
-                    continue;
-                }
-                builder.field(SEARCH_FIELD_TEXT, para.getText());
+        IndexResponse response = client.prepareIndex(this.indexName, this.typeName)
+                .setSource(gson.toJson(note))
+                .get();
 
-                if (para.getTitle() != null) {
-                    builder.field(SEARCH_FILED_TITLE, para.getTitle());
-                }
+        String idGenerated = response.getId();
+        LOG.debug("index success,id={}", idGenerated);
 
-                Date date = para.getDateStarted() != null ? para.getDateStarted() : para.getDateCreated();
-                builder.field(SEARCH_FIELD_MODIFIED, date.getTime());
-            }
+    }
 
-            builder.endObject();
-
-            IndexResponse response = client.prepareIndex(this.indexName, this.typeName)
-                    .setSource(builder.string())
-                    .get();
-
-            String idGenerated = response.getId();
-            LOG.debug("index success,id={}", idGenerated);
-        } catch (IOException e) {
-            LOG.error("Failed to add note {} to index", note, e);
-        }
+    private Gson getGson() {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setPrettyPrinting();
+        return gsonBuilder.create();
     }
 
     @Override
