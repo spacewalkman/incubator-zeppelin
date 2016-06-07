@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -93,6 +94,14 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
         Note note = notebookRepo.get("2BQFAE8A7");
 
         assertNotNull(note);
+    }
+
+    @Test
+    public void testList() throws IOException, InterruptedException {
+        List<NoteInfo> noteInfos= notebookRepo.list();
+        LOG.debug("total count={}",noteInfos.size());
+
+        assertNotNull(noteInfos);
     }
 
     @Test

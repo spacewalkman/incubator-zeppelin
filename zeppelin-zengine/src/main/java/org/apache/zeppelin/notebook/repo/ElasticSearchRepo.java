@@ -13,6 +13,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,6 @@ public class ElasticSearchRepo implements NotebookRepo {
     private static final String CONFIG_REPO_ES_INDEX_NAME = "zeppelin.es.search.repo.index.name";
     private static final String CONFIG_REPO_ES_TYPE_NAME = "zeppelin.es.search.repo.index.type";
 
-
     private Client client;
     private String indexName;
     private String typeName;
@@ -63,7 +63,25 @@ public class ElasticSearchRepo implements NotebookRepo {
 
     @Override
     public List<NoteInfo> list() throws IOException {
-        return new ArrayList<NoteInfo>(1);
+        SearchResponse response = client.prepareSearch(indexName)
+                .setTypes(typeName)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .execute()
+                .actionGet();
+
+        List<NoteInfo> results = null;
+        SearchHits hits = response.getHits();
+        long count = hits.getTotalHits();
+        if (count > 0) {
+            results = new ArrayList<NoteInfo>((int) count);
+            for (SearchHit hit : hits.getHits()) {
+                Note noteParsed = getGson().fromJson(hit.getSourceAsString(), Note.class);
+                results.add(new NoteInfo(noteParsed));
+            }
+
+        }
+
+        return results;
     }
 
     @Override
@@ -74,22 +92,31 @@ public class ElasticSearchRepo implements NotebookRepo {
         }
 
 
-        TermQueryBuilder qb=QueryBuilders.termQuery(ID_FIELD, noteId);
-        LOG.debug(qb.toString());
+        TermQueryBuilder tqb = QueryBuilders.termQuery(ID_FIELD, noteId);
+        LOG.debug(tqb.toString());
 
         SearchResponse response = client.prepareSearch(indexName)
                 .setTypes(typeName)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(qb)
+                .setQuery(tqb)
                 .execute()
                 .actionGet();
 
         SearchHits hits = response.getHits();
-        String sourceDocString = hits.getAt(0).getSourceAsString();
-        LOG.debug("源doc={}", sourceDocString);
+        long count = hits.getTotalHits();
+        if (count < 1) {
+            return null;
+        } else {
+            if (count > 1) {
+                LOG.warn("hit more than 1,should not be");
+            }
 
-        Gson gson = getGson();
-        return  gson.fromJson(sourceDocString,Note.class);
+            String sourceDocString = hits.getAt(0).getSourceAsString();
+            LOG.debug("源doc={}", sourceDocString);
+
+            Gson gson = getGson();
+            return gson.fromJson(sourceDocString, Note.class);
+        }
 
     }
 
