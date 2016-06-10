@@ -20,7 +20,7 @@ limitations under the License.
 {% include JB/setup %}
 <br />
 <div class="row">
- <div class="col-md-5">
+ <div class="col-md-6">
 <h2>Multi-purpose Notebook</h2>
 
 <p style="font-size:16px; color:#555555;font-style:italic;margin-bottom: 15px;">
@@ -34,14 +34,14 @@ limitations under the License.
 </ul>
 
  </div>
- <div class="col-md-7"><img class="img-responsive" style="border: 1px solid #ecf0f1;" height="auto" src="/assets/themes/zeppelin/img/notebook.png" /></div>
+ <div class="col-md-6"><img class="img-responsive" style="border: 1px solid #ecf0f1;" height="auto" src="/assets/themes/zeppelin/img/notebook.png" /></div>
 </div>
 
 <br />
 ### Multiple language backend
 
 Zeppelin interpreter concept allows any language/data-processing-backend to be plugged into Zeppelin.
-Currently Zeppelin supports many interpreters such as Scala(with Apache Spark), Python(with Apache Spark), SparkSQL, Hive, Markdown and Shell.
+Currently Zeppelin supports many interpreters such as Scala(with Apache Spark), Python(with Apache Spark), SparkSQL, JDBC, Markdown and Shell.
 
 <img class="img-responsive" src="/assets/themes/zeppelin/img/screenshots/multiple_language_backend.png" />
 
