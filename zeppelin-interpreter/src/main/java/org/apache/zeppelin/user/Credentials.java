@@ -33,7 +33,7 @@ import java.util.Map;
 public class Credentials {
   private static final Logger LOG = LoggerFactory.getLogger(Credentials.class);
 
-  private Map<String, UserCredentials> credentialsMap;
+  private Map<String, UserCredentials> credentialsMap;//<username,datasources credentials> mapping
   private Gson gson;
   private Boolean credentialsPersist = true;
   File credentialsFile;
