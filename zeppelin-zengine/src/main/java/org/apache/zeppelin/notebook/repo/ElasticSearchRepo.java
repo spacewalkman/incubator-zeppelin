@@ -2,17 +2,18 @@ package org.apache.zeppelin.notebook.repo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
@@ -91,41 +92,22 @@ public class ElasticSearchRepo implements NotebookRepo {
             return null;
         }
 
-
-        TermQueryBuilder tqb = QueryBuilders.termQuery(ID_FIELD, noteId);
-        LOG.debug(tqb.toString());
-
-        SearchResponse response = client.prepareSearch(indexName)
-                .setTypes(typeName)
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(tqb)
-                .execute()
+        GetResponse response = client.prepareGet(indexName, typeName, noteId).execute()
                 .actionGet();
 
-        SearchHits hits = response.getHits();
-        long count = hits.getTotalHits();
-        if (count < 1) {
+        if (!response.isExists()) {
             return null;
-        } else {
-            if (count > 1) {
-                LOG.warn("hit more than 1,should not be");
-            }
-
-            String sourceDocString = hits.getAt(0).getSourceAsString();
-            LOG.debug("源doc={}", sourceDocString);
-
-            Gson gson = getGson();
-            return gson.fromJson(sourceDocString, Note.class);
         }
+
+        Gson gson = getGson();
+        return gson.fromJson(response.getSourceAsString(), Note.class);
 
     }
 
     @Override
     public void save(Note note) throws IOException {
-        Gson gson = getGson();
-
-        IndexResponse response = client.prepareIndex(this.indexName, this.typeName)
-                .setSource(gson.toJson(note))
+        IndexResponse response = client.prepareIndex(this.indexName, this.typeName, note.id())
+                .setSource(getGson().toJson(note))
                 .get();
 
         String idGenerated = response.getId();
@@ -141,7 +123,13 @@ public class ElasticSearchRepo implements NotebookRepo {
 
     @Override
     public void remove(String noteId) throws IOException {
+        DeleteResponse response = client.prepareDelete(this.indexName, this.typeName, noteId).get();
 
+        if (response.isFound()) {
+            LOG.debug("note id={},delete successfully", noteId);
+        } else {
+            LOG.warn("note id={},not found", noteId);
+        }
     }
 
     @Override
@@ -153,6 +141,6 @@ public class ElasticSearchRepo implements NotebookRepo {
 
     @Override
     public void checkpoint(String noteId, String checkPointName) throws IOException {
-
+        return;//no checkpoint feature in ES
     }
 }

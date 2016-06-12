@@ -19,12 +19,16 @@ package org.apache.zeppelin.notebook.repo;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.dep.DependencyResolver;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter1;
-import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.notebook.JobListenerFactory;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.search.SearchService;
 import org.junit.After;
@@ -37,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -88,25 +93,52 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
         notebookRepo.close();
     }
 
+
+    /**
+     * populate ES note repo with VFSNoteRepo
+     */
+    @Test
+    public void testAddVFSRepoNotes() throws IOException, InterruptedException {
+        NotebookRepo vfsNoteRepo = new VFSNotebookRepo(ZeppelinConfiguration.create());
+        Random rand = new Random();
+        String[] users = {"user1", "user2"};
+
+        for (NoteInfo info : vfsNoteRepo.list()) {
+            Note note = vfsNoteRepo.get(info.getId());
+            if (note.getCreatedBy() == null || note.getCreatedBy().isEmpty()) {
+                note.setCreatedBy(users[rand.nextInt(2)]);
+            }
+
+            notebookRepo.save(note);
+        }
+
+    }
+
     @Test
     public void testGet() throws IOException, InterruptedException {
-        //Note note = notebookRepo.get("AVUk-7PnAYiCyGTG0gya");
-        Note note = notebookRepo.get("2BQFAE8A7");
+        List<NoteInfo> noteInfos = notebookRepo.list();
+        if (noteInfos != null && noteInfos.size() > 0) {
+            for (NoteInfo noteinfo :
+                    noteInfos) {
+                Note note = notebookRepo.get(noteinfo.getId());
 
-        assertNotNull(note);
+                assertNotNull(note);
+                assertNotNull(note.getCreatedBy());
+            }
+        }
     }
 
     @Test
     public void testList() throws IOException, InterruptedException {
-        List<NoteInfo> noteInfos= notebookRepo.list();
-        LOG.debug("total count={}",noteInfos.size());
+        List<NoteInfo> noteInfos = notebookRepo.list();
+        LOG.debug("total count={}", noteInfos.size());
 
         assertNotNull(noteInfos);
     }
 
     @Test
     public void testSaveNotebook() throws IOException, InterruptedException {
-        Note note = notebook.createNote();
+        Note note = notebook.createNote("user1");
         note.getNoteReplLoader().setInterpreters(factory.getDefaultInterpreterSettingList());
 
         Paragraph p1 = note.addParagraph();
@@ -118,23 +150,6 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
         note.setName("testSaveNotebook");
         notebookRepo.save(note);
         assertEquals(note.getName(), "testSaveNotebook");
-    }
-
-    class NotebookWriter implements Runnable {
-        Note note;
-
-        public NotebookWriter(Note note) {
-            this.note = note;
-        }
-
-        @Override
-        public void run() {
-            try {
-                notebookRepo.save(note);
-            } catch (IOException e) {
-                LOG.error(e.toString(), e);
-            }
-        }
     }
 
     @Override
