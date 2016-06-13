@@ -16,13 +16,7 @@
  */
 package org.apache.zeppelin.rest;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
@@ -34,7 +28,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.gson.Gson;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test against spark cluster.
@@ -68,7 +67,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void basicRDDTransformationAndActionTest() throws IOException {
         // create new note
-        Note note = ZeppelinServer.notebook.createNote();
+        Note note = ZeppelinServer.notebook.createNote("anonymous");
 
         // run markdown paragraph, again
         Paragraph p = note.addParagraph();
@@ -86,7 +85,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void sparkRTest() throws IOException {
       // create new note
-      Note note = ZeppelinServer.notebook.createNote();
+      Note note = ZeppelinServer.notebook.createNote("anonymous");
       int sparkVersion = getSparkVersionNumber(note);
 
       if (isSparkR() && sparkVersion >= 14) {   // sparkr supported from 1.4.0
@@ -110,7 +109,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void pySparkTest() throws IOException {
         // create new note
-        Note note = ZeppelinServer.notebook.createNote();
+        Note note = ZeppelinServer.notebook.createNote("anonymous");
         note.setName("note");
         int sparkVersion = getSparkVersionNumber(note);
 
@@ -133,7 +132,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void pySparkAutoConvertOptionTest() throws IOException {
         // create new note
-        Note note = ZeppelinServer.notebook.createNote();
+        Note note = ZeppelinServer.notebook.createNote("anonymous");
         note.setName("note");
 
         int sparkVersion = getSparkVersionNumber(note);
@@ -158,7 +157,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void zRunTest() throws IOException {
         // create new note
-        Note note = ZeppelinServer.notebook.createNote();
+        Note note = ZeppelinServer.notebook.createNote("anonymous");
         Paragraph p0 = note.addParagraph();
         Map config0 = p0.getConfig();
         config0.put("enabled", true);
@@ -190,7 +189,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     @Test
     public void pySparkDepLoaderTest() throws IOException {
         // create new note
-        Note note = ZeppelinServer.notebook.createNote();
+        Note note = ZeppelinServer.notebook.createNote("anonymous");
 
         if (isPyspark() && getSparkVersionNumber(note) >= 14) {
             // restart spark interpreter

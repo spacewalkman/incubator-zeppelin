@@ -16,14 +16,8 @@
  */
 package org.apache.zeppelin.search;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.*;
-import static org.apache.zeppelin.search.LuceneSearch.formatId;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.notebook.Note;
@@ -35,8 +29,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.apache.zeppelin.search.LuceneSearch.formatId;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LuceneSearchTest {
 
@@ -286,7 +287,7 @@ public class LuceneSearchTest {
   }
 
   private Note newNote(String name) {
-    Note note = new Note(notebookRepoMock, replLoaderMock, null, notebookIndex, null);
+    Note note = new Note(notebookRepoMock, replLoaderMock, null, notebookIndex, null, "anonymous");
     note.setName(name);
     return note;
   }

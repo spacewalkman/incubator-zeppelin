@@ -48,112 +48,112 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 public class ElasticSearchRepoTest implements JobListenerFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchRepoTest.class);
-    private ZeppelinConfiguration conf;
-    private SchedulerFactory schedulerFactory;
-    private Notebook notebook;
-    private NotebookRepo notebookRepo;
-    private InterpreterFactory factory;
-    private DependencyResolver depResolver;
+  private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchRepoTest.class);
+  private ZeppelinConfiguration conf;
+  private SchedulerFactory schedulerFactory;
+  private Notebook notebook;
+  private NotebookRepo notebookRepo;
+  private InterpreterFactory factory;
+  private DependencyResolver depResolver;
 
-    private File mainZepDir;
-    private File mainNotebookDir;
+  private File mainZepDir;
+  private File mainNotebookDir;
 
-    @Before
-    public void setUp() throws Exception {
-        String zpath = System.getProperty("java.io.tmpdir") + "/ZeppelinLTest_" + System.currentTimeMillis();
-        mainZepDir = new File(zpath);
-        mainZepDir.mkdirs();
-        new File(mainZepDir, "conf").mkdirs();
-        String mainNotePath = zpath + "/notebook";
-        mainNotebookDir = new File(mainNotePath);
-        mainNotebookDir.mkdirs();
+  @Before
+  public void setUp() throws Exception {
+    String zpath = System.getProperty("java.io.tmpdir") + "/ZeppelinLTest_" + System.currentTimeMillis();
+    mainZepDir = new File(zpath);
+    mainZepDir.mkdirs();
+    new File(mainZepDir, "conf").mkdirs();
+    String mainNotePath = zpath + "/notebook";
+    mainNotebookDir = new File(mainNotePath);
+    mainNotebookDir.mkdirs();
 
-        conf = ZeppelinConfiguration.create();
+    conf = ZeppelinConfiguration.create();
 
-        this.schedulerFactory = new SchedulerFactory();
+    this.schedulerFactory = new SchedulerFactory();
 
-        MockInterpreter1.register("mock1", "org.apache.zeppelin.interpreter.mock.MockInterpreter1");
+    MockInterpreter1.register("mock1", "org.apache.zeppelin.interpreter.mock.MockInterpreter1");
 
-        this.schedulerFactory = new SchedulerFactory();
-        depResolver = new DependencyResolver(mainZepDir.getAbsolutePath() + "/local-repo");
-        factory = new InterpreterFactory(conf, new InterpreterOption(false), null, null, depResolver);
+    this.schedulerFactory = new SchedulerFactory();
+    depResolver = new DependencyResolver(mainZepDir.getAbsolutePath() + "/local-repo");
+    factory = new InterpreterFactory(conf, new InterpreterOption(false), null, null, depResolver);
 
-        SearchService search = mock(SearchService.class);
-        notebookRepo = new ElasticSearchRepo(conf);
-        notebook = new Notebook(conf, notebookRepo, schedulerFactory, factory, this, search, null, null);
+    SearchService search = mock(SearchService.class);
+    notebookRepo = new ElasticSearchRepo(conf);
+    notebook = new Notebook(conf, notebookRepo, schedulerFactory, factory, this, search, null, null);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (!FileUtils.deleteQuietly(mainZepDir)) {
+      LOG.error("Failed to delete {} ", mainZepDir.getName());
     }
 
-    @After
-    public void tearDown() throws Exception {
-        if (!FileUtils.deleteQuietly(mainZepDir)) {
-            LOG.error("Failed to delete {} ", mainZepDir.getName());
-        }
+    notebookRepo.close();
+  }
 
-        notebookRepo.close();
+
+  /**
+   * populate ES note repo with VFSNoteRepo
+   */
+  @Test
+  public void testAddVFSRepoNotes() throws IOException, InterruptedException {
+    NotebookRepo vfsNoteRepo = new VFSNotebookRepo(ZeppelinConfiguration.create());
+    Random rand = new Random();
+    String[] users = {"user1", "user2"};
+
+    for (NoteInfo info : vfsNoteRepo.list()) {
+      Note note = vfsNoteRepo.get(info.getId());
+      if (note.getCreatedBy() == null || note.getCreatedBy().isEmpty()) {
+        note.setCreatedBy(users[rand.nextInt(2)]);
+      }
+
+      notebookRepo.save(note);
     }
 
+  }
 
-    /**
-     * populate ES note repo with VFSNoteRepo
-     */
-    @Test
-    public void testAddVFSRepoNotes() throws IOException, InterruptedException {
-        NotebookRepo vfsNoteRepo = new VFSNotebookRepo(ZeppelinConfiguration.create());
-        Random rand = new Random();
-        String[] users = {"user1", "user2"};
+  @Test
+  public void testGet() throws IOException, InterruptedException {
+    List<NoteInfo> noteInfos = notebookRepo.list();
+    if (noteInfos != null && noteInfos.size() > 0) {
+      for (NoteInfo noteinfo :
+              noteInfos) {
+        Note note = notebookRepo.get(noteinfo.getId());
 
-        for (NoteInfo info : vfsNoteRepo.list()) {
-            Note note = vfsNoteRepo.get(info.getId());
-            if (note.getCreatedBy() == null || note.getCreatedBy().isEmpty()) {
-                note.setCreatedBy(users[rand.nextInt(2)]);
-            }
-
-            notebookRepo.save(note);
-        }
-
+        assertNotNull(note);
+        assertNotNull(note.getCreatedBy());
+      }
     }
+  }
 
-    @Test
-    public void testGet() throws IOException, InterruptedException {
-        List<NoteInfo> noteInfos = notebookRepo.list();
-        if (noteInfos != null && noteInfos.size() > 0) {
-            for (NoteInfo noteinfo :
-                    noteInfos) {
-                Note note = notebookRepo.get(noteinfo.getId());
+  @Test
+  public void testList() throws IOException, InterruptedException {
+    List<NoteInfo> noteInfos = notebookRepo.list();
+    LOG.debug("total count={}", noteInfos.size());
 
-                assertNotNull(note);
-                assertNotNull(note.getCreatedBy());
-            }
-        }
-    }
+    assertNotNull(noteInfos);
+  }
 
-    @Test
-    public void testList() throws IOException, InterruptedException {
-        List<NoteInfo> noteInfos = notebookRepo.list();
-        LOG.debug("total count={}", noteInfos.size());
+  @Test
+  public void testSaveNotebook() throws IOException, InterruptedException {
+    Note note = notebook.createNote("user1");
+    note.getNoteReplLoader().setInterpreters(factory.getDefaultInterpreterSettingList());
 
-        assertNotNull(noteInfos);
-    }
+    Paragraph p1 = note.addParagraph();
+    Map<String, Object> config = p1.getConfig();
+    config.put("enabled", true);
+    p1.setConfig(config);
+    p1.setText("%mock1 hello world");
 
-    @Test
-    public void testSaveNotebook() throws IOException, InterruptedException {
-        Note note = notebook.createNote("user1");
-        note.getNoteReplLoader().setInterpreters(factory.getDefaultInterpreterSettingList());
+    note.setName("testSaveNotebook");
+    notebookRepo.save(note);
+    assertEquals(note.getName(), "testSaveNotebook");
+  }
 
-        Paragraph p1 = note.addParagraph();
-        Map<String, Object> config = p1.getConfig();
-        config.put("enabled", true);
-        p1.setConfig(config);
-        p1.setText("%mock1 hello world");
-
-        note.setName("testSaveNotebook");
-        notebookRepo.save(note);
-        assertEquals(note.getName(), "testSaveNotebook");
-    }
-
-    @Override
-    public ParagraphJobListener getParagraphJobListener(Note note) {
-        return null;
-    }
+  @Override
+  public ParagraphJobListener getParagraphJobListener(Note note) {
+    return null;
+  }
 }

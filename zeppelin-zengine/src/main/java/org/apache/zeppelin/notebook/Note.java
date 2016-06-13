@@ -17,18 +17,16 @@
 
 package org.apache.zeppelin.notebook;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import com.google.gson.Gson;
 
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.Input;
-import org.apache.zeppelin.interpreter.*;
+import org.apache.zeppelin.interpreter.Interpreter;
+import org.apache.zeppelin.interpreter.InterpreterException;
+import org.apache.zeppelin.interpreter.InterpreterGroup;
+import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.utility.IdHashes;
@@ -37,12 +35,22 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.search.SearchService;
-
-import com.google.gson.Gson;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Binded interpreters for a note
@@ -54,6 +62,7 @@ public class Note implements Serializable, JobListener {
   // threadpool for delayed persist of note
   private static final ScheduledThreadPoolExecutor delayedPersistThreadPool =
           new ScheduledThreadPoolExecutor(0);
+
   static {
     delayedPersistThreadPool.setRemoveOnCancelPolicy(true);
   }
@@ -62,6 +71,7 @@ public class Note implements Serializable, JobListener {
 
   private String name = "";
   private String id;
+  private String createdBy;
 
   @SuppressWarnings("rawtypes")
   Map<String, List<AngularObject>> angularObjects = new HashMap<>();
@@ -88,16 +98,21 @@ public class Note implements Serializable, JobListener {
   private Map<String, Object> info = new HashMap<>();
 
 
-  public Note() {}
+  public Note() {
+  }
 
+  /**
+   * @param createdBy note's creator, current principal
+   */
   public Note(NotebookRepo repo, NoteInterpreterLoader replLoader,
-      JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials) {
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, String createdBy) {
     this.repo = repo;
     this.replLoader = replLoader;
     this.jobListenerFactory = jlFactory;
     this.index = noteIndex;
     this.credentials = credentials;
     generateId();
+    this.createdBy = createdBy;
   }
 
   private void generateId() {
@@ -150,7 +165,9 @@ public class Note implements Serializable, JobListener {
 
   public Credentials getCredentials() {
     return credentials;
-  };
+  }
+
+  ;
 
   public void setCredentials(Credentials credentials) {
     this.credentials = credentials;
@@ -176,8 +193,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * Clone paragraph and add it to note.
-   *
-   * @param srcParagraph
    */
   public void addCloneParagraph(Paragraph srcParagraph) {
 
@@ -189,8 +204,8 @@ public class Note implements Serializable, JobListener {
     Map<String, Input> form = new HashMap<>(srcParagraph.settings.getForms());
     Gson gson = new Gson();
     InterpreterResult result = gson.fromJson(
-        gson.toJson(srcParagraph.getReturn()),
-        InterpreterResult.class);
+            gson.toJson(srcParagraph.getReturn()),
+            InterpreterResult.class);
 
     newParagraph.setConfig(config);
     newParagraph.settings.setParams(param);
@@ -206,8 +221,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * Insert paragraph in given index.
-   *
-   * @param index
    */
   public Paragraph insertParagraph(int index) {
     Paragraph p = new Paragraph(this, this, replLoader);
@@ -220,7 +233,6 @@ public class Note implements Serializable, JobListener {
   /**
    * Remove paragraph by id.
    *
-   * @param paragraphId
    * @return a paragraph that was deleted, or <code>null</code> otherwise
    */
   public Paragraph removeParagraph(String paragraphId) {
@@ -244,9 +256,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * Clear paragraph output by id.
-   *
-   * @param paragraphId
-   * @return
    */
   public Paragraph clearParagraphOutput(String paragraphId) {
     synchronized (paragraphs) {
@@ -264,7 +273,6 @@ public class Note implements Serializable, JobListener {
   /**
    * Move paragraph into the new index (order from 0 ~ n-1).
    *
-   * @param paragraphId
    * @param index new index
    */
   public void moveParagraph(String paragraphId, int index) {
@@ -274,10 +282,9 @@ public class Note implements Serializable, JobListener {
   /**
    * Move paragraph into the new index (order from 0 ~ n-1).
    *
-   * @param paragraphId
-   * @param index new index
-   * @param throwWhenIndexIsOutOfBound whether throw IndexOutOfBoundException
-   *                                   when index is out of bound
+   * @param index                      new index
+   * @param throwWhenIndexIsOutOfBound whether throw IndexOutOfBoundException when index is out of
+   *                                   bound
    */
   public void moveParagraph(String paragraphId, int index, boolean throwWhenIndexIsOutOfBound) {
     synchronized (paragraphs) {
@@ -287,7 +294,7 @@ public class Note implements Serializable, JobListener {
       if (index < 0 || index >= paragraphs.size()) {
         if (throwWhenIndexIsOutOfBound) {
           throw new IndexOutOfBoundsException("paragraph size is " + paragraphs.size() +
-              " , index is " + index);
+                  " , index is " + index);
         } else {
           return;
         }
@@ -339,7 +346,7 @@ public class Note implements Serializable, JobListener {
     }
   }
 
-  public List<Map<String, String>> generateParagraphsInfo (){
+  public List<Map<String, String>> generateParagraphsInfo() {
     List<Map<String, String>> paragraphsInfo = new LinkedList<>();
     synchronized (paragraphs) {
       for (Paragraph p : paragraphs) {
@@ -384,8 +391,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * Run a single paragraph.
-   *
-   * @param paragraphId
    */
   public void run(String paragraphId) {
     Paragraph p = getParagraph(paragraphId);
@@ -458,7 +463,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * Persist this note with maximum delay.
-   * @param maxDelaySec
    */
   public void persist(int maxDelaySec) {
     startDelayedPersistTimer(maxDelaySec);
@@ -530,6 +534,14 @@ public class Note implements Serializable, JobListener {
   }
 
   @Override
-  public void onProgressUpdate(Job job, int progress) {}
+  public void onProgressUpdate(Job job, int progress) {
+  }
 
+  public String getCreatedBy() {
+    return createdBy;
+  }
+
+  public void setCreatedBy(String createdBy) {
+    this.createdBy = createdBy;
+  }
 }

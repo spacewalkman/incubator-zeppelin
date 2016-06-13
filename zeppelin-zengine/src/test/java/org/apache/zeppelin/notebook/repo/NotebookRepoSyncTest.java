@@ -17,15 +17,6 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -35,13 +26,16 @@ import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.InterpreterOutput;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter1;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter2;
-import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.notebook.JobListenerFactory;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.NotebookAuthorization;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.search.SearchService;
-import org.apache.zeppelin.search.LuceneSearch;
 import org.apache.zeppelin.user.Credentials;
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +43,15 @@ import org.junit.Test;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 
 public class NotebookRepoSyncTest implements JobListenerFactory {
@@ -122,7 +125,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     assertEquals(0, notebookRepoSync.list(1).size());
     
     /* create note */
-    Note note = notebookSync.createNote();
+    Note note = notebookSync.createNote("anonymous");
 
     // check that automatically saved on both storages
     assertEquals(1, notebookRepoSync.list(0).size());
@@ -138,7 +141,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     assertEquals(0, notebookRepoSync.list(0).size());
     assertEquals(0, notebookRepoSync.list(1).size());
     
-    Note note = notebookSync.createNote();
+    Note note = notebookSync.createNote("anonymous");
 
     /* check that created in both storage systems */
     assertEquals(1, notebookRepoSync.list(0).size());
@@ -158,7 +161,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
   public void testSyncUpdateMain() throws IOException {
     
     /* create note */
-    Note note = notebookSync.createNote();
+    Note note = notebookSync.createNote("anonymous");
     Paragraph p1 = note.addParagraph();
     Map config = p1.getConfig();
     config.put("enabled", true);
@@ -238,7 +241,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     // no notes
     assertThat(vRepoSync.list().size()).isEqualTo(0);
     // create note
-    Note note = vNotebookSync.createNote();
+    Note note = vNotebookSync.createNote("anonymous");
     assertThat(vRepoSync.list().size()).isEqualTo(1);
     
     String noteId = vRepoSync.list().get(0).getId();

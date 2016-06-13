@@ -17,18 +17,9 @@
 
 package org.apache.zeppelin.notebook;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -44,33 +35,30 @@ import org.apache.zeppelin.resource.ResourcePoolUtils;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.Credentials;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.CronTrigger;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
-import org.quartz.SchedulerException;
-import org.quartz.TriggerBuilder;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Collection of Notes.
  */
 public class Notebook {
   static Logger logger = LoggerFactory.getLogger(Notebook.class);
 
-  @SuppressWarnings("unused") @Deprecated //TODO(bzz): remove unused
+  @SuppressWarnings("unused")
+  @Deprecated //TODO(bzz): remove unused
   private SchedulerFactory schedulerFactory;
 
   private InterpreterFactory replFactory;
-  /** Keep the order. */
+  /**
+   * Keep the order.
+   */
   Map<String, Note> notes = new LinkedHashMap<String, Note>();
   private ZeppelinConfiguration conf;
   private StdSchedulerFactory quertzSchedFact;
@@ -84,23 +72,14 @@ public class Notebook {
   /**
    * Main constructor \w manual Dependency Injection
    *
-   * @param conf
-   * @param notebookRepo
-   * @param schedulerFactory
-   * @param replFactory
-   * @param jobListenerFactory
    * @param notebookIndex - (nullable) for indexing all notebooks on creating.
-   * @param notebookAuthorization
-   *
-   * @throws IOException
-   * @throws SchedulerException
    */
   public Notebook(ZeppelinConfiguration conf, NotebookRepo notebookRepo,
-      SchedulerFactory schedulerFactory,
-      InterpreterFactory replFactory, JobListenerFactory jobListenerFactory,
-      SearchService notebookIndex,
-      NotebookAuthorization notebookAuthorization,
-      Credentials credentials) throws IOException, SchedulerException {
+                  SchedulerFactory schedulerFactory,
+                  InterpreterFactory replFactory, JobListenerFactory jobListenerFactory,
+                  SearchService notebookIndex,
+                  NotebookAuthorization notebookAuthorization,
+                  Credentials credentials) throws IOException, SchedulerException {
     this.conf = conf;
     this.notebookRepo = notebookRepo;
     this.schedulerFactory = schedulerFactory;
@@ -120,37 +99,32 @@ public class Notebook {
       logger.info("Notebook indexing started...");
       notebookIndex.addIndexDocs(notes.values());
       logger.info("Notebook indexing finished: {} indexed in {}s", notes.size(),
-          TimeUnit.NANOSECONDS.toSeconds(start - System.nanoTime()));
+              TimeUnit.NANOSECONDS.toSeconds(start - System.nanoTime()));
     }
 
   }
 
   /**
-   * Create new note.
-   *
-   * @return
-   * @throws IOException
+   * create note with principal
    */
-  public Note createNote() throws IOException {
+  public Note createNote(String principal) throws IOException {
     Note note;
     if (conf.getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_AUTO_INTERPRETER_BINDING)) {
-      note = createNote(replFactory.getDefaultInterpreterSettingList());
+      note = createNote(replFactory.getDefaultInterpreterSettingList(), principal);
     } else {
-      note = createNote(null);
+      note = createNote(null, principal);
     }
+
     notebookIndex.addIndexDoc(note);
     return note;
   }
 
   /**
    * Create new note.
-   *
-   * @return
-   * @throws IOException
    */
-  public Note createNote(List<String> interpreterIds) throws IOException {
+  public Note createNote(List<String> interpreterIds, String principal) throws IOException {
     NoteInterpreterLoader intpLoader = new NoteInterpreterLoader(replFactory);
-    Note note = new Note(notebookRepo, intpLoader, jobListenerFactory, notebookIndex, credentials);
+    Note note = new Note(notebookRepo, intpLoader, jobListenerFactory, notebookIndex, credentials, principal);
     intpLoader.setNoteId(note.id());
     synchronized (notes) {
       notes.put(note.id(), note);
@@ -163,9 +137,10 @@ public class Notebook {
     note.persist();
     return note;
   }
-  
+
   /**
    * Export existing note.
+   *
    * @param noteId - the note ID to clone
    * @return Note JSON
    * @throws IOException, IllegalArgumentException
@@ -183,12 +158,13 @@ public class Notebook {
 
   /**
    * import JSON as a new note.
+   *
    * @param sourceJson - the note JSON to import
-   * @param noteName - the name of the new note
+   * @param noteName   - the name of the new note
+   * @param principal  current principal
    * @return notebook ID
-   * @throws IOException
    */
-  public Note importNote(String sourceJson, String noteName) throws IOException {
+  public Note importNote(String sourceJson, String noteName, String principal) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -197,7 +173,7 @@ public class Notebook {
     Note newNote;
     try {
       Note oldNote = gson.fromJson(reader, Note.class);
-      newNote = createNote();
+      newNote = createNote(principal);
       if (noteName != null)
         newNote.setName(noteName);
       else
@@ -207,30 +183,33 @@ public class Notebook {
         newNote.addCloneParagraph(p);
       }
 
+      notebookAuthorization.addOwner(newNote.id(), principal);
       newNote.persist();
     } catch (IOException e) {
       logger.error(e.toString(), e);
       throw e;
     }
-    
+
     return newNote;
   }
 
   /**
    * Clone existing note.
+   *
    * @param sourceNoteID - the note ID to clone
-   * @param newNoteName - the name of the new note
+   * @param newNoteName  - the name of the new note
+   * @param principal    current principal
    * @return noteId
    * @throws IOException, CloneNotSupportedException, IllegalArgumentException
    */
-  public Note cloneNote(String sourceNoteID, String newNoteName) throws
-      IOException, CloneNotSupportedException, IllegalArgumentException {
+  public Note cloneNote(String sourceNoteID, String newNoteName, String principal) throws
+          IOException, CloneNotSupportedException, IllegalArgumentException {
 
     Note sourceNote = getNote(sourceNoteID);
     if (sourceNote == null) {
       throw new IllegalArgumentException(sourceNoteID + "not found");
     }
-    Note newNote = createNote();
+    Note newNote = createNote(principal);
     if (newNoteName != null) {
       newNote.setName(newNoteName);
     }
@@ -243,13 +222,14 @@ public class Notebook {
       newNote.addCloneParagraph(p);
     }
 
+    notebookAuthorization.addOwner(newNote.id(), principal);
     notebookIndex.addIndexDoc(newNote);
     newNote.persist();
     return newNote;
   }
 
   public void bindInterpretersToNote(String id,
-      List<String> interpreterSettingIds) throws IOException {
+                                     List<String> interpreterSettingIds) throws IOException {
     Note note = getNote(id);
     if (note != null) {
       note.getNoteReplLoader().setInterpreters(interpreterSettingIds);
@@ -355,7 +335,7 @@ public class Notebook {
     for (Paragraph p : note.getParagraphs()) {
       p.setNote(note);
       if (p.getDateFinished() != null &&
-          lastUpdatedDate.before(p.getDateFinished())) {
+              lastUpdatedDate.before(p.getDateFinished())) {
         lastUpdatedDate = p.getDateFinished();
       }
     }
@@ -370,7 +350,7 @@ public class Notebook {
           SnapshotAngularObject snapshot = angularObjectSnapshot.get(object.getName());
           if (snapshot == null || snapshot.getLastUpdate().before(lastUpdatedDate)) {
             angularObjectSnapshot.put(object.getName(),
-                new SnapshotAngularObject(intpGroupName, object, lastUpdatedDate));
+                    new SnapshotAngularObject(intpGroupName, object, lastUpdatedDate));
           }
         }
       }
@@ -405,17 +385,16 @@ public class Notebook {
   private void loadAllNotes() throws IOException {
     List<NoteInfo> noteInfos = notebookRepo.list();
 
-    for (NoteInfo info : noteInfos) {
-      loadNoteFromRepo(info.getId());
+    if (noteInfos != null && noteInfos.size() > 0) {
+      for (NoteInfo info : noteInfos) {
+        loadNoteFromRepo(info.getId());
+      }
     }
   }
 
   /**
-   * Reload all notes from repository after clearing `notes`
-   * to reflect the changes of added/deleted/modified notebooks on file system level.
-   *
-   * @return
-   * @throws IOException
+   * Reload all notes from repository after clearing `notes` to reflect the changes of
+   * added/deleted/modified notebooks on file system level.
    */
   public void reloadAllNotes() throws IOException {
     synchronized (notes) {
@@ -430,8 +409,10 @@ public class Notebook {
     }
 
     List<NoteInfo> noteInfos = notebookRepo.list();
-    for (NoteInfo info : noteInfos) {
-      loadNoteFromRepo(info.getId());
+    if (noteInfos != null && noteInfos.size() > 0) {
+      for (NoteInfo info : noteInfos) {
+        loadNoteFromRepo(info.getId());
+      }
     }
   }
 
@@ -442,7 +423,7 @@ public class Notebook {
     Date lastUpdate;
 
     public SnapshotAngularObject(String intpGroupId,
-        AngularObject angularObject, Date lastUpdate) {
+                                 AngularObject angularObject, Date lastUpdate) {
       super();
       this.intpGroupId = intpGroupId;
       this.angularObject = angularObject;
@@ -452,9 +433,11 @@ public class Notebook {
     public String getIntpGroupId() {
       return intpGroupId;
     }
+
     public AngularObject getAngularObject() {
       return angularObject;
     }
+
     public Date getLastUpdate() {
       return lastUpdate;
     }
@@ -501,7 +484,7 @@ public class Notebook {
       String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
       note.runAll();
-    
+
       while (!note.getLastParagraph().isTerminated()) {
         try {
           Thread.sleep(1000);
@@ -509,7 +492,7 @@ public class Notebook {
           logger.error(e.toString(), e);
         }
       }
-      
+
       boolean releaseResource = false;
       try {
         Map<String, Object> config = note.getConfig();
@@ -523,7 +506,7 @@ public class Notebook {
         for (InterpreterSetting setting : note.getNoteReplLoader().getInterpreterSettings()) {
           notebook.getInterpreterFactory().restart(setting.id());
         }
-      }      
+      }
     }
   }
 
@@ -547,8 +530,8 @@ public class Notebook {
 
 
       JobDetail newJob =
-          JobBuilder.newJob(CronJob.class).withIdentity(id, "note").usingJobData("noteId", id)
-          .build();
+              JobBuilder.newJob(CronJob.class).withIdentity(id, "note").usingJobData("noteId", id)
+                      .build();
 
       Map<String, Object> info = note.getInfo();
       info.put("cron", null);
@@ -556,9 +539,9 @@ public class Notebook {
       CronTrigger trigger = null;
       try {
         trigger =
-            TriggerBuilder.newTrigger().withIdentity("trigger_" + id, "note")
-            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpr)).forJob(id, "note")
-            .build();
+                TriggerBuilder.newTrigger().withIdentity("trigger_" + id, "note")
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpr)).forJob(id, "note")
+                        .build();
       } catch (Exception e) {
         logger.error("Error", e);
         info.put("cron", e.getMessage());
