@@ -14,7 +14,7 @@
 
 'use strict';
 
-angular.module('zeppelinWebApp').controller('NoteImportCtrl', function($scope, $timeout, websocketMsgSrv) {
+angular.module('zeppelinWebApp').controller('NoteImportCtrl', function($rootScope, $scope, $timeout, websocketMsgSrv) {
   var vm = this;
   $scope.note = {};
   $scope.note.step1 = true;
@@ -95,7 +95,7 @@ angular.module('zeppelinWebApp').controller('NoteImportCtrl', function($scope, $
       } else {
         result.name = $scope.note.noteImportName;
       }
-      websocketMsgSrv.importNotebook(result);
+      websocketMsgSrv.importNotebook(result, $rootScope.ticket.principal);
       //angular.element('#noteImportModal').modal('hide');
     } else {
       $scope.note.errorText = 'Invalid JSON';

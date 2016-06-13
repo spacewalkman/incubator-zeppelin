@@ -17,15 +17,14 @@
 
 package org.apache.zeppelin.rest.message;
 
-import java.util.List;
-
-import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+
+import java.util.List;
 
 /**
  * InterpreterSetting information for binding
  */
-public class InterpreterSettingListForNoteBind {
+public class InterpreterSettingListForNoteBind extends PrincipalAndRoles {
   String id;
   String name;
   String group;

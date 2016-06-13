@@ -22,7 +22,7 @@ package org.apache.zeppelin.rest.message;
  *
  * index field will be ignored when it's used to provide initial paragraphs
  */
-public class NewParagraphRequest {
+public class NewParagraphRequest extends PrincipalAndRoles {
   String title;
   String text;
   Double index;

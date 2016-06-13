@@ -17,17 +17,16 @@
 
 package org.apache.zeppelin.rest.message;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.zeppelin.dep.Dependency;
 import org.apache.zeppelin.interpreter.InterpreterOption;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- *  NewInterpreterSetting rest api request message
- *
+ * NewInterpreterSetting rest api request message
  */
-public class NewInterpreterSettingRequest {
+public class NewInterpreterSettingRequest extends PrincipalAndRoles {
   String name;
   String group;
 

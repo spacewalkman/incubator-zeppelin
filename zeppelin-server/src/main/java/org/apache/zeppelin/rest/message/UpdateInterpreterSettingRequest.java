@@ -17,22 +17,22 @@
 
 package org.apache.zeppelin.rest.message;
 
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.zeppelin.dep.Dependency;
 import org.apache.zeppelin.interpreter.InterpreterOption;
+
+import java.util.List;
+import java.util.Properties;
 
 /**
  * UpdateInterpreterSetting rest api request message
  */
-public class UpdateInterpreterSettingRequest {
+public class UpdateInterpreterSettingRequest extends PrincipalAndRoles {
   Properties properties;
   List<Dependency> dependencies;
   InterpreterOption option;
 
   public UpdateInterpreterSettingRequest(Properties properties,
-      List<Dependency> dependencies, InterpreterOption option) {
+                                         List<Dependency> dependencies, InterpreterOption option) {
     this.properties = properties;
     this.dependencies = dependencies;
     this.option = option;

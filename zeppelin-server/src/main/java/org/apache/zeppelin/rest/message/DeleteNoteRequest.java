@@ -17,15 +17,14 @@
 
 package org.apache.zeppelin.rest.message;
 
-import java.util.Map;
-
 /**
- * RunParagraphWithParametersRequest rest api request message
+ * delete note rest api request message
  */
-public class RunParagraphWithParametersRequest extends PrincipalAndRoles {
-  Map<String, Object> params;
+public class DeleteNoteRequest extends PrincipalAndRoles {
+  String noteId;
 
-  public Map<String, Object> getParams() {
-    return params;
+
+  public String getNoteId() {
+    return noteId;
   }
 }

@@ -18,21 +18,14 @@
 package org.apache.zeppelin.rest.message;
 
 import java.util.List;
-import java.util.Map;
-
-import org.apache.zeppelin.interpreter.InterpreterOption;
 
 /**
- *  NewNotebookRequest rest api request message
- *
+ * NewNotebookRequest rest api request message
  */
-public class NewNotebookRequest {
+public class NewNotebookRequest extends PrincipalAndRoles {
   String name;
+
   List<NewParagraphRequest> paragraphs;
-
-  public NewNotebookRequest (){
-
-  }
 
   public String getName() {
     return name;
@@ -41,4 +34,5 @@ public class NewNotebookRequest {
   public List<NewParagraphRequest> getParagraphs() {
     return paragraphs;
   }
+
 }

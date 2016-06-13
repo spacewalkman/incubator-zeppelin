@@ -17,20 +17,11 @@
 
 package org.apache.zeppelin.rest.message;
 
-import java.util.Map;
-
-import org.apache.zeppelin.interpreter.InterpreterOption;
-
 /**
- *  CronRequest rest api request message
- *
+ * CronRequest rest api request message
  */
-public class CronRequest {
+public class CronRequest extends PrincipalAndRoles {
   String cron;
-
-  public CronRequest (){
-
-  }
 
   public String getCronString() {
     return cron;
