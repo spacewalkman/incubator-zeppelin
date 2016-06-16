@@ -1,0 +1,199 @@
+{
+  "mappings": {
+    "note": {
+      "properties": {
+        "angularObjects": {
+          "type": "object"
+        },
+        "config": {
+          "type": "object"
+        },
+        "createdBy": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "info": {
+          "type": "object"
+        },
+        "lastUpdated": {
+          "type": "date",
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
+          "ignore_malformed": "true"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "paragraphs": {
+      "_parent": {
+        "type": "note"
+      },
+      "properties": {
+        "config": {
+          "properties": {
+            "colWidth": {
+              "type": "double"
+            },
+            "editorMode": {
+              "type": "string"
+            },
+            "graph": {
+              "properties": {
+                "groups": {
+                  "properties": {
+                    "aggr": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "type": "double"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "height": {
+                  "type": "double"
+                },
+                "keys": {
+                  "properties": {
+                    "aggr": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "type": "double"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "mode": {
+                  "type": "string",
+                  "index": "not_analyzed"
+                },
+                "optionOpen": {
+                  "type": "boolean"
+                },
+                "scatter": {
+                  "properties": {
+                    "xAxis": {
+                      "properties": {
+                        "aggr": {
+                          "type": "string"
+                        },
+                        "index": {
+                          "type": "double"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "yAxis": {
+                      "properties": {
+                        "aggr": {
+                          "type": "string"
+                        },
+                        "index": {
+                          "type": "double"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "values": {
+                  "properties": {
+                    "aggr": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "type": "double"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "tableHide": {
+              "type": "boolean"
+            }
+          }
+        },
+        "dateCreated": {
+          "type": "date",
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
+          "ignore_malformed": "true"
+        },
+        "dateUpdated": {
+          "type": "date",
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
+          "ignore_malformed": "true"
+        },
+        "dateStarted": {
+          "type": "date",
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
+          "ignore_malformed": "true"
+        },
+        "dateFinished": {
+          "type": "date",
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
+          "ignore_malformed": "true"
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "jobName": {
+          "type": "string"
+        },
+        "progressUpdateIntervalMs": {
+          "type": "long"
+        },
+        "result": {
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "msg": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          }
+        },
+        "settings": {
+          "properties": {
+            "forms": {
+              "type": "object"
+            },
+            "params": {
+              "type": "object"
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
