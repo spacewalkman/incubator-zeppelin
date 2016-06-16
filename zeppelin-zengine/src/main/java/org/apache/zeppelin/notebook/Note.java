@@ -72,6 +72,8 @@ public class Note implements Serializable, JobListener {
   private String name = "";
   private String id;
   private String createdBy;
+  private String topic;
+  private List<String> tags;
 
   @SuppressWarnings("rawtypes")
   Map<String, List<AngularObject>> angularObjects = new HashMap<>();
@@ -559,5 +561,21 @@ public class Note implements Serializable, JobListener {
 
   public void setCreatedBy(String createdBy) {
     this.createdBy = createdBy;
+  }
+
+  public String getTopic() {
+    return topic;
+  }
+
+  public void setTopic(String topic) {
+    this.topic = topic;
+  }
+
+  public List<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags = tags;
   }
 }

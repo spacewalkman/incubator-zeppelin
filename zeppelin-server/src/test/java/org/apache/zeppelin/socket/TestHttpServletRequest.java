@@ -19,8 +19,6 @@
  */
 package org.apache.zeppelin.socket;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -30,11 +28,41 @@ import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
+
 /**
  * Created by joelz on 8/6/15.
  * Helps mocking a http servlet request
  */
 public class TestHttpServletRequest implements HttpServletRequest {
+    @Override
+    public String changeSessionId() {
+        return null;
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> aClass) throws IOException, ServletException {
+        return null;
+    }
+
+    @Override
+    public long getContentLengthLong() {
+        return 0;
+    }
+
     @Override
     public boolean authenticate(HttpServletResponse httpServletResponse) throws IOException, ServletException {
         return false;
