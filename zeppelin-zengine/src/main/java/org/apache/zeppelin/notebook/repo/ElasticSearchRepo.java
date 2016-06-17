@@ -335,8 +335,19 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     }
   }
 
+  //TODO:(qy) below are really interface pollution
   @Override
-  public void checkpoint(String noteId, String checkPointName) throws IOException {
-    return;//no checkpoint feature in ES
+  public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
+    return null;//no checkpoint feature in ES
+  }
+
+  @Override
+  public Note get(String noteId, Revision rev) throws IOException {
+    return null;
+  }
+
+  @Override
+  public List<Revision> revisionHistory(String noteId) {
+    return null;
   }
 }
