@@ -80,9 +80,11 @@ public class NotebookServer extends WebSocketServlet implements
   protected enum JOB_MANAGER_SERVICE {
     JOB_MANAGER_PAGE("JOB_MANAGER_PAGE");
     private String serviceTypeKey;
+
     JOB_MANAGER_SERVICE(String serviceType) {
       this.serviceTypeKey = serviceType;
     }
+
     String getKey() {
       return this.serviceTypeKey;
     }
@@ -399,11 +401,11 @@ public class NotebookServer extends WebSocketServlet implements
     response.put("jobs", notebookJobs);
 
     conn.send(serializeMessage(new Message(OP.LIST_NOTEBOOK_JOBS)
-      .put("notebookJobs", response)));
+            .put("notebookJobs", response)));
   }
 
   public void unicastUpdateNotebookJobInfo(NotebookSocket conn, Message fromMessage)
-      throws IOException {
+          throws IOException {
     double lastUpdateUnixTimeRaw = (double) fromMessage.get("lastUpdateUnixTime");
     long lastUpdateUnixTime = new Double(lastUpdateUnixTimeRaw).longValue();
 
