@@ -115,7 +115,7 @@ public class Notebook {
       note = createNote(null, principal);
     }
 
-    notebookIndex.addIndexDoc(note);
+    //notebookIndex.addIndexDoc(note);
     return note;
   }
 
@@ -134,8 +134,8 @@ public class Notebook {
     }
 
     note.setLastUpdated(new Date());
-    notebookIndex.addIndexDoc(note);
-    note.persist();
+    //notebookIndex.addIndexDoc(note);
+    //note.persist();
     return note;
   }
 

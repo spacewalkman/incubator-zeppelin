@@ -16,22 +16,23 @@
  */
 package org.apache.zeppelin.search;
 
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Paragraph;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
-
 /**
  * Search (both, indexing and query) the notebooks.
- * 
- * Intended to have multiple implementation, i.e:
- *  - local Lucene (in-memory, on-disk)
- *  - remote Elasticsearch
+ *
+ * Intended to have multiple implementation, i.e: - local Lucene (in-memory, on-disk) - remote
+ * Elasticsearch
  */
 public interface SearchService {
+
+  int DEFUALT_PAGE_SIZE = 20;
 
   /**
    * Full-text search in all the notebooks
@@ -42,12 +43,9 @@ public interface SearchService {
   public List<Map<String, String>> query(String queryStr);
 
   /**
-   * Updates all documents in index for the given note:
-   *  - name
-   *  - all paragraphs
+   * Updates all documents in index for the given note: - name - all paragraphs
    *
    * @param note a Note to update index for
-   * @throws IOException
    */
   public void updateIndexDoc(Note note) throws IOException;
 
@@ -72,10 +70,6 @@ public interface SearchService {
 
   /**
    * Deletes doc for a given
-   *
-   * @param note
-   * @param p
-   * @throws IOException
    */
   public void deleteIndexDoc(Note note, Paragraph p);
 

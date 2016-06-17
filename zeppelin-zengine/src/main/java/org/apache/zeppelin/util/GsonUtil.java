@@ -35,6 +35,17 @@ public class GsonUtil {
     return gsonBuilder.create();
   }
 
+  /**
+   * use zeppelin gson native date format for import from zeppelinhub/exported note.json
+   * @return
+   */
+  public static Gson getZeppelinGson() {
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    gsonBuilder.setPrettyPrinting();
+    gsonBuilder.serializeNulls();
+    return gsonBuilder.create();
+  }
+
   public static String toJson(Object obj) {
     return getGson().toJson(obj);
   }
@@ -52,6 +63,10 @@ public class GsonUtil {
 
   public static <T> T fromJson(String json, Class<T> clazz) {
     return getGson().fromJson(json, clazz);
+  }
+
+  public static <T> T fromZeppelinJson(String json, Class<T> clazz) {
+    return getZeppelinGson().fromJson(json, clazz);
   }
 
   /**

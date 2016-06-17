@@ -17,6 +17,14 @@
 
 package org.apache.zeppelin.notebook.repo;
 
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -25,14 +33,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Notebook repository sync with remote storage
@@ -49,8 +49,6 @@ public class NotebookRepoSync implements NotebookRepo {
   private List<NotebookRepo> repos = new ArrayList<NotebookRepo>();
 
   /**
-   * @param noteIndex
-   * @param (conf)
    * @throws - Exception
    */
   @SuppressWarnings("static-access")
@@ -64,7 +62,7 @@ public class NotebookRepoSync implements NotebookRepo {
     String[] storageClassNames = allStorageClassNames.split(",");
     if (storageClassNames.length > getMaxRepoNum()) {
       LOG.warn("Unsupported number {} of storage classes in ZEPPELIN_NOTEBOOK_STORAGE : {}\n" +
-        "first {} will be used", storageClassNames.length, allStorageClassNames, getMaxRepoNum());
+              "first {} will be used", storageClassNames.length, allStorageClassNames, getMaxRepoNum());
     }
 
     for (int i = 0; i < Math.min(storageClassNames.length, getMaxRepoNum()); i++) {
@@ -73,11 +71,11 @@ public class NotebookRepoSync implements NotebookRepo {
       try {
         notebookStorageClass = getClass().forName(storageClassNames[i].trim());
         Constructor<?> constructor = notebookStorageClass.getConstructor(
-                  ZeppelinConfiguration.class);
+                ZeppelinConfiguration.class);
         repos.add((NotebookRepo) constructor.newInstance(conf));
       } catch (ClassNotFoundException | NoSuchMethodException | SecurityException |
-          InstantiationException | IllegalAccessException | IllegalArgumentException |
-          InvocationTargetException e) {
+              InstantiationException | IllegalAccessException | IllegalArgumentException |
+              InvocationTargetException e) {
         LOG.warn("Failed to initialize {} notebook storage class", storageClassNames[i], e);
       }
     }
@@ -101,17 +99,17 @@ public class NotebookRepoSync implements NotebookRepo {
     try {
       notebookStorageClass = getClass().forName(defaultStorage);
       Constructor<?> constructor = notebookStorageClass.getConstructor(
-                ZeppelinConfiguration.class);
+              ZeppelinConfiguration.class);
       repos.add((NotebookRepo) constructor.newInstance(conf));
     } catch (ClassNotFoundException | NoSuchMethodException | SecurityException |
-        InstantiationException | IllegalAccessException | IllegalArgumentException |
-        InvocationTargetException e) {
+            InstantiationException | IllegalAccessException | IllegalArgumentException |
+            InvocationTargetException e) {
       LOG.warn("Failed to initialize {} notebook storage class {}", defaultStorage, e);
     }
   }
 
   /**
-   *  Lists Notebooks from the first repository
+   * Lists Notebooks from the first repository
    */
   @Override
   public List<NoteInfo> list() throws IOException {
@@ -124,7 +122,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   /**
-   *  Returns from Notebook from the first repository
+   * Returns from Notebook from the first repository
    */
   @Override
   public Note get(String noteId) throws IOException {
@@ -137,7 +135,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   /**
-   *  Saves to all repositories
+   * Saves to all repositories
    */
   @Override
   public void save(Note note) throws IOException {
@@ -145,8 +143,7 @@ public class NotebookRepoSync implements NotebookRepo {
     if (getRepoCount() > 1) {
       try {
         getRepo(1).save(note);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
         LOG.info(e.getMessage() + ": Failed to write to secondary storage");
       }
     }
@@ -167,15 +164,13 @@ public class NotebookRepoSync implements NotebookRepo {
 
   /**
    * Copies new/updated notes from source to destination storage
-   *
-   * @throws IOException
    */
   void sync(int sourceRepoIndex, int destRepoIndex) throws IOException {
     LOG.info("Sync started");
     NotebookRepo srcRepo = getRepo(sourceRepoIndex);
     NotebookRepo dstRepo = getRepo(destRepoIndex);
-    List <NoteInfo> srcNotes = srcRepo.list();
-    List <NoteInfo> dstNotes = dstRepo.list();
+    List<NoteInfo> srcNotes = srcRepo.list();
+    List<NoteInfo> dstNotes = dstRepo.list();
 
     Map<String, List<String>> noteIDs = notesCheckDiff(srcNotes, srcRepo, dstNotes, dstRepo);
     List<String> pushNoteIDs = noteIDs.get(pushKey);
@@ -208,7 +203,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   private void pushNotes(List<String> ids, NotebookRepo localRepo,
-      NotebookRepo remoteRepo) throws IOException {
+                         NotebookRepo remoteRepo) throws IOException {
     for (String id : ids) {
       remoteRepo.save(localRepo.get(id));
     }
@@ -225,16 +220,16 @@ public class NotebookRepoSync implements NotebookRepo {
   NotebookRepo getRepo(int repoIndex) throws IOException {
     if (repoIndex < 0 || repoIndex >= getRepoCount()) {
       throw new IOException("Requested storage index " + repoIndex
-          + " isn't initialized," + " repository count is " + getRepoCount());
+              + " isn't initialized," + " repository count is " + getRepoCount());
     }
     return repos.get(repoIndex);
   }
 
   private Map<String, List<String>> notesCheckDiff(List<NoteInfo> sourceNotes,
-      NotebookRepo sourceRepo, List<NoteInfo> destNotes, NotebookRepo destRepo)
-      throws IOException {
-    List <String> pushIDs = new ArrayList<String>();
-    List <String> pullIDs = new ArrayList<String>();
+                                                   NotebookRepo sourceRepo, List<NoteInfo> destNotes, NotebookRepo destRepo)
+          throws IOException {
+    List<String> pushIDs = new ArrayList<String>();
+    List<String> pullIDs = new ArrayList<String>();
 
     NoteInfo dnote;
     Date sdate, ddate;
@@ -275,7 +270,7 @@ public class NotebookRepoSync implements NotebookRepo {
     return map;
   }
 
-  private NoteInfo containsID(List <NoteInfo> notes, String id) {
+  private NoteInfo containsID(List<NoteInfo> notes, String id) {
     for (NoteInfo note : notes) {
       if (note.getId().equals(id)) {
         return note;
@@ -283,8 +278,10 @@ public class NotebookRepoSync implements NotebookRepo {
     }
     return null;
   }
+
   /**
    * checks latest modification date based on Paragraph fields
+   *
    * @return -Date
    */
   private Date lastModificationDate(Note note) {
@@ -327,7 +324,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   @SuppressWarnings("unused")
-  private void printNoteInfos(List <NoteInfo> notes) {
+  private void printNoteInfos(List<NoteInfo> notes) {
     LOG.info("The following is a list of note infos");
     for (NoteInfo note : notes) {
       printNoteInfo(note);
@@ -340,14 +337,14 @@ public class NotebookRepoSync implements NotebookRepo {
     Map<String, Object> configs = note.getConfig();
     for (Map.Entry<String, Object> entry : configs.entrySet()) {
       LOG.info("Config Key = " + entry.getKey() + "  , Value = " +
-        entry.getValue().toString() + "of class " + entry.getClass());
+              entry.getValue().toString() + "of class " + entry.getClass());
     }
   }
 
   @Override
   public void close() {
     LOG.info("Closing all notebook storages");
-    for (NotebookRepo repo: repos) {
+    for (NotebookRepo repo : repos) {
       repo.close();
     }
   }
@@ -362,10 +359,10 @@ public class NotebookRepoSync implements NotebookRepo {
       try {
         getRepo(i).checkpoint(noteId, checkPointName);
       } catch (IOException e) {
-        LOG.warn("Couldn't checkpoint in {} storage with index {} for note {}", 
-          getRepo(i).getClass().toString(), i, noteId);
-        errorMessage += "Error on storage class " + getRepo(i).getClass().toString() + 
-          " with index " + i + " : " + e.getMessage() + "\n";
+        LOG.warn("Couldn't checkpoint in {} storage with index {} for note {}",
+                getRepo(i).getClass().toString(), i, noteId);
+        errorMessage += "Error on storage class " + getRepo(i).getClass().toString() +
+                " with index " + i + " : " + e.getMessage() + "\n";
         errorCount++;
       }
     }
@@ -374,5 +371,15 @@ public class NotebookRepoSync implements NotebookRepo {
       throw new IOException(errorMessage);
     }
 
+  }
+
+  /**
+   * get first repo as primary repo
+   */
+  public NotebookRepo getPrimaryRepo() {
+    if (repos.size() > 0)
+      return repos.get(0);
+    else
+      return null;
   }
 }

@@ -31,6 +31,7 @@ import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
+import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.notebook.utility.IdHashes;
 import org.apache.zeppelin.resource.ResourcePoolUtils;
 import org.apache.zeppelin.scheduler.Job;
@@ -256,6 +257,16 @@ public class Note implements Serializable, JobListener {
       paragraphs.add(index, p);
     }
     return p;
+  }
+
+  /**
+   * TODO: id() format
+   */
+  public Paragraph addParagraph(Paragraph paragraph) {
+    synchronized (paragraphs) {
+      paragraphs.add(paragraph);
+    }
+    return paragraph;
   }
 
   /**
@@ -499,9 +510,19 @@ public class Note implements Serializable, JobListener {
     this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
     index.updateIndexDoc(this);
 
-    if (index != repo) {//when use ElasticSearch both as repo and SearchService,don't save twice
-      repo.save(this);
+    if (repo instanceof NotebookRepoSync) {
+      NotebookRepoSync repoSync = (NotebookRepoSync) repo;
+      NotebookRepo noteRepo = repoSync.getPrimaryRepo();
+
+      if (index != noteRepo) {//when use ElasticSearch both as repo and SearchService,don't save twice
+        repo.save(this);
+      }
+    } else {
+      if (repo != index) {
+        repo.save(this);
+      }
     }
+
   }
 
   /**
