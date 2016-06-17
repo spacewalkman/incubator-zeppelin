@@ -16,11 +16,8 @@
  */
 package org.apache.zeppelin.notebook.repo.zeppelinhub;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -32,8 +29,11 @@ import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * ZeppelinHub repo class.
@@ -44,7 +44,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   static final String ZEPPELIN_CONF_PROP_NAME_SERVER = "zeppelinhub.api.address";
   static final String ZEPPELIN_CONF_PROP_NAME_TOKEN = "zeppelinhub.api.token";
   public static final String TOKEN_HEADER = "X-Zeppelin-Token";
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new Gson();//don't use GsonUtil.getGson(), Date format is incompatiable
   private static final Note EMPTY_NOTE = new Note();
   private final Client websocketClient;
 

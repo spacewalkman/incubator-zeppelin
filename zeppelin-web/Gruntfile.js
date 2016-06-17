@@ -239,7 +239,7 @@ module.exports = function (grunt) {
         flow: {
           html: {
             steps: {
-              js: ['concat', 'uglifyjs'],
+              js: ['concat'],// 'uglifyjs'],
               css: ['cssmin']
             },
             post: {}
@@ -273,21 +273,19 @@ module.exports = function (grunt) {
 
     uglify: {
       options: {
-        mangle: {
-          'screw_ie8': true
-        },
-        preserveComments: 'some',
-        compress: {
-          'screw_ie8': true,
-          sequences: true,
-          'dead_code': true,
-          conditionals: true,
-          booleans: true,
-          unused: true,
-          'if_return': true,
-          'join_vars': true,
-          'drop_console': true
-        }
+        mangle: false,
+        preserveComments: 'all',
+        // compress: {
+        //   'screw_ie8': true,
+        //   sequences: true,
+        //   'dead_code': true,
+        //   conditionals: true,
+        //   booleans: true,
+        //   unused: true,
+        //   'if_return': true,
+        //   'join_vars': true,
+        //   'drop_console': true
+        // }
       }
     },
     // concat: {

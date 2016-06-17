@@ -312,7 +312,7 @@ public class NotebookRestApi {
   }
 
   /**
-   * set note creator to owners set
+   * set note's creator to it's owners set
    */
   private void addCreatorToNoteOwner(NewNotebookRequest request, Note note) {
     Set<String> owners = new LinkedHashSet<>();

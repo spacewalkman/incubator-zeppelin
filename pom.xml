@@ -262,27 +262,27 @@
           <enableRSS>false</enableRSS>
         </configuration>
         <executions>
-          <execution>
-            <id>checkstyle-fail-build</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <failOnViolation>true</failOnViolation>
-              <excludes>org/apache/zeppelin/interpreter/thrift/*</excludes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>checkstyle-gen-html-report</id>
-            <phase>install</phase>
-            <goals>
-              <goal>checkstyle-aggregate</goal>
-            </goals>
-            <configuration>
-              <excludes>org/apache/zeppelin/interpreter/thrift/*</excludes>
-            </configuration>
-          </execution>
+          <!--<execution>-->
+            <!--<id>checkstyle-fail-build</id>-->
+            <!--<phase>validate</phase>-->
+            <!--<goals>-->
+              <!--<goal>check</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+              <!--<failOnViolation>true</failOnViolation>-->
+              <!--<excludes>org/apache/zeppelin/interpreter/thrift/*</excludes>-->
+            <!--</configuration>-->
+          <!--</execution>-->
+          <!--<execution>-->
+            <!--<id>checkstyle-gen-html-report</id>-->
+            <!--<phase>install</phase>-->
+            <!--<goals>-->
+              <!--<goal>checkstyle-aggregate</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+              <!--<excludes>org/apache/zeppelin/interpreter/thrift/*</excludes>-->
+            <!--</configuration>-->
+          <!--</execution>-->
         </executions>
       </plugin>
 
@@ -397,20 +397,20 @@
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>1.3.1</version>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <rules>
-                <DependencyConvergence/>
-              </rules>
-              <failFast>true</failFast>
-            </configuration>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-          </execution>
-        </executions>
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>enforce</id>-->
+            <!--<configuration>-->
+              <!--<rules>-->
+                <!--<DependencyConvergence/>-->
+              <!--</rules>-->
+              <!--<failFast>true</failFast>-->
+            <!--</configuration>-->
+            <!--<goals>-->
+              <!--<goal>enforce</goal>-->
+            <!--</goals>-->
+          <!--</execution>-->
+        <!--</executions>-->
       </plugin>
 
       <!--TODO(alex): make part of the build and reconcile conflicts <plugin>
@@ -525,13 +525,13 @@
           </configuration>
 
           <executions>
-            <execution>
-              <id>verify.rat</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
+            <!--<execution>-->
+              <!--<id>verify.rat</id>-->
+              <!--<phase>verify</phase>-->
+              <!--<goals>-->
+                <!--<goal>check</goal>-->
+              <!--</goals>-->
+            <!--</execution>-->
           </executions>
         </plugin>
 

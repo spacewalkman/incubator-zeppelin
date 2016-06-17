@@ -36,6 +36,10 @@ public class Message {
     NOTE, // [s-c] note info
           // @param note serlialized Note object
 
+    NOTE_TOPIC, // [s-c] note bussiness topic
+
+    NOTE_TAGS, // [s-c] note tags
+
     PARAGRAPH, // [s-c] paragraph info
                // @param paragraph serialized paragraph object
 
@@ -44,6 +48,13 @@ public class Message {
               // @param progress percentage progress
 
     NEW_NOTE, // [c-s] create new notebook
+    SET_NOTE_TOPIC, // [c-s] set note topic
+                    // @param id paragraph id
+                    // @param note's topic
+    SET_NOTE_TAGS, // [c-s] set note tags
+                   // @param id note id
+                   // @param note's tags array
+
     DEL_NOTE, // [c-s] delete notebook
               // @param id note id
     CLONE_NOTE, // [c-s] clone new notebook
@@ -100,7 +111,7 @@ public class Message {
 
     ANGULAR_OBJECT_UPDATE,  // [s-c] add/update angular object
     ANGULAR_OBJECT_REMOVE,  // [s-c] add angular object del
-    
+
     ANGULAR_OBJECT_UPDATED,  // [c-s] angular object value updated,
 
     ANGULAR_OBJECT_CLIENT_BIND,  // [c-s] angular object updated from AngularJS z object

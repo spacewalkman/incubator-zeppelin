@@ -29,7 +29,7 @@
         }
       }
     },
-    "paragraphs": {
+    "paragraph": {
       "_parent": {
         "type": "note"
       },

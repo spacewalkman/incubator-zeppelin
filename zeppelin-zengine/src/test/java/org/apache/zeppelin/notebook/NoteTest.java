@@ -60,7 +60,7 @@ public class NoteTest {
     when(interpreter.getScheduler()).thenReturn(scheduler);
 
     String pText = "%spark sc.version";
-    Note note = new Note(repo, replLoader, jobListenerFactory, index, credentials);
+    Note note = new Note(repo, replLoader, jobListenerFactory, index, credentials, "anonymous");
     Paragraph p = note.addParagraph();
     p.setText(pText);
     note.run(p.getId());
@@ -79,7 +79,7 @@ public class NoteTest {
     when(interpreter.getScheduler()).thenReturn(scheduler);
 
     String pText = "%mysql show databases";
-    Note note = new Note(repo, replLoader, jobListenerFactory, index, credentials);
+    Note note = new Note(repo, replLoader, jobListenerFactory, index, credentials, "anonymous");
     Paragraph p = note.addParagraph();
     p.setText(pText);
     note.run(p.getId());

@@ -16,13 +16,8 @@
  */
 package org.apache.zeppelin.notebook.repo.zeppelinhub.websocket;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -31,9 +26,9 @@ import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.listener.Zeppelin
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.protocol.ZeppelinhubMessage;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.scheduler.SchedulerService;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.scheduler.ZeppelinHeartbeat;
-import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.scheduler.ZeppelinHubHeartbeat;
 import org.apache.zeppelin.notebook.socket.Message;
 import org.apache.zeppelin.notebook.socket.Message.OP;
+import org.apache.zeppelin.util.GsonUtil;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -41,8 +36,13 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import java.io.IOException;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Zeppelin websocket client.
@@ -76,7 +76,7 @@ public class ZeppelinClient {
     zeppelinWebsocketUrl = URI.create(zeppelinUrl);
     zeppelinhubToken = token;
     wsClient = createNewWebsocketClient();
-    gson = new Gson();
+    gson = GsonUtil.getGson();
     zeppelinConnectionMap = new ConcurrentHashMap<>();
     schedulerService = SchedulerService.getInstance();
     authModule = Authentication.initialize(token, conf);

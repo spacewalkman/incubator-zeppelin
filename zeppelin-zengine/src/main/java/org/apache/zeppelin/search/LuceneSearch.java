@@ -16,13 +16,9 @@
  */
 package org.apache.zeppelin.search;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -39,7 +35,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -57,9 +52,13 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Search (both, indexing and query) the notebooks using Lucene.
@@ -231,7 +230,7 @@ public class LuceneSearch implements SearchService {
   }
 
   /**
-   * If paragraph is not null, id is <noteId>/paragraphs/<paragraphId>,
+   * If paragraph is not null, id is <noteId>/paragraph/<paragraphId>,
    * otherwise it's just <noteId>.
    */
   static String formatId(String noteId, Paragraph p) {

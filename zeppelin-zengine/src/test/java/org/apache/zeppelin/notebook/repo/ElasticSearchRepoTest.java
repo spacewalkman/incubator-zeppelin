@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -98,11 +99,12 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
    * populate ES note repo with VFSNoteRepo
    */
   @Test
-  public void testAddVFSRepoNotes() throws IOException, InterruptedException {
+  public void testSyncVFSRepo2ElasticSearchRepo() throws IOException, InterruptedException {
     NotebookRepo vfsNoteRepo = new VFSNotebookRepo(ZeppelinConfiguration.create());
     Random rand = new Random();
     String[] users = {"user1", "user2"};
 
+    int count = 0;
     for (NoteInfo info : vfsNoteRepo.list()) {
       Note note = vfsNoteRepo.get(info.getId());
       if (note.getCreatedBy() == null || note.getCreatedBy().isEmpty()) {
@@ -110,8 +112,11 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
       }
 
       notebookRepo.save(note);
+      count++;
+      if (count == 1) {
+        break;
+      }
     }
-
   }
 
   @Test
@@ -148,6 +153,13 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
     p1.setText("%mock1 hello world");
 
     note.setName("testSaveNotebook");
+    note.setTopic("商品画像");
+
+    List<String> tags = new ArrayList<String>();
+    tags.add("小贷");
+    tags.add("zeppelin");
+    tags.add("分析");
+    note.setTags(tags);
     notebookRepo.save(note);
     assertEquals(note.getName(), "testSaveNotebook");
   }

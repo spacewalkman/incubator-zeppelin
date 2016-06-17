@@ -133,6 +133,7 @@ public class Notebook {
       bindInterpretersToNote(note.id(), interpreterIds);
     }
 
+    note.setLastUpdated(new Date());
     notebookIndex.addIndexDoc(note);
     note.persist();
     return note;
@@ -223,7 +224,7 @@ public class Notebook {
     }
 
     notebookAuthorization.addOwner(newNote.id(), principal);
-    notebookIndex.addIndexDoc(newNote);
+    //notebookIndex.addIndexDoc(newNote); TODO:check comment do no harm
     newNote.persist();
     return newNote;
   }
@@ -503,7 +504,7 @@ public class Notebook {
       paragaraphDate = paragraph.getDateFinished();
     } else {
       if (paragraph.getDateFinished() != null &&
-          paragraph.getDateFinished().after(paragaraphDate)) {
+              paragraph.getDateFinished().after(paragaraphDate)) {
         paragaraphDate = paragraph.getDateFinished();
       }
     }
@@ -522,7 +523,7 @@ public class Notebook {
   }
 
   public List<Map<String, Object>> getJobListforNotebook(boolean needsReload,
-      long lastUpdateServerUnixTime) {
+                                                         long lastUpdateServerUnixTime) {
     final String CRON_TYPE_NOTEBOOK_KEYWORD = "cron";
 
     if (needsReload) {
@@ -554,10 +555,9 @@ public class Notebook {
 
       // set notebook type ( cron or normal )
       if (note.getConfig().containsKey(CRON_TYPE_NOTEBOOK_KEYWORD) == true &&
-          !note.getConfig().get(CRON_TYPE_NOTEBOOK_KEYWORD).equals("")) {
+              !note.getConfig().get(CRON_TYPE_NOTEBOOK_KEYWORD).equals("")) {
         info.put("notebookType", "cron");
-      }
-      else {
+      } else {
         info.put("notebookType", "normal");
       }
 
@@ -584,7 +584,7 @@ public class Notebook {
       // set interpreter bind type
       String interpreterGroupName = null;
       if (note.getNoteReplLoader().getInterpreterSettings() != null &&
-          note.getNoteReplLoader().getInterpreterSettings().size() >= 1) {
+              note.getNoteReplLoader().getInterpreterSettings().size() >= 1) {
         interpreterGroupName = note.getNoteReplLoader().getInterpreterSettings().get(0).getGroup();
       }
 
@@ -713,7 +713,10 @@ public class Notebook {
 
   public void close() {
     this.notebookRepo.close();
-    this.notebookIndex.close();
+
+    if (this.notebookRepo != this.notebookIndex) {//when elasticSearch as both repo and searchService,don't close twice
+      this.notebookIndex.close();
+    }
   }
 
 }

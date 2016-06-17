@@ -178,6 +178,12 @@ public class NotebookServer extends WebSocketServlet implements
         case NEW_NOTE:
           createNote(conn, userAndRoles, notebook, messagereceived);
           break;
+        case SET_NOTE_TOPIC://set topic
+          setNoteTopic(conn, userAndRoles, notebook, messagereceived);
+          break;
+        case SET_NOTE_TAGS://set tags
+          setNoteTags(conn, userAndRoles, notebook, messagereceived);
+          break;
         case DEL_NOTE:
           removeNote(conn, userAndRoles, notebook, messagereceived);
           break;
@@ -631,6 +637,73 @@ public class NotebookServer extends WebSocketServlet implements
     conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", note)));
     broadcastNoteList(userAndRoles);
   }
+
+  /**
+   * set bussiness topic to note
+   */
+  private void setNoteTopic(NotebookSocket conn, HashSet<String> userAndRoles,
+                            Notebook notebook, Message message)//TODO: client message assemble
+          throws IOException {
+    String noteId = (String) message.get("id");
+    if (noteId == null || noteId.isEmpty()) {
+      return;
+    }
+
+    String topic = (String) message.get("topic");
+    if (topic == null || topic.isEmpty()) {
+      return;
+    }
+
+    Note note = notebook.getNote(noteId);
+    if (note == null) {
+      return;
+    }
+
+    NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
+    if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
+      permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      return;
+    }
+
+    note.setTopic(topic);
+
+    note.persist();
+    broadcast(note.id(), new Message(OP.NOTE_TOPIC).put("topic", topic)); //TODO: qy client update topic(when multiple clients)
+  }
+
+  /**
+   * set tags to note
+   */
+  private void setNoteTags(NotebookSocket conn, HashSet<String> userAndRoles,
+                           Notebook notebook, Message message)//TODO: client message assemble
+          throws IOException {
+    String noteId = (String) message.get("id");
+    if (noteId == null || noteId.isEmpty()) {
+      return;
+    }
+
+    List<String> tags = (List<String>) message.get("tags");//TODO:check deserialized tags
+    if (tags == null || tags.size() == 0) {
+      return;
+    }
+
+    Note note = notebook.getNote(noteId);
+    if (note == null) {
+      return;
+    }
+
+    NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
+    if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
+      permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      return;
+    }
+
+    note.setTags(tags);
+
+    note.persist();
+    broadcast(note.id(), new Message(OP.NOTE_TAGS).put("tags", tags)); //TODO: qy client update tags(when multiple clients)
+  }
+
 
   /**
    * set note creator to owners set

@@ -39,11 +39,13 @@ import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
+import org.apache.zeppelin.util.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -69,15 +71,19 @@ public class Note implements Serializable, JobListener {
     delayedPersistThreadPool.setRemoveOnCancelPolicy(true);
   }
 
+
   final List<Paragraph> paragraphs = new LinkedList<>();
 
   private String name = "";
   private String id;
-  private String createdBy;
-  private String topic;
-  private List<String> tags;
 
   private transient ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+
+  private String createdBy;// used for filter notes & permission check
+  private List<String> tags;
+  private String topic;
+  private Date lastUpdated;//max(lastUpdaed in paragraphs)
+
 
   @SuppressWarnings("rawtypes")
   Map<String, List<AngularObject>> angularObjects = new HashMap<>();
@@ -137,7 +143,7 @@ public class Note implements Serializable, JobListener {
     return name;
   }
 
-  private String normalizeNoteName(String name){
+  private String normalizeNoteName(String name) {
     name = name.trim();
     name = name.replace("\\", "/");
     while (name.indexOf("///") >= 0) {
@@ -224,7 +230,7 @@ public class Note implements Serializable, JobListener {
     Map<String, Object> config = new HashMap<>(srcParagraph.getConfig());
     Map<String, Object> param = new HashMap<>(srcParagraph.settings.getParams());
     Map<String, Input> form = new HashMap<>(srcParagraph.settings.getForms());
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getGson();
     InterpreterResult result = gson.fromJson(
             gson.toJson(srcParagraph.getReturn()),
             InterpreterResult.class);
@@ -489,8 +495,32 @@ public class Note implements Serializable, JobListener {
   public void persist() throws IOException {
     stopDelayedPersistTimer();
     snapshotAngularObjectRegistry();
+
+    this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
     index.updateIndexDoc(this);
-    repo.save(this);
+
+    if (index != repo) {//when use ElasticSearch both as repo and SearchService,don't save twice
+      repo.save(this);
+    }
+  }
+
+  /**
+   * max dateUpdated from all paragraphs
+   */
+  private Date getMaxLastUpdateInParagraphs() {
+    Date maxUpdated = null;
+    for (Paragraph para : this.getParagraphs()) {
+      if (para.dateUpdated != null) {
+        if (maxUpdated == null) {
+          maxUpdated = para.dateUpdated;
+        } else {
+          if (maxUpdated.before(para.dateUpdated)) {
+            maxUpdated = para.dateUpdated;
+          }
+        }
+      }
+    }
+    return maxUpdated;
   }
 
   /**
@@ -577,6 +607,16 @@ public class Note implements Serializable, JobListener {
     this.createdBy = createdBy;
   }
 
+
+  public List<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags = tags;
+  }
+
+
   public String getTopic() {
     return topic;
   }
@@ -585,11 +625,11 @@ public class Note implements Serializable, JobListener {
     this.topic = topic;
   }
 
-  public List<String> getTags() {
-    return tags;
+  public Date getLastUpdated() {
+    return lastUpdated;
   }
 
-  public void setTags(List<String> tags) {
-    this.tags = tags;
+  public void setLastUpdated(Date lastUpdated) {
+    this.lastUpdated = lastUpdated;
   }
 }

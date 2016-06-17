@@ -17,15 +17,6 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
@@ -40,15 +31,19 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
+import org.apache.zeppelin.util.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.LinkedList;
+import java.util.List;
 
-/**
-*
-*/
 public class VFSNotebookRepo implements NotebookRepo {
   Logger logger = LoggerFactory.getLogger(VFSNotebookRepo.class);
 
@@ -72,7 +67,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     if (filesystemRoot.getScheme() == null) { // it is local path
       try {
         this.filesystemRoot = new URI(new File(
-            conf.getRelativeDir(filesystemRoot.getPath())).getAbsolutePath());
+                conf.getRelativeDir(filesystemRoot.getPath())).getAbsolutePath());
       } catch (URISyntaxException e) {
         throw new IOException(e);
       }
@@ -116,9 +111,9 @@ public class VFSNotebookRepo implements NotebookRepo {
     for (FileObject f : children) {
       String fileName = f.getName().getBaseName();
       if (f.isHidden()
-          || fileName.startsWith(".")
-          || fileName.startsWith("#")
-          || fileName.startsWith("~")) {
+              || fileName.startsWith(".")
+              || fileName.startsWith("#")
+              || fileName.startsWith("~")) {
         // skip hidden, temporary files
         continue;
       }
@@ -154,16 +149,13 @@ public class VFSNotebookRepo implements NotebookRepo {
       throw new IOException(noteJson.getName().toString() + " not found");
     }
 
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    gsonBuilder.setPrettyPrinting();
-    Gson gson = gsonBuilder.create();
 
     FileContent content = noteJson.getContent();
     InputStream ins = content.getInputStream();
     String json = IOUtils.toString(ins, conf.getString(ConfVars.ZEPPELIN_ENCODING));
     ins.close();
 
-    Note note = gson.fromJson(json, Note.class);
+    Note note = GsonUtil.fromJson(json, Note.class);
 //    note.setReplLoader(replLoader);
 //    note.jobListenerFactory = jobListenerFactory;
 
@@ -205,13 +197,9 @@ public class VFSNotebookRepo implements NotebookRepo {
 
   @Override
   public synchronized void save(Note note) throws IOException {
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    gsonBuilder.setPrettyPrinting();
-    Gson gson = gsonBuilder.create();
-    String json = gson.toJson(note);
+    String json = GsonUtil.toJson(note);
 
     FileObject rootDir = getRootDir();
-
     FileObject noteDir = rootDir.resolveFile(note.id(), NameScope.CHILD);
 
     if (!noteDir.exists()) {
