@@ -139,17 +139,23 @@ public class NotebookAuthorization {
   }
 
   public void setOwners(String noteId, Set<String> entities) {
-    getAuthInfoForNote(noteId).get(OWNERS).addAll(entities);
+    Set<String> owners = getAuthInfoForNote(noteId).get(OWNERS);
+    owners.clear();
+    owners.addAll(entities);
     saveToFile();
   }
 
   public void setReaders(String noteId, Set<String> entities) {
-    getAuthInfoForNote(noteId).get(READERS).addAll(entities);
+    Set<String> readers = getAuthInfoForNote(noteId).get(READERS);
+    readers.clear();
+    readers.addAll(entities);
     saveToFile();
   }
 
   public void setWriters(String noteId, Set<String> entities) {
-    getAuthInfoForNote(noteId).get(WRITERS).addAll(entities);
+    Set<String> writers = getAuthInfoForNote(noteId).get(WRITERS);
+    writers.clear();
+    writers.addAll(entities);
     saveToFile();
   }
 
