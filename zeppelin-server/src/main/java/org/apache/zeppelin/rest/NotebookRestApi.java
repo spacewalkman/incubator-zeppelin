@@ -600,6 +600,8 @@ public class NotebookRestApi {
       if (paramsForUpdating != null) {
         paragraph.settings.getParams().putAll(paramsForUpdating);
         note.persist();
+
+        note.setLastReplName(paragraph.getId());
       }
     }
 
@@ -716,7 +718,7 @@ public class NotebookRestApi {
 
   /**
    * Get notebook jobs for job manager
-   * @param
+   *
    * @return JSON with status.OK
    * @throws IOException, IllegalArgumentException
    */
@@ -737,7 +739,7 @@ public class NotebookRestApi {
 
   /**
    * Get updated notebook jobs for job manager
-   * @param
+   *
    * @return JSON with status.OK
    * @throws IOException, IllegalArgumentException
    */
@@ -745,8 +747,8 @@ public class NotebookRestApi {
   @Path("jobmanager/{lastUpdateUnixtime}/")
   @ZeppelinApi
   public Response getUpdatedJobListforNotebook(
-      @PathParam("lastUpdateUnixtime") long lastUpdateUnixTime) throws
-      IOException, IllegalArgumentException {
+          @PathParam("lastUpdateUnixtime") long lastUpdateUnixTime) throws
+          IOException, IllegalArgumentException {
     LOG.info("Get updated notebook jobs lastUpdateTime {}", lastUpdateUnixTime);
 
     List<Map<String, Object>> notebookJobs;
