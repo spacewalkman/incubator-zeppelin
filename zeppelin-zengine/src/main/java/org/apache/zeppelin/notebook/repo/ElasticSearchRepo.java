@@ -23,6 +23,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -241,6 +242,10 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   public List<Map<String, String>> query(String queryStr) {
     HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.multiMatchQuery(queryStr, SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT));
     SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addFields(SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT).addHighlightedField(SEARCH_FILED_TITLE).addHighlightedField(SEARCH_FIELD_TEXT).execute().actionGet();
+    MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT);
+
+//    QueryBuilder qb = QueryBuilders.boolQuery()
+//            .must(multiMatchQueryBuilder).filter(new PrefixQueryBuilder(ID_FIELD, ).);
 
     SearchHits hits = paragraphsResponse.getHits();
     long count = hits.getTotalHits();
@@ -338,7 +343,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   //TODO:(qy) below are really interface pollution
   @Override
   public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
-    return null;//no checkpoint feature in ES
+    return null;
   }
 
   @Override

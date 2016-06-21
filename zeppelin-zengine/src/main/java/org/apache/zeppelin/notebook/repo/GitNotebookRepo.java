@@ -17,9 +17,8 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -34,17 +33,17 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * NotebookRepo that hosts all the notebook FS in a single Git repo
  *
- * This impl intended to be simple and straightforward:
- *   - does not handle branches
- *   - only basic local git file repo, no remote Github push\pull yet
+ * This impl intended to be simple and straightforward: - does not handle branches - only basic
+ * local git file repo, no remote Github push\pull yet
  *
- *   TODO(bzz): add default .gitignore
+ * TODO(bzz): add default .gitignore
  */
 public class GitNotebookRepo extends VFSNotebookRepo {
   private static final Logger LOG = LoggerFactory.getLogger(GitNotebookRepo.class);
@@ -107,7 +106,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
     LOG.debug("Listing history for {}:", noteId);
     try {
       Iterable<RevCommit> logs = git.log().addPath(noteId).call();
-      for (RevCommit log: logs) {
+      for (RevCommit log : logs) {
         history.add(new Revision(log.getName(), log.getShortMessage(), log.getCommitTime()));
         LOG.debug(" - ({},{},{})", log.getName(), log.getCommitTime(), log.getFullMessage());
       }

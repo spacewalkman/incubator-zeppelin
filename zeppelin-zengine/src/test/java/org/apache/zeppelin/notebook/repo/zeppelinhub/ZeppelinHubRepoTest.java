@@ -1,12 +1,6 @@
 package org.apache.zeppelin.notebook.repo.zeppelinhub;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import com.google.common.io.Files;
 
 import org.apache.commons.httpclient.HttpException;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -16,7 +10,13 @@ import org.apache.zeppelin.notebook.repo.zeppelinhub.rest.ZeppelinhubRestApiHand
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ZeppelinHubRepoTest {
@@ -43,7 +43,7 @@ public class ZeppelinHubRepoTest {
     byte[] response = Files.toByteArray(pathOfNotebooks);
     when(mockedZeppelinhubHandler.asyncGet("")).thenReturn(new String(response));
 
-    response =  Files.toByteArray(pathOfNotebook);
+    response = Files.toByteArray(pathOfNotebook);
     when(mockedZeppelinhubHandler.asyncGet("AAAAA")).thenReturn(new String(response));
 
     return mockedZeppelinhubHandler;
@@ -52,7 +52,7 @@ public class ZeppelinHubRepoTest {
   @Test
   public void testGetZeppelinhubUrl() {
     System.setProperty(ZeppelinHubRepo.ZEPPELIN_CONF_PROP_NAME_SERVER, testAddr);
-    
+
     ZeppelinConfiguration config = new ZeppelinConfiguration();
     ZeppelinHubRepo repository = new ZeppelinHubRepo(config);
     assertThat(repository.getZeppelinHubUrl(config)).isEqualTo("http://zeppelinhub.ltd");
@@ -62,13 +62,13 @@ public class ZeppelinHubRepoTest {
     config = new ZeppelinConfiguration();
     repository = new ZeppelinHubRepo(config);
     assertThat(repository.getZeppelinHubUrl(config)).isEqualTo("https://www.zeppelinhub.com");
-    
+
     System.setProperty(ZeppelinHubRepo.ZEPPELIN_CONF_PROP_NAME_SERVER, "http://zeppelinhub.ltd:4242");
 
     config = new ZeppelinConfiguration();
     repository = new ZeppelinHubRepo(config);
     assertThat(repository.getZeppelinHubUrl(config)).isEqualTo("http://zeppelinhub.ltd:4242");
-    
+
     System.setProperty(ZeppelinHubRepo.ZEPPELIN_CONF_PROP_NAME_SERVER, "http://zeppelinhub.ltd:0");
 
     config = new ZeppelinConfiguration();
@@ -127,20 +127,20 @@ public class ZeppelinHubRepoTest {
     assertThat(notebooks).isNotEmpty();
     assertThat(notebooks.size()).isEqualTo(3);
   }
-  
+
   @Test
   public void testGetNote() throws IOException {
     Note notebook = repo.get("AAAAA");
     assertThat(notebook).isNotNull();
     assertThat(notebook.id()).isEqualTo("2A94M5J1Z");
   }
-  
+
   @Test
   public void testRemoveNote() throws IOException {
     // not suppose to throw
     repo.remove("AAAAA");
   }
-  
+
   @Test
   public void testRemoveNoteError() throws IOException {
     // not suppose to throw

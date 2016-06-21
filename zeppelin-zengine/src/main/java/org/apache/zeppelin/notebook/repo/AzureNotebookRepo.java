@@ -19,9 +19,15 @@ package org.apache.zeppelin.notebook.repo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.*;
+import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.CloudFileClient;
+import com.microsoft.azure.storage.file.CloudFileDirectory;
+import com.microsoft.azure.storage.file.CloudFileShare;
+import com.microsoft.azure.storage.file.ListFileItem;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -31,7 +37,12 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.LinkedList;
@@ -49,20 +60,20 @@ public class AzureNotebookRepo implements NotebookRepo {
   private final CloudFileDirectory rootDir;
 
   public AzureNotebookRepo(ZeppelinConfiguration conf)
-      throws URISyntaxException, InvalidKeyException, StorageException {
+          throws URISyntaxException, InvalidKeyException, StorageException {
     this.conf = conf;
     user = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_AZURE_USER);
     shareName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_AZURE_SHARE);
 
     CloudStorageAccount account = CloudStorageAccount.parse(
-        conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_AZURE_CONNECTION_STRING));
+            conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_AZURE_CONNECTION_STRING));
     CloudFileClient client = account.createCloudFileClient();
     CloudFileShare share = client.getShareReference(shareName);
     share.createIfNotExists();
 
     CloudFileDirectory userDir = StringUtils.isBlank(user) ?
-        share.getRootDirectoryReference() :
-        share.getRootDirectoryReference().getDirectoryReference(user);
+            share.getRootDirectoryReference() :
+            share.getRootDirectoryReference().getDirectoryReference(user);
     userDir.createIfNotExists();
 
     rootDir = userDir.getDirectoryReference("notebook");
@@ -115,7 +126,7 @@ public class AzureNotebookRepo implements NotebookRepo {
     }
 
     String json = IOUtils.toString(ins,
-        conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_ENCODING));
+            conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_ENCODING));
     ins.close();
 
     GsonBuilder gsonBuilder = new GsonBuilder();
@@ -205,7 +216,8 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg)
+          throws IOException {
     // no-op
     LOG.info("Checkpoint feature isn't supported in {}", this.getClass().toString());
     return null;

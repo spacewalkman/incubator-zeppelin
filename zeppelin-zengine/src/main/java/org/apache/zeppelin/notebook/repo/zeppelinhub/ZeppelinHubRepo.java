@@ -58,7 +58,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
     restApiClient = ZeppelinhubRestApiHandler.newInstance(zeppelinHubUrl, token);
 
     websocketClient = Client.initialize(getZeppelinWebsocketUri(conf),
-        getZeppelinhubWebsocketUri(conf), token, conf);
+            getZeppelinhubWebsocketUri(conf), token, conf);
     websocketClient.start();
   }
 
@@ -72,7 +72,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
 
     if (scheme == null) {
       LOG.info("{} is not a valid zeppelinhub server address. proceed with default address {}",
-          apiRoot, DEFAULT_SERVER);
+              apiRoot, DEFAULT_SERVER);
       apiRoot = new URI(DEFAULT_SERVER);
       scheme = apiRoot.getScheme();
       port = apiRoot.getPort();
@@ -88,7 +88,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
     String zeppelinHubUri = StringUtils.EMPTY;
     try {
       zeppelinHubUri = getZeppelinHubWsUri(new URI(conf.getString("ZEPPELINHUB_API_ADDRESS",
-          ZEPPELIN_CONF_PROP_NAME_SERVER, DEFAULT_SERVER)));
+              ZEPPELIN_CONF_PROP_NAME_SERVER, DEFAULT_SERVER)));
     } catch (URISyntaxException e) {
       LOG.error("Cannot get ZeppelinHub URI", e);
     }
@@ -118,8 +118,8 @@ public class ZeppelinHubRepo implements NotebookRepo {
     String zeppelinhubUrl;
     try {
       String url = conf.getString("ZEPPELINHUB_API_ADDRESS",
-                                  ZEPPELIN_CONF_PROP_NAME_SERVER,
-                                  DEFAULT_SERVER);
+              ZEPPELIN_CONF_PROP_NAME_SERVER,
+              DEFAULT_SERVER);
       apiRoot = new URI(url);
     } catch (URISyntaxException e) {
       LOG.error("Invalid zeppelinhub url, using default address {}", DEFAULT_SERVER, e);
@@ -129,7 +129,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
     String scheme = apiRoot.getScheme();
     if (scheme == null) {
       LOG.info("{} is not a valid zeppelinhub server address. proceed with default address {}",
-               apiRoot, DEFAULT_SERVER);
+              apiRoot, DEFAULT_SERVER);
       zeppelinhubUrl = DEFAULT_SERVER;
     } else {
       zeppelinhubUrl = scheme + "://" + apiRoot.getHost();
@@ -143,7 +143,8 @@ public class ZeppelinHubRepo implements NotebookRepo {
   @Override
   public List<NoteInfo> list() throws IOException {
     String response = restApiClient.asyncGet("");
-    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {}.getType());
+    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {
+    }.getType());
     if (notes == null) {
       return Collections.emptyList();
     }
@@ -173,7 +174,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
     }
     String notebook = GSON.toJson(note);
     restApiClient.asyncPut(notebook);
-    LOG.info("ZeppelinHub REST API saving note {} ", note.id()); 
+    LOG.info("ZeppelinHub REST API saving note {} ", note.id());
   }
 
   @Override
@@ -188,7 +189,8 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg)
+          throws IOException {
     // Auto-generated method stub
     return null;
   }

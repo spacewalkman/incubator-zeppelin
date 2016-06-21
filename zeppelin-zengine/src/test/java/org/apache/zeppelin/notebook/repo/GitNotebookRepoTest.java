@@ -17,12 +17,7 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import static com.google.common.truth.Truth.assertThat;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import com.google.common.base.Joiner;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -40,7 +35,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Joiner;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.truth.Truth.assertThat;
 
 public class GitNotebookRepoTest {
 
@@ -53,7 +53,7 @@ public class GitNotebookRepoTest {
 
   @Before
   public void setUp() throws Exception {
-    String zpath = System.getProperty("java.io.tmpdir")+"/ZeppelinTest_"+System.currentTimeMillis();
+    String zpath = System.getProperty("java.io.tmpdir") + "/ZeppelinTest_" + System.currentTimeMillis();
     zeppelinDir = new File(zpath);
     zeppelinDir.mkdirs();
     new File(zeppelinDir, "conf").mkdirs();
@@ -64,7 +64,7 @@ public class GitNotebookRepoTest {
 
     String testNoteDir = Joiner.on(File.separator).join(notebooksDir, TEST_NOTE_ID);
     FileUtils.copyDirectory(new File(Joiner.on(File.separator).join("src", "test", "resources", TEST_NOTE_ID)),
-        new File(testNoteDir)
+            new File(testNoteDir)
     );
 
     System.setProperty(ConfVars.ZEPPELIN_HOME.getVarName(), zeppelinDir.getAbsolutePath());
@@ -130,7 +130,7 @@ public class GitNotebookRepoTest {
     List<Revision> notebookHistoryBefore = notebookRepo.revisionHistory(TEST_NOTE_ID);
     assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID)).isNotEmpty();
     int initialCount = notebookHistoryBefore.size();
-    
+
     // add changes to note
     Note note = notebookRepo.get(TEST_NOTE_ID);
     Paragraph p = note.addParagraph();
@@ -138,18 +138,18 @@ public class GitNotebookRepoTest {
     config.put("enabled", true);
     p.setConfig(config);
     p.setText("%md checkpoint test text");
-    
+
     // save and checkpoint note
     notebookRepo.save(note);
     notebookRepo.checkpoint(TEST_NOTE_ID, "second commit");
-    
+
     // see if commit is added
     List<Revision> notebookHistoryAfter = notebookRepo.revisionHistory(TEST_NOTE_ID);
     assertThat(notebookHistoryAfter.size()).isEqualTo(initialCount + 1);
   }
-  
+
   private boolean containsNote(List<NoteInfo> notes, String noteId) {
-    for (NoteInfo note: notes) {
+    for (NoteInfo note : notes) {
       if (note.getId().equals(noteId)) {
         return true;
       }
