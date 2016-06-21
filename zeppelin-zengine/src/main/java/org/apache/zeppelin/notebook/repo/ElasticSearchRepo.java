@@ -47,9 +47,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchRepo.class);
 
   private static final String SEARCH_FILED_TITLE = "title";
-  private static final String INDEX_FILED_USER = "user";
   private static final String SEARCH_FIELD_TEXT = "text";
-  private static final String SEARCH_FIELD_MODIFIED = "modifed";
 
   static final String PARAGRAPH = "paragraph";
   static final String ID_FIELD = "_id";
@@ -77,8 +75,13 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     this.paragraphTypeName = conf.getString(CONFIG_REPO_ES_PARAGRAPH_TYPE_NAME, "paragraph");
     this.pageSize = conf.getInt(CONFIG_REPO_ES_PAGE_SIZE_NAME, DEFUALT_PAGE_SIZE);
 
-    client = TransportClient.builder().build()
+    TransportClient transportClient = TransportClient.builder().build()
             .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
+    client = transportClient;
+
+    if (transportClient.connectedNodes() == null || transportClient.connectedNodes().size() == 0) {
+      throw new IOException(String.format("There are no active nodes available for the transport@%s:%s", esHost, esPort));
+    }
   }
 
 
@@ -120,7 +123,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     Note note = GsonUtil.fromJson(response.getSourceAsString(), Note.class);
 
-    //find children(paragraphs) by parent(note) ,mantain paragraphs order
+    //find children(paragraphs) by parent(note) ,maintain paragraphs order
     HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
     SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(ID_FIELD, SortOrder.ASC).execute().actionGet();
 
@@ -138,7 +141,16 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   @Override
   public void save(Note note) throws IOException {
-    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.id()).setOpType(IndexRequest.OpType.INDEX)
+    indexOrCreateNote(note, true);
+  }
+
+  /**
+   * convenient method
+   *
+   * @param isOverride use INDEX or CREATE
+   */
+  private void indexOrCreateNote(Note note, boolean isOverride) {
+    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.id()).setOpType(isOverride ? IndexRequest.OpType.INDEX : IndexRequest.OpType.CREATE)
             .setSource(GsonUtil.toJson(note, true))
             .get();
     LOG.debug("note indexed success,id={}", noteResponse.getId());
@@ -166,7 +178,6 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
       int successCount = getSuccessCount(bulkItemResponses);
       LOG.debug("paragraphs index success={},failed={}", successCount, (bulkItemResponses.length - successCount));
     }
-
   }
 
   private int getSuccessCount(BulkItemResponse[] bulkItemResponses) {
@@ -194,8 +205,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   /**
-   * paragraph id={noteId}/paragraph/{index}, so when search paragraphs,can be sorted by
-   * id,paragraph.id is not used
+   * paragraph id={noteId}/paragraph/{index}, so when search paragraphs,can be
+   * sorted by id,paragraph.id is not used
    */
   static String formatId(String noteId, String paddedIndex) {
     String id = noteId;
@@ -263,7 +274,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   @Override
   public void updateIndexDoc(Note note) throws IOException {
-    this.save(note); //just replace,no partial update
+    this.indexOrCreateNote(note, false); //just replace,no partial update
   }
 
   //TODO:none-transactional
@@ -290,7 +301,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   /**
-   * use <code>PrefixQueryBuilder</code> to delete parent note, son paragraph delete too? TODO
+   * use <code>PrefixQueryBuilder</code> to delete parent note, children
+   * paragraph delete too
    */
   @Override
   public void deleteIndexDocs(Note note) {
