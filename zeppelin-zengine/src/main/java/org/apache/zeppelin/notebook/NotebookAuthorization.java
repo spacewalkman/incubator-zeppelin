@@ -139,27 +139,27 @@ public class NotebookAuthorization {
   }
 
   public void setOwners(String noteId, Set<String> entities) {
-    Set<String> owners = getAuthInfoForNote(noteId).get(OWNERS);
+    Set<String> owners = getOrInitAuthInfoForNote(noteId).get(OWNERS);
     owners.clear();
     owners.addAll(entities);
     saveToFile();
   }
 
   public void setReaders(String noteId, Set<String> entities) {
-    Set<String> readers = getAuthInfoForNote(noteId).get(READERS);
+    Set<String> readers = getOrInitAuthInfoForNote(noteId).get(READERS);
     readers.clear();
     readers.addAll(entities);
     saveToFile();
   }
 
   public void setWriters(String noteId, Set<String> entities) {
-    Set<String> writers = getAuthInfoForNote(noteId).get(WRITERS);
+    Set<String> writers = getOrInitAuthInfoForNote(noteId).get(WRITERS);
     writers.clear();
     writers.addAll(entities);
     saveToFile();
   }
 
-  private Map<String, Set<String>> getAuthInfoForNote(String noteId) {
+  private Map<String, Set<String>> getOrInitAuthInfoForNote(String noteId) {
     Map<String, Set<String>> noteAuthInfo = authInfo.get(noteId);
     if (noteAuthInfo == null) {
       noteAuthInfo = new LinkedHashMap();
@@ -173,15 +173,15 @@ public class NotebookAuthorization {
   }
 
   public Set<String> getOwners(String noteId) {
-    return getAuthInfoForNote(noteId).get(OWNERS);
+    return getOrInitAuthInfoForNote(noteId).get(OWNERS);
   }
 
   public Set<String> getReaders(String noteId) {
-    return getAuthInfoForNote(noteId).get(READERS);
+    return getOrInitAuthInfoForNote(noteId).get(READERS);
   }
 
   public Set<String> getWriters(String noteId) {
-    return getAuthInfoForNote(noteId).get(WRITERS);
+    return getOrInitAuthInfoForNote(noteId).get(WRITERS);
   }
 
   public boolean isOwner(String noteId, Set<String> entities) {
