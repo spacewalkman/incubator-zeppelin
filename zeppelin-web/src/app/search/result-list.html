@@ -20,8 +20,8 @@ limitations under the License.
             <h4>
               <i style="font-size: 10px;" class="icon-doc"></i>
               <a class="search-results-header"
-                 href="#/notebook/{{note.id}}">
-                  {{note.name.trim()==='' && 'Note ' + note.id.split('/',2)[0] || note.name}}
+                 href="#/notebook/{{note.id.split('_',2)[0]}}">
+                  {{note.name.trim()==='' && 'Note ' + note.id.split('_',2)[0] || note.name}}
               </a>
             </h4>
           </div>

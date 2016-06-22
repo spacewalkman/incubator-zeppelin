@@ -2,6 +2,8 @@ package org.apache.zeppelin.notebook.repo;
 
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -21,11 +23,13 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
@@ -46,7 +50,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchRepo.class);
 
-  private static final String SEARCH_FILED_TITLE = "title";
+  private static final String SEARCH_FIELD_TITLE = "title";
   private static final String SEARCH_FIELD_TEXT = "text";
 
   static final String PARAGRAPH = "paragraph";
@@ -205,8 +209,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   /**
-   * paragraph id={noteId}/paragraph/{index}, so when search paragraphs,can be
-   * sorted by id,paragraph.id is not used
+   * paragraph id={noteId}/paragraph/{index}, so when search paragraphs,can be sorted by
+   * id,paragraph.id is not used
    */
   static String formatId(String noteId, String paddedIndex) {
     String id = noteId;
@@ -247,28 +251,86 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   /**
    * TODO: 1)实现aggregation,按照createdBy、lastModifiedTime和tag
    *
+   * query paragraphs
+   *
    * @param queryStr queryString in search box
    */
   @Override
   public List<Map<String, String>> query(String queryStr) {
-    HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.multiMatchQuery(queryStr, SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT));
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addFields(SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT).addHighlightedField(SEARCH_FILED_TITLE).addHighlightedField(SEARCH_FIELD_TEXT).execute().actionGet();
-    MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FILED_TITLE, SEARCH_FIELD_TEXT);
-
-//    QueryBuilder qb = QueryBuilders.boolQuery()
-//            .must(multiMatchQueryBuilder).filter(new PrefixQueryBuilder(ID_FIELD, ).);
+     /*
+      {
+          "query" : {
+            "multi_match" : {
+              "query" : "Hortonworks",
+               "fields" : [ "text", "title" ]
+            }
+          },
+          "highlight" : {
+            "fields" : {
+              "text" : {},
+              "title": {}
+            }
+          }
+      }
+    */
+    MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT);
+    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(multiMatchQueryBuilder).addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT).addHighlightedField(SEARCH_FIELD_TITLE).addHighlightedField(SEARCH_FIELD_TEXT).execute().actionGet();
 
     SearchHits hits = paragraphsResponse.getHits();
     long count = hits.getTotalHits();
-    if (count > 0) {
-      for (SearchHit hit : hits.getHits()) {
-        String hitString = hit.getSourceAsString();
-        Map<String, HighlightField> highlightFieldMap = hit.getHighlightFields();
-        LOG.debug("hitString={}", hitString);
-        LOG.debug("highlightFieldMap={}", highlightFieldMap);
-      }
+    if (count < 0) {
+      return null;
     }
-    return null;
+
+    List<Map<String, String>> matchingParagraphs = Lists.newArrayList();
+    for (SearchHit hit : hits.getHits()) {
+      String id = hit.getId();
+      SearchHitField titleField = hit.getFields().get(SEARCH_FIELD_TITLE);
+      String title = null;
+      if (titleField != null) {
+        title = titleField.getValue();
+      }
+
+      SearchHitField textField = hit.getFields().get(SEARCH_FIELD_TEXT);
+      String text = null;
+      if (textField != null) {
+        text = textField.getValue();
+      }
+
+      //when multi_match, which field match can't be decided upfront, must iterate
+      Map<String, HighlightField> highlightFieldMap = hit.getHighlightFields();
+      HighlightField titleHighLightField = highlightFieldMap.get(SEARCH_FIELD_TITLE);
+      Text[] titleFragments = null;
+      if (titleHighLightField != null) {
+        titleFragments = titleHighLightField.getFragments();
+      }
+      LOG.debug("title highlight fragments found={}", titleFragments);
+
+      HighlightField textHighLightField = highlightFieldMap.get(SEARCH_FIELD_TEXT);
+      Text[] textFragments = null;
+      if (textHighLightField != null) {
+        textFragments = textHighLightField.getFragments();
+      }
+      LOG.debug("text highlight fragments found={}", textFragments);
+
+      String showFrament = "";//highlight fragment showing in UI
+      if (titleFragments != null) {
+        showFrament = titleFragments[0].string();
+      }
+
+      if (textFragments != null) {
+        if (showFrament != null && showFrament.isEmpty()) {
+          showFrament += "\n";
+        }
+        showFrament += textFragments[0].string();
+      }
+
+      matchingParagraphs.add(ImmutableMap.of("id", id,
+              "name", title == null ? "" : title, "snippet", showFrament, "text", text == null ? "" : text, "header", title == null ? "" : title));
+    }
+
+    return matchingParagraphs;
+
   }
 
 
@@ -301,8 +363,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   /**
-   * use <code>PrefixQueryBuilder</code> to delete parent note, children
-   * paragraph delete too
+   * use <code>PrefixQueryBuilder</code> to delete parent note, children paragraph delete too
    */
   @Override
   public void deleteIndexDocs(Note note) {

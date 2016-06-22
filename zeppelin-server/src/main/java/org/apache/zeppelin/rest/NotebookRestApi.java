@@ -776,8 +776,10 @@ public class NotebookRestApi {
     userAndRoles.addAll(roles);
     List<Map<String, String>> notebooksFound = notebookIndex.query(queryTerm);
     for (int i = 0; i < notebooksFound.size(); i++) {
-      String[] Id = notebooksFound.get(i).get("id").split("/", 2);
+      String[] Id = notebooksFound.get(i).get("id").split("_", 3);//paragrah id scheme in ES: {noteId}_pargraph_{sequnceNumber}
       String noteId = Id[0];
+
+      //filtered by authentication
       if (!notebookAuthorization.isOwner(noteId, userAndRoles) &&
               !notebookAuthorization.isReader(noteId, userAndRoles) &&
               !notebookAuthorization.isWriter(noteId, userAndRoles)) {
