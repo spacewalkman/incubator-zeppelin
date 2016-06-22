@@ -37,7 +37,7 @@
         "config": {
           "properties": {
             "colWidth": {
-              "type": "double"
+              "type": "integer"
             },
             "editorMode": {
               "type": "string"
@@ -50,7 +50,7 @@
                       "type": "string"
                     },
                     "index": {
-                      "type": "double"
+                      "type": "integer"
                     },
                     "name": {
                       "type": "string"
