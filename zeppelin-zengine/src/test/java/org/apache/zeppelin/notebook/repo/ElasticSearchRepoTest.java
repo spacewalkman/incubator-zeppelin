@@ -137,7 +137,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
   public void testSearch() throws IOException, InterruptedException {
     if (notebookRepo instanceof ElasticSearchRepo) {
       ElasticSearchRepo esRepo = (ElasticSearchRepo) notebookRepo;
-      List<Map<String, String>> results = esRepo.query("qy");
+      List<Map<String, String>> results = esRepo.query("scala windows");
       LOG.debug("results={}", results);
     }
   }

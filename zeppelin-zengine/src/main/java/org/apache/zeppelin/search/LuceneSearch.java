@@ -63,8 +63,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Search (both, indexing and query) the notebooks using Lucene.
  *
- * Query is thread-safe, as creates new IndexReader every time.
- * Index is thread-safe, as re-uses single IndexWriter, which is thread-safe.
+ * Query is thread-safe, as creates new IndexReader every time. Index is thread-safe, as re-uses
+ * single IndexWriter, which is thread-safe.
  */
 public class LuceneSearch implements SearchService {
   private static final Logger LOG = LoggerFactory.getLogger(LuceneSearch.class);
@@ -97,15 +97,15 @@ public class LuceneSearch implements SearchService {
   public List<Map<String, String>> query(String queryStr) {
     if (null == ramDirectory) {
       throw new IllegalStateException(
-          "Something went wrong on instance creation time, index dir is null");
+              "Something went wrong on instance creation time, index dir is null");
     }
     List<Map<String, String>> result = Collections.emptyList();
     try (IndexReader indexReader = DirectoryReader.open(ramDirectory)) {
       IndexSearcher indexSearcher = new IndexSearcher(indexReader);
       Analyzer analyzer = new StandardAnalyzer();
       MultiFieldQueryParser parser = new MultiFieldQueryParser(
-          new String[] {SEARCH_FIELD_TEXT, SEARCH_FIELD_TITLE},
-          analyzer);
+              new String[]{SEARCH_FIELD_TEXT, SEARCH_FIELD_TITLE},
+              analyzer);
 
       Query query = parser.parse(queryStr);
       LOG.debug("Searching for: " + query.toString(SEARCH_FIELD_TEXT));
@@ -124,7 +124,7 @@ public class LuceneSearch implements SearchService {
   }
 
   private List<Map<String, String>> doSearch(IndexSearcher searcher, Query query,
-      Analyzer analyzer, Highlighter highlighter) {
+                                             Analyzer analyzer, Highlighter highlighter) {
     List<Map<String, String>> matchingParagraphs = Lists.newArrayList();
     ScoreDoc[] hits;
     try {
@@ -148,7 +148,7 @@ public class LuceneSearch implements SearchService {
 
           if (text != null) {
             TokenStream tokenStream = TokenSources.getTokenStream(searcher.getIndexReader(), id,
-                SEARCH_FIELD_TEXT, analyzer);
+                    SEARCH_FIELD_TEXT, analyzer);
             TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, 3);
             LOG.debug("    {} fragments found for query '{}'", frag.length, query);
             for (int j = 0; j < frag.length; j++) {
@@ -161,14 +161,14 @@ public class LuceneSearch implements SearchService {
 
           if (header != null) {
             TokenStream tokenTitle = TokenSources.getTokenStream(searcher.getIndexReader(), id,
-                SEARCH_FIELD_TITLE, analyzer);
+                    SEARCH_FIELD_TITLE, analyzer);
             TextFragment[] frgTitle = highlighter.getBestTextFragments(tokenTitle, header, true, 3);
             header = (frgTitle != null && frgTitle.length > 0) ? frgTitle[0].toString() : "";
           } else {
             header = "";
           }
           matchingParagraphs.add(ImmutableMap.of("id", path, // <noteId>/paragraph/<paragraphId>
-              "name", title, "snippet", fragment, "text", text, "header", header));
+                  "name", title, "snippet", fragment, "text", text, "header", header));
         } else {
           LOG.info("{}. No {} for this document", i + 1, ID_FIELD);
         }
@@ -185,10 +185,11 @@ public class LuceneSearch implements SearchService {
   @Override
   public void updateIndexDoc(Note note) throws IOException {
     updateIndexNoteName(note);
-    for (Paragraph p: note.getParagraphs()) {
+    for (Paragraph p : note.getParagraphs()) {
       updateIndexParagraph(note, p);
     }
   }
+
 
   private void updateIndexNoteName(Note note) throws IOException {
     String noteName = note.getName();
@@ -201,7 +202,8 @@ public class LuceneSearch implements SearchService {
     updateDoc(noteId, noteName, null);
   }
 
-  private void updateIndexParagraph(Note note, Paragraph p) throws IOException {
+  @Override
+  public void updateIndexParagraph(Note note, Paragraph p) throws IOException {
     if (p.getText() == null) {
       LOG.debug("Skipping empty paragraph");
       return;
@@ -210,13 +212,8 @@ public class LuceneSearch implements SearchService {
   }
 
   /**
-   * Updates index for the given note: either note.name or a paragraph If
-   * paragraph is <code>null</code> - updates only for the note.name
-   *
-   * @param noteId
-   * @param noteName
-   * @param p
-   * @throws IOException
+   * Updates index for the given note: either note.name or a paragraph If paragraph is
+   * <code>null</code> - updates only for the note.name
    */
   private void updateDoc(String noteId, String noteName, Paragraph p) throws IOException {
     String id = formatId(noteId, p);
@@ -230,8 +227,8 @@ public class LuceneSearch implements SearchService {
   }
 
   /**
-   * If paragraph is not null, id is <noteId>/paragraph/<paragraphId>,
-   * otherwise it's just <noteId>.
+   * If paragraph is not null, id is <noteId>/paragraph/<paragraphId>, otherwise it's just
+   * <noteId>.
    */
   static String formatId(String noteId, Paragraph p) {
     String id = noteId;
@@ -252,13 +249,11 @@ public class LuceneSearch implements SearchService {
   }
 
   /**
-   * If paragraph is not null, indexes code in the paragraph, otherwise indexes
-   * the notebook name.
+   * If paragraph is not null, indexes code in the paragraph, otherwise indexes the notebook name.
    *
-   * @param id id of the document, different for Note name and paragraph
+   * @param id       id of the document, different for Note name and paragraph
    * @param noteName name of the note
-   * @param p paragraph
-   * @return
+   * @param p        paragraph
    */
   private Document newDocument(String id, String noteName, Paragraph p) {
     Document doc = new Document();
@@ -302,7 +297,7 @@ public class LuceneSearch implements SearchService {
       }
       long end = System.nanoTime();
       LOG.info("Indexing {} notebooks took {}ms", docsIndexed,
-          TimeUnit.NANOSECONDS.toMillis(end - start));
+              TimeUnit.NANOSECONDS.toMillis(end - start));
     }
   }
 
@@ -321,9 +316,6 @@ public class LuceneSearch implements SearchService {
 
   /**
    * Indexes the given notebook, but does not commit changes.
-   *
-   * @param note
-   * @throws IOException
    */
   private void addIndexDocAsync(Note note) throws IOException {
     indexNoteName(writer, note.getId(), note.getName());
@@ -383,8 +375,6 @@ public class LuceneSearch implements SearchService {
 
   /**
    * Indexes a notebook name
-   *
-   * @throws IOException
    */
   private void indexNoteName(IndexWriter w, String noteId, String noteName) throws IOException {
     LOG.debug("Indexing Notebook {}, '{}'", noteId, noteName);
@@ -396,12 +386,10 @@ public class LuceneSearch implements SearchService {
   }
 
   /**
-   * Indexes a single document:
-   *  - code of the paragraph (if non-null)
-   *  - or just a note name
+   * Indexes a single document: - code of the paragraph (if non-null) - or just a note name
    */
   private void indexDoc(IndexWriter w, String noteId, String noteName, Paragraph p)
-      throws IOException {
+          throws IOException {
     String id = formatId(noteId, p);
     Document doc = newDocument(id, noteName, p);
     w.addDocument(doc);

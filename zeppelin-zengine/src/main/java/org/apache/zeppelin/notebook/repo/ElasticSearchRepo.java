@@ -145,20 +145,28 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   @Override
   public void save(Note note) throws IOException {
-    indexOrCreateNote(note, true);
+    indexNoteAndParagraphs(note);
   }
 
   /**
-   * convenient method
-   *
-   * @param isOverride use INDEX or CREATE
+   * index note and paragraphs associate with it
    */
-  private void indexOrCreateNote(Note note, boolean isOverride) {
-    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.id()).setOpType(isOverride ? IndexRequest.OpType.INDEX : IndexRequest.OpType.CREATE)
+  private void indexNoteAndParagraphs(Note note) {
+    doIndexNoteOnly(note);
+    doIndexParagraphs(note);
+  }
+
+  public void doIndexNoteOnly(Note note) {
+    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.id()).setOpType(IndexRequest.OpType.INDEX)
             .setSource(GsonUtil.toJson(note, true))
             .get();
     LOG.debug("note indexed success,id={}", noteResponse.getId());
+  }
 
+  /**
+   * index paragraphs only
+   */
+  private void doIndexParagraphs(Note note) {
     List<Paragraph> paras = note.getParagraphs();
     if (paras != null && paras.size() > 0) {
       int size = paras.size();
@@ -172,7 +180,9 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
         String paraJson = GsonUtil.toJson(para);
 
         String savedParagraphId = formatId(note.getId(), String.format(padding, i));
-        IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, savedParagraphId).setOpType(IndexRequest.OpType.INDEX).setParent(note.getId()).setSource(paraJson);
+        IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, savedParagraphId)
+                .setOpType(IndexRequest.OpType.INDEX)
+                .setParent(note.getId()).setSource(paraJson);
         bulkIndex.add(paragraphIndexRequest);
       }
 
@@ -195,7 +205,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   /**
-   * left padding with zeros
+   * left padding with zeros,to ensure that we can sort on _id field asc, to maintain paragraphs'
+   * order
    */
   private int getPadding(int size) {
     int padding = 0;
@@ -212,7 +223,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
    * paragraph id={noteId}/paragraph/{index}, so when search paragraphs,can be sorted by
    * id,paragraph.id is not used
    */
-  static String formatId(String noteId, String paddedIndex) {
+  static final String formatId(String noteId, String paddedIndex) {
     String id = noteId;
     return Joiner.on('_').join(id, PARAGRAPH, paddedIndex);
   }
@@ -244,7 +255,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     if (response.isFound()) {
       LOG.debug("note id={},delete successfully", noteId);
     } else {
-      LOG.warn("note id={},not found", noteId);
+      LOG.warn("note id={}, not found", noteId);
     }
   }
 
@@ -333,10 +344,32 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   }
 
-
   @Override
   public void updateIndexDoc(Note note) throws IOException {
-    this.indexOrCreateNote(note, false); //just replace,no partial update
+    this.indexNoteAndParagraphs(note); //just replace as a whole
+  }
+
+  @Override
+  public void updateIndexParagraph(Note note, Paragraph para) throws IOException {
+    this.doIndexNoteOnly(note);//update lastUpdated field
+
+    //partial update,update a single paragraph, no touch on other paragraphs
+    int padLeft = getPadding(note.getParagraphs().size());
+    String padding = padLeft > 0 ? "%0" + (padLeft + 1) + "d" : "%d";
+    String paraJson = GsonUtil.toJson(para);
+
+    String noteId = note.getId();
+    String savedParagraphId = formatId(noteId, String.format(padding, note.getParagraphIndex(para)));
+    IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, savedParagraphId)
+            .setOpType(IndexRequest.OpType.INDEX)
+            .setParent(noteId).setSource(paraJson).setParent(noteId);
+    IndexResponse paraIndexResponse = paragraphIndexRequest.execute().actionGet();
+
+    if (paraIndexResponse.isCreated()) {
+      LOG.debug("paragraph={} created success", savedParagraphId);
+    } else {
+      LOG.debug("paragraph={} update success,now version={}", savedParagraphId, paraIndexResponse.getVersion());
+    }
   }
 
   //TODO:none-transactional
@@ -347,7 +380,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
         try {
           this.save(note);
         } catch (IOException e) {
-          LOG.error("Failed to index note,id={}", note.getId(), e);
+          LOG.error("Failed to index note, id={}", note.getId(), e);
         }
       }
     }

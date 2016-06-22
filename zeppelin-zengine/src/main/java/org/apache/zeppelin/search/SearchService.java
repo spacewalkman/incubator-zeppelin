@@ -49,6 +49,12 @@ public interface SearchService {
    */
   public void updateIndexDoc(Note note) throws IOException;
 
+
+  /**
+   * partial update note, update a single paragraph in a note
+   */
+  public void updateIndexParagraph(Note note, Paragraph paragraph) throws IOException;
+
   /**
    * Indexes full collection of notes: all the paragraphs + Note names
    *

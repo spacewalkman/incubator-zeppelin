@@ -413,6 +413,26 @@ public class Note implements Serializable, JobListener {
     return null;
   }
 
+
+  /**
+   * get paragraph inde in paragraphs List
+   */
+  public int getParagraphIndex(Paragraph paragraph) {
+    if (paragraph.getId() == null || paragraph.getId().isEmpty()) {
+      return -1;
+    }
+
+    synchronized (paragraphs) {
+      for (int i = 0; i < paragraphs.size(); i++) {
+        if (paragraphs.get(i).getId().equals(paragraph.getId())) {
+          return i;
+        }
+      }
+
+      return -1;
+    }
+  }
+
   public Paragraph getLastParagraph() {
     synchronized (paragraphs) {
       return paragraphs.get(paragraphs.size() - 1);
@@ -540,11 +560,24 @@ public class Note implements Serializable, JobListener {
     }
   }
 
+
+  /**
+   * partial update paragraph only, when changed only happened to individual paragraph only
+   */
+  public void persistParagraph(Paragraph paragraph) throws IOException {
+    stopDelayedPersistTimer();
+    snapshotAngularObjectRegistry();
+
+    this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
+    index.updateIndexParagraph(this, paragraph);
+  }
+
   public void persist() throws IOException {
     stopDelayedPersistTimer();
     snapshotAngularObjectRegistry();
 
     this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
+
     index.updateIndexDoc(this);
 
     if (repo instanceof NotebookRepoSync) {

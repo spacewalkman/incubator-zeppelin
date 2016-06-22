@@ -180,10 +180,10 @@ public class NotebookServer extends WebSocketServlet implements
         case NEW_NOTE:
           createNote(conn, userAndRoles, notebook, messagereceived);
           break;
-        case SET_NOTE_TOPIC://set topic
+        case SET_NOTE_TOPIC://set topic TODO:update note,only
           setNoteTopic(conn, userAndRoles, notebook, messagereceived);
           break;
-        case SET_NOTE_TAGS://set tags
+        case SET_NOTE_TAGS://set tags TODO:update note,only
           setNoteTags(conn, userAndRoles, notebook, messagereceived);
           break;
         case DEL_NOTE:
@@ -759,7 +759,8 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
     p.setText((String) fromMessage.get("paragraph"));
-    note.persist();
+    //note.persist();
+    note.persistParagraph(p);//partial update
     broadcast(note.id(), new Message(OP.PARAGRAPH).put("paragraph", p));
   }
 
@@ -1192,7 +1193,8 @@ public class NotebookServer extends WebSocketServlet implements
       note.addParagraph();
     }
 
-    note.persist();
+    //note.persist();
+    note.persistParagraph(p);//partial update
     try {
       note.run(paragraphId);
     } catch (Exception ex) {
@@ -1260,7 +1262,6 @@ public class NotebookServer extends WebSocketServlet implements
             .put("noteId", noteId)
             .put("paragraphId", paragraphId)
             .put("data", output);
-    Paragraph paragraph = notebook().getNote(noteId).getParagraph(paragraphId);
     broadcast(noteId, msg);
   }
 
