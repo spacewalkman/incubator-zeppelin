@@ -20,7 +20,6 @@ package org.apache.zeppelin.conf;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.ConfigurationNode;
-import org.apache.zeppelin.notebook.repo.ElasticSearchRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,6 @@ import java.util.Map;
 
 /**
  * Zeppelin configuration.
- *
  */
 public class ZeppelinConfiguration extends XMLConfiguration {
   private static final String ZEPPELIN_SITE_XML = "zeppelin-site.xml";
@@ -67,9 +65,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
 
 
   /**
-   * Load from resource.
-   *url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
-   * @throws ConfigurationException
+   * Load from resource. url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
    */
   public static synchronized ZeppelinConfiguration create() {
     if (conf != null) {
@@ -114,7 +110,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
     for (ConfigurationNode p : properties) {
       if (p.getChildren("name") != null && p.getChildren("name").size() > 0
-          && name.equals(p.getChildren("name").get(0).getValue())) {
+              && name.equals(p.getChildren("name").get(0).getValue())) {
         return (String) p.getChildren("value").get(0).getValue();
       }
     }
@@ -128,7 +124,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
     for (ConfigurationNode p : properties) {
       if (p.getChildren("name") != null && p.getChildren("name").size() > 0
-          && name.equals(p.getChildren("name").get(0).getValue())) {
+              && name.equals(p.getChildren("name").get(0).getValue())) {
         return Integer.parseInt((String) p.getChildren("value").get(0).getValue());
       }
     }
@@ -142,7 +138,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
     for (ConfigurationNode p : properties) {
       if (p.getChildren("name") != null && p.getChildren("name").size() > 0
-          && name.equals(p.getChildren("name").get(0).getValue())) {
+              && name.equals(p.getChildren("name").get(0).getValue())) {
         return Long.parseLong((String) p.getChildren("value").get(0).getValue());
       }
     }
@@ -156,7 +152,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
     for (ConfigurationNode p : properties) {
       if (p.getChildren("name") != null && p.getChildren("name").size() > 0
-          && name.equals(p.getChildren("name").get(0).getValue())) {
+              && name.equals(p.getChildren("name").get(0).getValue())) {
         return Float.parseFloat((String) p.getChildren("value").get(0).getValue());
       }
     }
@@ -170,7 +166,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
     for (ConfigurationNode p : properties) {
       if (p.getChildren("name") != null && p.getChildren("name").size() > 0
-          && name.equals(p.getChildren("name").get(0).getValue())) {
+              && name.equals(p.getChildren("name").get(0).getValue())) {
         return Boolean.parseBoolean((String) p.getChildren("value").get(0).getValue());
       }
     }
@@ -333,7 +329,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
   public String getBucketName() {
     return getString(ConfVars.ZEPPELIN_NOTEBOOK_S3_BUCKET);
   }
-  
+
   public String getEndpoint() {
     return getString(ConfVars.ZEPPELIN_NOTEBOOK_S3_ENDPOINT);
   }
@@ -394,7 +390,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     }
   }
 
-  public boolean isWindowsPath(String path){
+  public boolean isWindowsPath(String path) {
     return path.matches("^[A-Za-z]:\\\\.*");
   }
 
@@ -402,8 +398,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getString(ConfVars.ZEPPELIN_CONF_DIR);
   }
 
-  public List<String> getAllowedOrigins()
-  {
+  public List<String> getAllowedOrigins() {
     if (getString(ConfVars.ZEPPELIN_ALLOWED_ORIGINS).isEmpty()) {
       return Arrays.asList(new String[0]);
     }
@@ -478,34 +473,34 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_WAR("zeppelin.war", "../zeppelin-web/dist"),
     ZEPPELIN_WAR_TEMPDIR("zeppelin.war.tempdir", "webapps"),
     ZEPPELIN_INTERPRETERS("zeppelin.interpreters", "org.apache.zeppelin.spark.SparkInterpreter,"
-        + "org.apache.zeppelin.spark.PySparkInterpreter,"
-        + "org.apache.zeppelin.rinterpreter.RRepl,"
-        + "org.apache.zeppelin.rinterpreter.KnitR,"
-        + "org.apache.zeppelin.spark.SparkRInterpreter,"
-        + "org.apache.zeppelin.spark.SparkSqlInterpreter,"
-        + "org.apache.zeppelin.spark.DepInterpreter,"
-        + "org.apache.zeppelin.markdown.Markdown,"
-        + "org.apache.zeppelin.angular.AngularInterpreter,"
-        + "org.apache.zeppelin.shell.ShellInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkSQLInterpreter,"
-        + "org.apache.zeppelin.livy.LivyPySparkInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkRInterpreter,"
-        + "org.apache.zeppelin.alluxio.AlluxioInterpreter,"
-        + "org.apache.zeppelin.file.HDFSFileInterpreter,"
-        + "org.apache.zeppelin.postgresql.PostgreSqlInterpreter,"
-        + "org.apache.zeppelin.flink.FlinkInterpreter,"
-        + "org.apache.zeppelin.python.PythonInterpreter,"
-        + "org.apache.zeppelin.ignite.IgniteInterpreter,"
-        + "org.apache.zeppelin.ignite.IgniteSqlInterpreter,"
-        + "org.apache.zeppelin.lens.LensInterpreter,"
-        + "org.apache.zeppelin.cassandra.CassandraInterpreter,"
-        + "org.apache.zeppelin.geode.GeodeOqlInterpreter,"
-        + "org.apache.zeppelin.kylin.KylinInterpreter,"
-        + "org.apache.zeppelin.elasticsearch.ElasticsearchInterpreter,"
-        + "org.apache.zeppelin.scalding.ScaldingInterpreter,"
-        + "org.apache.zeppelin.jdbc.JDBCInterpreter,"
-        + "org.apache.zeppelin.hbase.HbaseInterpreter"),
+            + "org.apache.zeppelin.spark.PySparkInterpreter,"
+            + "org.apache.zeppelin.rinterpreter.RRepl,"
+            + "org.apache.zeppelin.rinterpreter.KnitR,"
+            + "org.apache.zeppelin.spark.SparkRInterpreter,"
+            + "org.apache.zeppelin.spark.SparkSqlInterpreter,"
+            + "org.apache.zeppelin.spark.DepInterpreter,"
+            + "org.apache.zeppelin.markdown.Markdown,"
+            + "org.apache.zeppelin.angular.AngularInterpreter,"
+            + "org.apache.zeppelin.shell.ShellInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkSQLInterpreter,"
+            + "org.apache.zeppelin.livy.LivyPySparkInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkRInterpreter,"
+            + "org.apache.zeppelin.alluxio.AlluxioInterpreter,"
+            + "org.apache.zeppelin.file.HDFSFileInterpreter,"
+            + "org.apache.zeppelin.postgresql.PostgreSqlInterpreter,"
+            + "org.apache.zeppelin.flink.FlinkInterpreter,"
+            + "org.apache.zeppelin.python.PythonInterpreter,"
+            + "org.apache.zeppelin.ignite.IgniteInterpreter,"
+            + "org.apache.zeppelin.ignite.IgniteSqlInterpreter,"
+            + "org.apache.zeppelin.lens.LensInterpreter,"
+            + "org.apache.zeppelin.cassandra.CassandraInterpreter,"
+            + "org.apache.zeppelin.geode.GeodeOqlInterpreter,"
+            + "org.apache.zeppelin.kylin.KylinInterpreter,"
+            + "org.apache.zeppelin.elasticsearch.ElasticsearchInterpreter,"
+            + "org.apache.zeppelin.scalding.ScaldingInterpreter,"
+            + "org.apache.zeppelin.jdbc.JDBCInterpreter,"
+            + "org.apache.zeppelin.hbase.HbaseInterpreter"),
     ZEPPELIN_INTERPRETER_JSON("zeppelin.interpreter.setting", "interpreter-setting.json"),
     ZEPPELIN_INTERPRETER_DIR("zeppelin.interpreter.dir", "interpreter"),
     ZEPPELIN_INTERPRETER_LOCALREPO("zeppelin.interpreter.localRepo", "local-repo"),
@@ -525,10 +520,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTEBOOK_AZURE_CONNECTION_STRING("zeppelin.notebook.azure.connectionString", null),
     ZEPPELIN_NOTEBOOK_AZURE_SHARE("zeppelin.notebook.azure.share", "zeppelin"),
     ZEPPELIN_NOTEBOOK_AZURE_USER("zeppelin.notebook.azure.user", "user"),
-    ZEPPELIN_NOTEBOOK_STORAGE("zeppelin.notebook.storage", ElasticSearchRepo.class.getName()),//TODO:replace with VFS
+    ZEPPELIN_NOTEBOOK_STORAGE("zeppelin.notebook.storage", "org.apache.zeppelin.notebook.repo.ElasticSearchRepo,org.apache.zeppelin.notebook.repo.VFSNotebookRepo"),//ES as primary repo, VFS as secondary repo
     ZEPPELIN_INTERPRETER_REMOTE_RUNNER("zeppelin.interpreter.remoterunner",
-        System.getProperty("os.name")
-                .startsWith("Windows") ? "bin/interpreter.cmd" : "bin/interpreter.sh"),
+            System.getProperty("os.name")
+                    .startsWith("Windows") ? "bin/interpreter.cmd" : "bin/interpreter.sh"),
     // Decide when new note is created, interpreter settings will be binded automatically or not.
     ZEPPELIN_NOTEBOOK_AUTO_INTERPRETER_BINDING("zeppelin.notebook.autoInterpreterBinding", true),
     ZEPPELIN_CONF_DIR("zeppelin.conf.dir", "conf"),
@@ -539,8 +534,15 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_ANONYMOUS_ALLOWED("zeppelin.anonymous.allowed", true),
     ZEPPELIN_CREDENTIALS_PERSIST("zeppelin.credentials.persist", true),
     ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000"),
-    ZEPPELIN_USE_JDBC_ALIAS("zeppelin.use.jdbc.alias", true);
+    ZEPPELIN_USE_JDBC_ALIAS("zeppelin.use.jdbc.alias", true),
 
+    //default page size when searching note
+    ZEPPELIN_NOTE_SEARCH_PAGE_SIZE("zeppelin.es.search.repo.page.size", 20),
+    ZEPPELIN_NOTE_REPO_ES_HOST("zeppelin.es.search.repo.host", "localhost"),
+    ZEPPELIN_NOTE_REPO_ES_PORT("zeppelin.es.search.repo.port", 9300),
+    ZEPPELIN_NOTE_REPO_ES_INDEX_NAME("zeppelin.es.search.repo.index.name", "zeppelin"),
+    ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME("zeppelin.es.search.repo.note.index.type", "note"),
+    ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph");
 
     private String varName;
     @SuppressWarnings("rawtypes")
@@ -644,7 +646,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     enum VarType {
       STRING {
         @Override
-        void checkType(String value) throws Exception {}
+        void checkType(String value) throws Exception {
+        }
       },
       INT {
         @Override
