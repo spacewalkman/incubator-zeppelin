@@ -6,7 +6,11 @@
           "type": "object"
         },
         "config": {
-          "type": "object"
+          "properties": {
+            "looknfeel": {
+              "type": "string"
+            }
+          }
         },
         "createdBy": {
           "type": "string",
@@ -19,13 +23,28 @@
         "info": {
           "type": "object"
         },
+        "lastReplName": {
+          "properties": {
+            "value": {
+              "type": "string"
+            }
+          }
+        },
         "lastUpdated": {
           "type": "date",
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
-          "ignore_malformed": "true"
+          "ignore_malformed": true,
+          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "name": {
           "type": "string"
+        },
+        "tags": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "topic": {
+          "type": "string",
+          "index": "not_analyzed"
         }
       }
     },
