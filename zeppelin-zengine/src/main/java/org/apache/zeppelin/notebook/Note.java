@@ -212,12 +212,9 @@ public class Note implements Serializable, JobListener {
     return credentials;
   }
 
-  ;
-
   public void setCredentials(Credentials credentials) {
     this.credentials = credentials;
   }
-
 
   @SuppressWarnings("rawtypes")
   public Map<String, List<AngularObject>> getAngularObjects() {
@@ -248,17 +245,23 @@ public class Note implements Serializable, JobListener {
     Map<String, Object> config = new HashMap<>(srcParagraph.getConfig());
     Map<String, Object> param = new HashMap<>(srcParagraph.settings.getParams());
     Map<String, Input> form = new HashMap<>(srcParagraph.settings.getForms());
-    Gson gson = GsonUtil.getGson();
-    InterpreterResult result = gson.fromJson(
-            gson.toJson(srcParagraph.getReturn()),
-            InterpreterResult.class);
 
     newParagraph.setConfig(config);
     newParagraph.settings.setParams(param);
     newParagraph.settings.setForms(form);
     newParagraph.setText(srcParagraph.getText());
     newParagraph.setTitle(srcParagraph.getTitle());
-    newParagraph.setReturn(result, null);
+
+    try {
+      Gson gson = GsonUtil.getGson();
+      String resultJson = gson.toJson(srcParagraph.getReturn());
+      InterpreterResult result = gson.fromJson(resultJson, InterpreterResult.class);
+      newParagraph.setReturn(result, null);
+    } catch (Exception e) {
+      // 'result' part of Note consists of exception, instead of actual interpreter results
+      logger.warn("Paragraph " + srcParagraph.getId() + " has a result with exception. "
+              + e.getMessage());
+    }
 
     synchronized (paragraphs) {
       paragraphs.add(newParagraph);
@@ -562,9 +565,8 @@ public class Note implements Serializable, JobListener {
 
 
   /**
-   * TODO:not used(qy)
-   * partial update paragraph only, when changed only happened to individual paragraph only
-   * @param  paragraph
+   * TODO:not used(qy) partial update paragraph only, when changed only happened to individual
+   * paragraph only
    */
   public void persistParagraph(Paragraph paragraph) throws IOException {
     stopDelayedPersistTimer();
@@ -576,7 +578,6 @@ public class Note implements Serializable, JobListener {
 
   /**
    * persist note and paragraphs
-   * @throws IOException
    */
   public void persist() throws IOException {
     stopDelayedPersistTimer();
