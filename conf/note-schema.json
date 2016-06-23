@@ -32,8 +32,7 @@
         },
         "lastUpdated": {
           "type": "date",
-          "ignore_malformed": true,
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "name": {
           "type": "string"
@@ -151,23 +150,19 @@
         },
         "dateCreated": {
           "type": "date",
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
-          "ignore_malformed": "true"
+          "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "dateUpdated": {
           "type": "date",
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
-          "ignore_malformed": "true"
+          "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "dateStarted": {
           "type": "date",
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
-          "ignore_malformed": "true"
+          "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "dateFinished": {
           "type": "date",
-          "format": "yyy-MM-ddHH:mm:ss||yyyy-MM-dd||epoch_millis",
-          "ignore_malformed": "true"
+          "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "errorMessage": {
           "type": "string"
