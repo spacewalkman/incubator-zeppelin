@@ -562,7 +562,9 @@ public class Note implements Serializable, JobListener {
 
 
   /**
+   * TODO:not used(qy)
    * partial update paragraph only, when changed only happened to individual paragraph only
+   * @param  paragraph
    */
   public void persistParagraph(Paragraph paragraph) throws IOException {
     stopDelayedPersistTimer();
@@ -572,6 +574,10 @@ public class Note implements Serializable, JobListener {
     index.updateIndexParagraph(this, paragraph);
   }
 
+  /**
+   * persist note and paragraphs
+   * @throws IOException
+   */
   public void persist() throws IOException {
     stopDelayedPersistTimer();
     snapshotAngularObjectRegistry();

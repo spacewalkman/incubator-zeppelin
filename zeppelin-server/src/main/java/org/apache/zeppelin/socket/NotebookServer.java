@@ -573,8 +573,7 @@ public class NotebookServer extends WebSocketServlet implements
           throws SchedulerException, IOException {
     String noteId = (String) fromMessage.get("id");
     String name = (String) fromMessage.get("name");
-    Map<String, Object> config = (Map<String, Object>) fromMessage
-            .get("config");
+    Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
     if (noteId == null) {
       return;
     }
@@ -742,10 +741,8 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    Map<String, Object> params = (Map<String, Object>) fromMessage
-            .get("params");
-    Map<String, Object> config = (Map<String, Object>) fromMessage
-            .get("config");
+    Map<String, Object> params = (Map<String, Object>) fromMessage.get("params");
+    Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
     NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
@@ -759,8 +756,7 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
     p.setText((String) fromMessage.get("paragraph"));
-    //note.persist();
-    note.persistParagraph(p);//partial update
+    note.persist();
     broadcast(note.id(), new Message(OP.PARAGRAPH).put("paragraph", p));
   }
 
@@ -1179,11 +1175,9 @@ public class NotebookServer extends WebSocketServlet implements
       p.setAuthenticationInfo(new AuthenticationInfo());
     }
 
-    Map<String, Object> params = (Map<String, Object>) fromMessage
-            .get("params");
+    Map<String, Object> params = (Map<String, Object>) fromMessage.get("params");
     p.settings.setParams(params);
-    Map<String, Object> config = (Map<String, Object>) fromMessage
-            .get("config");
+    Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
     p.setConfig(config);
     // if it's the last paragraph, let's add a new one
     boolean isTheLastParagraph = note.getLastParagraph().getId().equals(p.getId());
@@ -1193,8 +1187,7 @@ public class NotebookServer extends WebSocketServlet implements
       note.addParagraph();
     }
 
-    //note.persist();
-    note.persistParagraph(p);//partial update
+    note.persist(); //p.setText(text) will update lastUpdated time,so note must updated too,not only paragraph
     try {
       note.run(paragraphId);
     } catch (Exception ex) {
