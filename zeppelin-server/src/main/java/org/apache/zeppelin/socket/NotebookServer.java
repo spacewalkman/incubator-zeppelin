@@ -463,11 +463,7 @@ public class NotebookServer extends WebSocketServlet implements
    * add note's creator to owners set, creator should not be explicit set in shiro.ini
    */
   private void addCreatorToOwners(NotebookAuthorization notebookAuthorization, Note note) {
-    Set<String> lastOwners = notebookAuthorization.getOwners(note.id());
-    if (!lastOwners.contains(note.getCreatedBy())) {
-      lastOwners.add(note.getCreatedBy());
-      notebookAuthorization.setOwners(note.id(), lastOwners);
-    }
+    notebookAuthorization.addOwner(note.id(), note.getCreatedBy());
   }
 
   /**
