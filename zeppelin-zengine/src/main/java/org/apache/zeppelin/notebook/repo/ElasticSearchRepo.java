@@ -31,6 +31,11 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -40,11 +45,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * ElasticSearch-backed Repo
+ * ElasticSearch-backed NoteRepo and Service implementation
  */
 public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
@@ -53,14 +59,26 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   private static final String SEARCH_FIELD_TITLE = "title";
   private static final String SEARCH_FIELD_TEXT = "text";
 
-  static final String PARAGRAPH = "paragraph";
-  static final String ID_FIELD = "_id";
+  private static final String PARAGRAPH = "paragraph";
+  private static final String ID_FIELD = "_id";
+
+  private static final String AGGREGATION_FILED_TAGS = "tags";
+  private static final String AGGREGATION_NAME_TAGS = "tags_aggs";
+
+  private static final String AGGREGATION_FILED_AUTHOR = "createdBy";
+  private static final String AGGREGATION_NAME_AUTHOR = "createdBy_agg";
+
+  private static final String AGGREGATION_FILED_LAST_UPDATED = "lastUpdated";
+  private static final String AGGREGATION_NAME_LAST_UPDATED = "lastUpdated_agg";
+
+  private static final String DATE_RANGE_FORMAT = "yyyy-MM";
 
   private Client client;
   private String indexName;
   private String noteTypeName;
   private String paragraphTypeName;//note-to-pargraph modeled as parent-to-child relation in ES
   private int defaultPageSize;
+  private int defaultTermsAggSize;
 
 
   public ElasticSearchRepo(ZeppelinConfiguration conf) throws IOException {
@@ -71,6 +89,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     this.noteTypeName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME);
     this.paragraphTypeName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME);
     this.defaultPageSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
+    this.defaultTermsAggSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE);
+
 
     TransportClient transportClient = TransportClient.builder().build()
             .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
@@ -87,10 +107,13 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     SearchResponse response = client.prepareSearch(indexName)
             .setTypes(noteTypeName)
             .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
+            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
+            .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
             .execute()
             .actionGet();
 
-    List<NoteInfo> results = null;
+    List<NoteInfo> results = new LinkedList<NoteInfo>();
     SearchHits hits = response.getHits();
     long count = hits.getTotalHits();
     if (count > 0) {
@@ -102,7 +125,26 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     }
 
+    //TODO: search with aggs,fields tags/topic?(qy)
+    //aggregation parse
+    Aggregations aggregations = response.getAggregations();
+    aggregationParse(aggregations, AGGREGATION_NAME_TAGS);
+    aggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
+    aggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
+
     return results;
+  }
+
+  private void aggregationParse(Aggregations aggregations, String aggName) {
+    if (aggregations != null) {
+      Map<String, Aggregation> aggsMap = aggregations.asMap();
+      Terms terms = (Terms) aggsMap.get(aggName);
+      Collection<Terms.Bucket> buckets = terms.getBuckets();
+
+      for (Terms.Bucket buck : buckets) {
+        LOG.debug("{}={}", buck.getKeyAsString(), buck.getDocCount());
+      }
+    }
   }
 
   @Override
@@ -285,10 +327,10 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     }
 
     MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT);
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).
-            setTypes(paragraphTypeName).
-            setQuery(multiMatchQueryBuilder).
-            addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT)
+    SearchResponse paragraphsResponse = client.prepareSearch(indexName)
+            .setTypes(paragraphTypeName)
+            .setQuery(multiMatchQueryBuilder)
+            .addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT)
             .addHighlightedField(SEARCH_FIELD_TITLE)
             .addHighlightedField(SEARCH_FIELD_TEXT)
             .setSize(size)
