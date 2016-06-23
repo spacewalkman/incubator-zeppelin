@@ -542,7 +542,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_ES_PORT("zeppelin.es.search.repo.port", 9300),
     ZEPPELIN_NOTE_REPO_ES_INDEX_NAME("zeppelin.es.search.repo.index.name", "zeppelin"),
     ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME("zeppelin.es.search.repo.note.index.type", "note"),
-    ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph");
+    ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph"),
+    ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE("zeppelin.es.search.aggregation.size", 10);//max terms aggregation size
 
     private String varName;
     @SuppressWarnings("rawtypes")
