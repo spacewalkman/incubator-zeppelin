@@ -40,7 +40,7 @@ public interface SearchService {
    * @param queryStr a query
    * @return A list of matching paragraphs (id, text, snippet w/ highlight)
    */
-  public List<Map<String, String>> query(String queryStr);
+  public List<Map<String, String>> query(String queryStr, int size, int form);
 
   /**
    * Updates all documents in index for the given note: - name - all paragraphs

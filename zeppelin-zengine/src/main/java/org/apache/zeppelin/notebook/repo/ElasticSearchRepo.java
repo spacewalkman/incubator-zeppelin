@@ -56,28 +56,21 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   static final String PARAGRAPH = "paragraph";
   static final String ID_FIELD = "_id";
 
-  private static final String CONFIG_REPO_ES_HOST = "zeppelin.es.search.repo.host";
-  private static final String CONFIG_REPO_ES_PORT = "zeppelin.es.search.repo.port";
-  private static final String CONFIG_REPO_ES_INDEX_NAME = "zeppelin.es.search.repo.index.name";
-  private static final String CONFIG_REPO_ES_NOTE_TYPE_NAME = "zeppelin.es.search.repo.index.type";
-  private static final String CONFIG_REPO_ES_PARAGRAPH_TYPE_NAME = "zeppelin.es.search.repo.paragraph.type";
-  private static final String CONFIG_REPO_ES_PAGE_SIZE_NAME = "zeppelin.es.search.repo.page.size";
-
   private Client client;
   private String indexName;
   private String noteTypeName;
   private String paragraphTypeName;//note-to-pargraph modeled as parent-to-child relation in ES
-  private int pageSize;
+  private int defaultPageSize;
 
 
   public ElasticSearchRepo(ZeppelinConfiguration conf) throws IOException {
-    String esHost = conf.getString(CONFIG_REPO_ES_HOST, "localhost");
-    int esPort = conf.getInt(CONFIG_REPO_ES_PORT, 9300);
+    String esHost = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_HOST);
+    int esPort = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_PORT);
 
-    this.indexName = conf.getString(CONFIG_REPO_ES_INDEX_NAME, "zeppelin");
-    this.noteTypeName = conf.getString(CONFIG_REPO_ES_NOTE_TYPE_NAME, "note");
-    this.paragraphTypeName = conf.getString(CONFIG_REPO_ES_PARAGRAPH_TYPE_NAME, "paragraph");
-    this.pageSize = conf.getInt(CONFIG_REPO_ES_PAGE_SIZE_NAME, DEFUALT_PAGE_SIZE);
+    this.indexName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_INDEX_NAME);
+    this.noteTypeName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME);
+    this.paragraphTypeName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME);
+    this.defaultPageSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
 
     TransportClient transportClient = TransportClient.builder().build()
             .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
@@ -267,7 +260,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
    * @param queryStr queryString in search box
    */
   @Override
-  public List<Map<String, String>> query(String queryStr) {
+  public List<Map<String, String>> query(String queryStr, int size, int from) {
      /*
       {
           "query" : {
@@ -284,8 +277,24 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
           }
       }
     */
+    if (size <= 0) {
+      size = this.defaultPageSize;
+    }
+    if (from < 0) {
+      from = 0;
+    }
+
     MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT);
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(multiMatchQueryBuilder).addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT).addHighlightedField(SEARCH_FIELD_TITLE).addHighlightedField(SEARCH_FIELD_TEXT).execute().actionGet();
+    SearchResponse paragraphsResponse = client.prepareSearch(indexName).
+            setTypes(paragraphTypeName).
+            setQuery(multiMatchQueryBuilder).
+            addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT)
+            .addHighlightedField(SEARCH_FIELD_TITLE)
+            .addHighlightedField(SEARCH_FIELD_TEXT)
+            .setSize(size)
+            .setFrom(from)
+            .execute()
+            .actionGet();
 
     SearchHits hits = paragraphsResponse.getHits();
     long count = hits.getTotalHits();

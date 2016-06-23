@@ -23,6 +23,7 @@ import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
@@ -75,6 +76,7 @@ public class NotebookRestApi {
   private NotebookServer notebookServer;
   private SearchService notebookIndex;
   private NotebookAuthorization notebookAuthorization;
+  private ZeppelinConfiguration conf;
 
   public NotebookRestApi() {
   }
@@ -84,6 +86,7 @@ public class NotebookRestApi {
     this.notebookServer = notebookServer;
     this.notebookIndex = search;
     this.notebookAuthorization = notebook.getNotebookAuthorization();
+    this.conf = ZeppelinConfiguration.create();
   }
 
   /**
@@ -767,14 +770,29 @@ public class NotebookRestApi {
   @GET
   @Path("search")
   @ZeppelinApi
-  public Response search(@QueryParam("q") String queryTerm) {
+  public Response search(@QueryParam("q") String queryTerm, @QueryParam("size") String size, @QueryParam("from") String from) {
     LOG.info("Searching notebooks for: {}", queryTerm);
     String principal = SecurityUtils.getPrincipal();
     HashSet<String> roles = SecurityUtils.getRoles();
     HashSet<String> userAndRoles = new HashSet<String>();
     userAndRoles.add(principal);
     userAndRoles.addAll(roles);
-    List<Map<String, String>> notebooksFound = notebookIndex.query(queryTerm);
+
+    int sizeInt;
+    try {
+      sizeInt = Integer.parseInt(size);
+    } catch (NumberFormatException e) {
+      sizeInt = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
+    }
+
+    int fromInt = 0;
+    try {
+      fromInt = Integer.parseInt(from);
+    } catch (NumberFormatException e) {
+      //eat it, fall back to 0
+    }
+
+    List<Map<String, String>> notebooksFound = notebookIndex.query(queryTerm, sizeInt, fromInt);
     for (int i = 0; i < notebooksFound.size(); i++) {
       String[] Id = notebooksFound.get(i).get("id").split("_", 3);//paragrah id scheme in ES: {noteId}_pargraph_{sequnceNumber}
       String noteId = Id[0];

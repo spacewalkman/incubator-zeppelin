@@ -37,7 +37,8 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
@@ -47,6 +48,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
@@ -78,6 +80,7 @@ public class LuceneSearch implements SearchService {
   Analyzer analyzer;
   IndexWriterConfig iwc;
   IndexWriter writer;
+  ZeppelinConfiguration conf;
 
   public LuceneSearch() {
     ramDirectory = new RAMDirectory();
@@ -88,17 +91,26 @@ public class LuceneSearch implements SearchService {
     } catch (IOException e) {
       LOG.error("Failed to create new IndexWriter", e);
     }
+    conf = ZeppelinConfiguration.create();
   }
 
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search#query(java.lang.String)
    */
   @Override
-  public List<Map<String, String>> query(String queryStr) {
+  public List<Map<String, String>> query(String queryStr, int size, int from) {
     if (null == ramDirectory) {
       throw new IllegalStateException(
               "Something went wrong on instance creation time, index dir is null");
     }
+
+    if (size <= 0) {
+      size = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
+    }
+    if (from < 0) {
+      from = 0;
+    }
+
     List<Map<String, String>> result = Collections.emptyList();
     try (IndexReader indexReader = DirectoryReader.open(ramDirectory)) {
       IndexSearcher indexSearcher = new IndexSearcher(indexReader);
@@ -113,7 +125,7 @@ public class LuceneSearch implements SearchService {
       SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
       Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(query));
 
-      result = doSearch(indexSearcher, query, analyzer, highlighter);
+      result = doSearch(indexSearcher, query, analyzer, highlighter, size, from);
       indexReader.close();
     } catch (IOException e) {
       LOG.error("Failed to open index dir {}, make sure indexing finished OK", ramDirectory, e);
@@ -124,15 +136,19 @@ public class LuceneSearch implements SearchService {
   }
 
   private List<Map<String, String>> doSearch(IndexSearcher searcher, Query query,
-                                             Analyzer analyzer, Highlighter highlighter) {
+                                             Analyzer analyzer, Highlighter highlighter, int size, int from) {
     List<Map<String, String>> matchingParagraphs = Lists.newArrayList();
-    ScoreDoc[] hits;
-    try {
-      hits = searcher.search(query, 20).scoreDocs;
-      for (int i = 0; i < hits.length; i++) {
-        LOG.debug("doc={} score={}", hits[i].doc, hits[i].score);
+    TopDocs hits;
 
-        int id = hits[i].doc;
+    try {
+      TopScoreDocCollector collector = TopScoreDocCollector.create(size);  // MAX_RESULTS is just an int limiting the total number of hits
+      searcher.search(query, collector);
+      hits = collector.topDocs(from, size);
+
+      for (int i = 0; i < hits.totalHits; i++) {
+        LOG.debug("doc={} score={}", hits.scoreDocs[i], hits.scoreDocs[i].score);
+
+        int id = hits.scoreDocs[i].doc;
         Document doc = searcher.doc(id);
         String path = doc.get(ID_FIELD);
         if (path != null) {
