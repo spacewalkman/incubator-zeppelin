@@ -49,6 +49,10 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({op: 'NOTE_UPDATE', data: {id: noteId, name: noteName, config : noteConfig}});
     },
 
+    updateNoteTags: function(noteId, tags) {
+      websocketEvents.sendNewEvent({op: 'SET_NOTE_TAGS', data: {id: noteId, tags: tags}});
+    },
+
     moveParagraph: function(paragraphId, newIndex) {
       websocketEvents.sendNewEvent({ op: 'MOVE_PARAGRAPH', data : {id: paragraphId, index: newIndex}});
     },

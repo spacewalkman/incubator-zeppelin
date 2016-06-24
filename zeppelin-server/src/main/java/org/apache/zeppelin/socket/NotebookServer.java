@@ -27,13 +27,12 @@ import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
-import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.interpreter.InterpreterOutput;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
+import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.JobListenerFactory;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
@@ -46,6 +45,7 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.server.ZeppelinServer;
 import org.apache.zeppelin.ticket.TicketContainer;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -672,15 +673,19 @@ public class NotebookServer extends WebSocketServlet implements
    * set tags to note
    */
   private void setNoteTags(NotebookSocket conn, HashSet<String> userAndRoles,
-                           Notebook notebook, Message message)//TODO: client message assemble
+                           Notebook notebook, Message message)
           throws IOException {
     String noteId = (String) message.get("id");
     if (noteId == null || noteId.isEmpty()) {
       return;
     }
 
-    List<String> tags = (List<String>) message.get("tags");//TODO:check deserialized tags
-    if (tags == null || tags.size() == 0) {
+    String tagsString = (String) message.get("tags");
+    if (tagsString == null || tagsString.isEmpty()) {
+      return;
+    }
+    String[] tags = tagsString.split(",");
+    if (tags.length == 0) {
       return;
     }
 
@@ -695,7 +700,7 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    note.setTags(tags);
+    note.setTags(Arrays.asList(tags));
 
     note.persist();
     broadcast(note.id(), new Message(OP.NOTE_TAGS).put("tags", tags)); //TODO: qy client update tags(when multiple clients)

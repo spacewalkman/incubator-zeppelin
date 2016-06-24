@@ -334,6 +334,13 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl',
     }
   };
 
+   /** update note tags */
+  $scope.sendNewTags= function() {
+      if ($scope.note.tags) {
+        websocketMsgSrv.updateNoteTags($scope.note.id, $scope.note.tags);
+      }
+  };
+
   /** update the current note */
   $scope.$on('setNoteContent', function(event, note) {
     $scope.paragraphUrl = $routeParams.paragraphId;
