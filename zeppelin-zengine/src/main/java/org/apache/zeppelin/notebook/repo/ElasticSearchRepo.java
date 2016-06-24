@@ -31,13 +31,15 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,17 +130,34 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     //TODO: search with aggs,fields tags/topic?(qy)
     //aggregation parse
     Aggregations aggregations = response.getAggregations();
-    aggregationParse(aggregations, AGGREGATION_NAME_TAGS);
-    aggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
-    aggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
+    termsAggregationParse(aggregations, AGGREGATION_NAME_TAGS);
+    termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
+    dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
 
     return results;
   }
 
-  private void aggregationParse(Aggregations aggregations, String aggName) {
+  /**
+   * parse date histogram aggregation
+   */
+  private void dateHistogramAggregationParse(Aggregations aggregations, String aggName) {
     if (aggregations != null) {
-      Map<String, Aggregation> aggsMap = aggregations.asMap();
-      Terms terms = (Terms) aggsMap.get(aggName);
+      Histogram agg = aggregations.get(aggName);
+      // For each entry
+      for (Histogram.Bucket entry : agg.getBuckets()) {
+        DateTime key = (DateTime) entry.getKey();    // Key
+        String keyAsString = entry.getKeyAsString(); // Key as String
+        long docCount = entry.getDocCount();         // Doc count
+
+        LOG.info("key [{}], date [{}], doc_count [{}]", keyAsString, key.getYear(), docCount);
+      }
+
+    }
+  }
+
+  private void termsAggregationParse(Aggregations aggregations, String aggName) {
+    if (aggregations != null) {
+      StringTerms terms = aggregations.get(aggName);
       Collection<Terms.Bucket> buckets = terms.getBuckets();
 
       for (Terms.Bucket buck : buckets) {
