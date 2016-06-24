@@ -1,4 +1,15 @@
 {
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "smartcn": {
+            "type": "smartcn"
+          }
+        }
+      }
+    }
+  },
   "mappings": {
     "note": {
       "properties": {
@@ -8,7 +19,8 @@
         "config": {
           "properties": {
             "looknfeel": {
-              "type": "string"
+              "type": "string",
+              "index": "not_analyzed"
             }
           }
         },
@@ -26,7 +38,8 @@
         "lastReplName": {
           "properties": {
             "value": {
-              "type": "string"
+              "type": "string",
+              "index": "not_analyzed"
             }
           }
         },
@@ -35,7 +48,8 @@
           "format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "analyzer": "smartcn"
         },
         "tags": {
           "type": "string",
@@ -43,7 +57,7 @@
         },
         "topic": {
           "type": "string",
-          "index": "not_analyzed"
+          "analyzer": "smartcn"
         }
       }
     },
@@ -55,39 +69,48 @@
         "config": {
           "properties": {
             "colWidth": {
-              "type": "integer"
+              "type": "double",
+              "index": "no"
             },
             "editorMode": {
-              "type": "string"
+              "type": "string",
+              "index": "not_analyzed"
             },
             "graph": {
               "properties": {
                 "groups": {
                   "properties": {
                     "aggr": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     },
                     "index": {
-                      "type": "integer"
+                      "type": "double",
+                      "index": "no"
                     },
                     "name": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     }
                   }
                 },
                 "height": {
-                  "type": "double"
+                  "type": "double",
+                  "index": "no"
                 },
                 "keys": {
                   "properties": {
                     "aggr": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     },
                     "index": {
-                      "type": "double"
+                      "type": "double",
+                      "index": "no"
                     },
                     "name": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     }
                   }
                 },
@@ -103,26 +126,32 @@
                     "xAxis": {
                       "properties": {
                         "aggr": {
-                          "type": "string"
+                          "type": "string",
+                          "index": "no"
                         },
                         "index": {
-                          "type": "double"
+                          "type": "double",
+                          "index": "no"
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "index": "no"
                         }
                       }
                     },
                     "yAxis": {
                       "properties": {
                         "aggr": {
-                          "type": "string"
+                          "type": "string",
+                          "index": "no"
                         },
                         "index": {
-                          "type": "double"
+                          "type": "double",
+                          "index": "no"
                         },
                         "name": {
-                          "type": "string"
+                          "type": "string",
+                          "index": "no"
                         }
                       }
                     }
@@ -131,20 +160,24 @@
                 "values": {
                   "properties": {
                     "aggr": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     },
                     "index": {
-                      "type": "double"
+                      "type": "double",
+                      "index": "no"
                     },
                     "name": {
-                      "type": "string"
+                      "type": "string",
+                      "index": "no"
                     }
                   }
                 }
               }
             },
             "tableHide": {
-              "type": "boolean"
+              "type": "boolean",
+              "index": "no"
             }
           }
         },
@@ -172,21 +205,26 @@
           "index": "not_analyzed"
         },
         "jobName": {
-          "type": "string"
+          "type": "string",
+          "index": "no"
         },
         "progressUpdateIntervalMs": {
-          "type": "long"
+          "type": "long",
+          "index": "no"
         },
         "result": {
           "properties": {
             "code": {
-              "type": "string"
+              "type": "string",
+              "index": "no"
             },
             "msg": {
-              "type": "string"
+              "type": "string",
+              "index": "no"
             },
             "type": {
-              "type": "string"
+              "type": "string",
+              "index": "no"
             }
           }
         },
@@ -205,7 +243,12 @@
           "index": "not_analyzed"
         },
         "text": {
-          "type": "string"
+          "type": "string",
+          "analyzer": "smartcn"
+        },
+        "title": {
+          "type": "string",
+          "analyzer": "smartcn"
         }
       }
     }
