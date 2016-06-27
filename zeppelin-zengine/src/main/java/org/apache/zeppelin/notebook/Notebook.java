@@ -169,7 +169,9 @@ public class Notebook {
   public Note importNote(String sourceJson, String noteName, String principal) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
-    Gson gson = gsonBuilder.create();
+
+    Gson gson = gsonBuilder.registerTypeAdapter(Date.class, new NotebookImportDeserializer())
+      .create();
     JsonReader reader = new JsonReader(new StringReader(sourceJson));
     reader.setLenient(true);
     Note newNote;
