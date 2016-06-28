@@ -162,14 +162,14 @@ public class GitNotebookRepoTest {
   public void getRevisionTest() throws IOException {
     // initial checks
     notebookRepo = new GitNotebookRepo(conf);
-    assertThat(notebookRepo.list(null)).isNotEmpty();
-    assertThat(containsNote(notebookRepo.list(null), TEST_NOTE_ID)).isTrue();
-    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID, null)).isEmpty();
+    assertThat(notebookRepo.list()).isNotEmpty();
+    assertThat(containsNote(notebookRepo.list(), TEST_NOTE_ID)).isTrue();
+    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID)).isEmpty();
 
     // add first checkpoint
-    Revision revision_1 = notebookRepo.checkpoint(TEST_NOTE_ID, "first commit", null);
-    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID, null).size()).isEqualTo(1);
-    int paragraphCount_1 = notebookRepo.get(TEST_NOTE_ID, null).getParagraphs().size();
+    Revision revision_1 = notebookRepo.checkpoint(TEST_NOTE_ID, "first commit");
+    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID).size()).isEqualTo(1);
+    int paragraphCount_1 = notebookRepo.get(TEST_NOTE_ID).getParagraphs().size();
 
     // add paragraph and save
     Note note = notebookRepo.get(TEST_NOTE_ID, null);
@@ -178,12 +178,12 @@ public class GitNotebookRepoTest {
     config.put("enabled", true);
     p1.setConfig(config);
     p1.setText("%md checkpoint test text");
-    notebookRepo.save(note, null);
+    notebookRepo.save(note);
 
     // second checkpoint
-    notebookRepo.checkpoint(TEST_NOTE_ID, "second commit", null);
-    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID, null).size()).isEqualTo(2);
-    int paragraphCount_2 = notebookRepo.get(TEST_NOTE_ID, null).getParagraphs().size();
+    notebookRepo.checkpoint(TEST_NOTE_ID, "second commit");
+    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID).size()).isEqualTo(2);
+    int paragraphCount_2 = notebookRepo.get(TEST_NOTE_ID).getParagraphs().size();
     assertThat(paragraphCount_2).isEqualTo(paragraphCount_1 + 1);
 
     // get note from revision 1
@@ -199,8 +199,8 @@ public class GitNotebookRepoTest {
     config.put("enabled", false);
     p2.setConfig(config);
     p2.setText("%md get revision when modified note test text");
-    notebookRepo.save(note, null);
-    note = notebookRepo.get(TEST_NOTE_ID, null);
+    notebookRepo.save(note);
+    note = notebookRepo.get(TEST_NOTE_ID);
     int paragraphCount_3 = note.getParagraphs().size();
     assertThat(paragraphCount_3).isEqualTo(paragraphCount_2 + 1);
 
@@ -217,14 +217,14 @@ public class GitNotebookRepoTest {
   public void getRevisionFailTest() throws IOException {
     // initial checks
     notebookRepo = new GitNotebookRepo(conf);
-    assertThat(notebookRepo.list(null)).isNotEmpty();
-    assertThat(containsNote(notebookRepo.list(null), TEST_NOTE_ID)).isTrue();
-    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID, null)).isEmpty();
+    assertThat(notebookRepo.list()).isNotEmpty();
+    assertThat(containsNote(notebookRepo.list(), TEST_NOTE_ID)).isTrue();
+    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID)).isEmpty();
 
     // add first checkpoint
-    Revision revision_1 = notebookRepo.checkpoint(TEST_NOTE_ID, "first commit", null);
-    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID, null).size()).isEqualTo(1);
-    int paragraphCount_1 = notebookRepo.get(TEST_NOTE_ID, null).getParagraphs().size();
+    Revision revision_1 = notebookRepo.checkpoint(TEST_NOTE_ID, "first commit");
+    assertThat(notebookRepo.revisionHistory(TEST_NOTE_ID).size()).isEqualTo(1);
+    int paragraphCount_1 = notebookRepo.get(TEST_NOTE_ID).getParagraphs().size();
 
     // get current note
     Note note = notebookRepo.get(TEST_NOTE_ID, null);
@@ -236,7 +236,7 @@ public class GitNotebookRepoTest {
     config.put("enabled", true);
     p1.setConfig(config);
     p1.setText("%md get revision when modified note test text");
-    notebookRepo.save(note, null);
+    notebookRepo.save(note);
     int paragraphCount_2 = note.getParagraphs().size();
 
     // get note from revision 1
