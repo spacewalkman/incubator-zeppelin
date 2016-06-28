@@ -499,7 +499,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
       String indexParagraphId = Joiner.on('_').join(note.getId(), PARAGRAPH, index);
 
-      DeleteResponse response = client.prepareDelete(this.indexName, this.paragraphTypeName, indexParagraphId).get();
+      DeleteResponse response = client.prepareDelete(this.indexName, this.paragraphTypeName, indexParagraphId).setParent(note.getId()).get();
 
       if (response.isFound()) {
         LOG.debug("paragraph indexed_id={},actual_id={},delete successfully", indexParagraphId, p.getId());
