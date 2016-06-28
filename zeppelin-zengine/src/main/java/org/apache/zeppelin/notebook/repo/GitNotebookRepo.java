@@ -22,19 +22,24 @@ import com.google.common.collect.Lists;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -94,10 +99,45 @@ public class GitNotebookRepo extends VFSNotebookRepo {
     return revision;
   }
 
-  @Override
-  public Note get(String noteId, Revision rev) throws IOException {
-    //TODO(bzz): something like 'git checkout rev', that will not change-the-world though
-    return super.get(noteId);
+  /**
+   * the idea is to:
+   * 1. stash current changes
+   * 2. remember head commit and checkout to the desired revision
+   * 3. get note and checkout back to the head
+   * 4. apply stash on top and remove it
+   */
+  public synchronized Note get(String noteId, Revision rev, AuthenticationInfo subject)
+      throws IOException {
+    Note note = null;
+    RevCommit stash = null;
+    try {
+      List<DiffEntry> gitDiff = git.diff().setPathFilter(PathFilter.create(noteId)).call();
+      boolean modified = !gitDiff.isEmpty();
+      if (modified) {
+        // stash changes
+        stash = git.stashCreate().call();
+        Collection<RevCommit> stashes = git.stashList().call();
+        LOG.debug("Created stash : {}, stash size : {}", stash, stashes.size());
+      }
+      ObjectId head = git.getRepository().resolve(Constants.HEAD);
+      // checkout to target revision
+      git.checkout().setStartPoint(rev.id).addPath(noteId).call();
+      // get the note
+      note = super.get(noteId, rev);
+      // checkout back to head
+      git.checkout().setStartPoint(head.getName()).addPath(noteId).call();
+      if (modified && stash != null) {
+        // unstash changes
+        ObjectId applied = git.stashApply().setStashRef(stash.getName()).call();
+        ObjectId dropped = git.stashDrop().setStashRef(0).call();
+        Collection<RevCommit> stashes = git.stashList().call();
+        LOG.debug("Stash applied as : {}, and dropped : {}, stash size: {}", applied, dropped,
+            stashes.size());
+      }
+    } catch (GitAPIException e) {
+      LOG.error("Failed to return note from revision \"{}\"", rev.message, e);
+    }
+    return note;
   }
 
   @Override

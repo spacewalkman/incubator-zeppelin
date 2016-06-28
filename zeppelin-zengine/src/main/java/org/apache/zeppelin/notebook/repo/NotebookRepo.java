@@ -103,12 +103,13 @@ public interface NotebookRepo {
    */
   static class Revision {
     public Revision(String revId, String message, int time) {
-      this.revId = revId;
+      this.id = revId;
       this.message = message;
       this.time = time;
     }
 
-    public String revId;
+    public String id;
+
     public String message;
     public int time;
   }
