@@ -594,7 +594,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       note.persist();
       broadcastNote(note);
-      broadcastNoteList(userAndRoles);
+      unicastNoteList(conn, userAndRoles);
     }
   }
 
@@ -632,7 +632,7 @@ public class NotebookServer extends WebSocketServlet implements
     note.persist();
     addConnectionToNote(note.id(), conn);
     conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", note)));
-    broadcastNoteList(userAndRoles);
+    unicastNoteList(conn, userAndRoles);
   }
 
   /**
@@ -731,7 +731,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     notebook.removeNote(noteId);
     removeNote(noteId);
-    broadcastNoteList(userAndRoles);
+    unicastNoteList(conn, userAndRoles);
   }
 
   private void updateParagraph(NotebookSocket conn, HashSet<String> userAndRoles,
@@ -774,7 +774,7 @@ public class NotebookServer extends WebSocketServlet implements
     Note newNote = notebook.cloneNote(noteId, name, userAndRoles.iterator().next());
     addConnectionToNote(newNote.id(), conn);
     conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", newNote)));
-    broadcastNoteList(userAndRoles);
+    unicastNoteList(conn, userAndRoles);
   }
 
   /**
@@ -795,7 +795,7 @@ public class NotebookServer extends WebSocketServlet implements
       note = notebook.importNote(noteJson, noteName, userAndRoles.iterator().next());
 
       broadcastNote(note);
-      broadcastNoteList(userAndRoles);
+      unicastNoteList(conn, userAndRoles);
     }
     return note;
   }

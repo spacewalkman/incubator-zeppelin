@@ -310,7 +310,7 @@ public class NotebookRestApi {
 
     note.persist();
     notebookServer.broadcastNote(note);
-    notebookServer.broadcastNoteList(request.getUserAndRoles());
+    notebookServer.broadcastNoteList(request.getUserAndRoles());//TODO:(qy) when create note using REST, could cause note filter by current user failed
     return new JsonResponse<>(Status.CREATED, "", note.getId()).build();
   }
 
@@ -347,7 +347,7 @@ public class NotebookRestApi {
         notebook.removeNote(noteId);
       }
     }
-    notebookServer.broadcastNoteList(request.getUserAndRoles());
+    notebookServer.broadcastNoteList(request.getUserAndRoles());//TODO:(qy) when delete note using REST, could cause note filter by current user failed
     return new JsonResponse<>(Status.OK, "").build();
   }
 
@@ -370,7 +370,7 @@ public class NotebookRestApi {
 
     if (TicketContainer.instance.isValid(request.getPrincipal(), request.getTicket())) {
       notebookServer.broadcastNote(newNote);
-      notebookServer.broadcastNoteList(request.getUserAndRoles());
+      notebookServer.broadcastNoteList(request.getUserAndRoles());//TODO:(qy) when clone note using REST, could cause note filter by current user failed
       return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
     }
 
