@@ -288,14 +288,13 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     //query note's pargraphs and delete
     HasParentQueryBuilder qb = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
 
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(qb).setNoFields().execute().actionGet();
+    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(qb).setNoFields().setSize(10000).execute().actionGet();//TODO:(qy) paragraphs per note,max=10000?
     SearchHits hits = paragraphsResponse.getHits();
 
     if (hits.getTotalHits() > 0) {
       BulkRequestBuilder bulkDeleteParagraphs = client.prepareBulk();
-      for (SearchHit hit : paragraphsResponse.getHits()) {
-        String paragraphId = (String) (hit.getSource().get(ID_FIELD));
-        bulkDeleteParagraphs.add(client.prepareDelete(this.indexName, this.paragraphTypeName, paragraphId));
+      for (SearchHit hit : hits) {
+        bulkDeleteParagraphs.add(client.prepareDelete(this.indexName, this.paragraphTypeName, hit.getId()).setParent(noteId));
       }
 
       BulkResponse paraDeleteBuldResponse = bulkDeleteParagraphs.execute().actionGet();
