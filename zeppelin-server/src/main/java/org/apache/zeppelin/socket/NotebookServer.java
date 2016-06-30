@@ -169,7 +169,7 @@ public class NotebookServer extends WebSocketServlet implements
           unicastNoteList(conn, userAndRoles);
           break;
         case RELOAD_NOTES_FROM_REPO:
-          broadcastReloadedNoteList(userAndRoles);
+          unicastNoteList(conn, userAndRoles);
           break;
         case GET_HOME_NOTE:
           sendHomeNote(conn, userAndRoles, notebook);
