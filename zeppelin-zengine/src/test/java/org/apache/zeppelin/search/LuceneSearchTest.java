@@ -17,11 +17,9 @@
 package org.apache.zeppelin.search;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
-import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInterpreterLoader;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.junit.After;
@@ -37,21 +35,20 @@ import java.util.Map;
 import static com.google.common.truth.Truth.assertThat;
 import static org.apache.zeppelin.search.LuceneSearch.formatId;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+
 
 public class LuceneSearchTest {
 
-  private static NoteInterpreterLoader replLoaderMock;
   private static NotebookRepo notebookRepoMock;
+  private static InterpreterFactory interpreterFactory;
   private SearchService notebookIndex;
 
   @BeforeClass
   public static void beforeStartUp() {
     notebookRepoMock = mock(NotebookRepo.class);
-    replLoaderMock = mock(NoteInterpreterLoader.class);
-
-    when(replLoaderMock.getInterpreterSettings())
-            .thenReturn(ImmutableList.<InterpreterSetting>of());
+    interpreterFactory = mock(InterpreterFactory.class);
+//    when(replLoaderMock.getInterpreterSettings())
+//      .thenReturn(ImmutableList.<InterpreterSetting>of());
   }
 
   @Before
@@ -295,7 +292,7 @@ public class LuceneSearchTest {
   }
 
   private Note newNote(String name) {
-    Note note = new Note(notebookRepoMock, replLoaderMock, null, notebookIndex, null, "anonymous");
+    Note note = new Note(notebookRepoMock, interpreterFactory, null, notebookIndex, null, "anonymous");
     note.setName(name);
     return note;
   }

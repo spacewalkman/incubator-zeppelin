@@ -18,7 +18,6 @@
 package org.apache.zeppelin.notebook;
 
 
-import com.google.common.base.Optional;
 import com.google.gson.Gson;
 
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +27,7 @@ import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.Input;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterException;
+import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
@@ -94,7 +94,7 @@ public class Note implements Serializable, JobListener {
   @SuppressWarnings("rawtypes")
   Map<String, List<AngularObject>> angularObjects = new HashMap<>();
 
-  private transient NoteInterpreterLoader replLoader;
+  private transient InterpreterFactory factory;
   private transient JobListenerFactory jobListenerFactory;
   private transient NotebookRepo repo;
   private transient SearchService index;
@@ -122,10 +122,10 @@ public class Note implements Serializable, JobListener {
   /**
    * @param createdBy note's creator, current principal
    */
-  public Note(NotebookRepo repo, NoteInterpreterLoader replLoader,
+  public Note(NotebookRepo repo, InterpreterFactory factory,
               JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, String createdBy) {
     this.repo = repo;
-    this.replLoader = replLoader;
+    this.factory = factory;
     this.jobListenerFactory = jlFactory;
     this.index = noteIndex;
     this.credentials = credentials;
@@ -138,8 +138,8 @@ public class Note implements Serializable, JobListener {
   }
 
   private String getDefaultInterpreterName() {
-    Optional<InterpreterSetting> settingOptional = replLoader.getDefaultInterpreterSetting();
-    return settingOptional.isPresent() ? settingOptional.get().getGroup() : StringUtils.EMPTY;
+    InterpreterSetting setting = factory.getDefaultInterpreterSetting(getId());
+    return null != setting ? setting.getGroup() : StringUtils.EMPTY;
   }
 
   void putDefaultReplName() {
@@ -180,12 +180,8 @@ public class Note implements Serializable, JobListener {
     this.name = name;
   }
 
-  public NoteInterpreterLoader getNoteReplLoader() {
-    return replLoader;
-  }
-
-  public void setReplLoader(NoteInterpreterLoader replLoader) {
-    this.replLoader = replLoader;
+  public void setInterpreterFactory(InterpreterFactory factory) {
+    this.factory = factory;
   }
 
   public JobListenerFactory getJobListenerFactory() {
@@ -226,7 +222,7 @@ public class Note implements Serializable, JobListener {
    */
 
   public Paragraph addParagraph() {
-    Paragraph p = new Paragraph(this, this, replLoader);
+    Paragraph p = new Paragraph(this, this, factory);
     addLastReplNameIfEmptyText(p);
     synchronized (paragraphs) {
       paragraphs.add(p);
@@ -240,7 +236,7 @@ public class Note implements Serializable, JobListener {
   public void addCloneParagraph(Paragraph srcParagraph) {
 
     // Keep paragraph original ID
-    final Paragraph newParagraph = new Paragraph(srcParagraph.getId(), this, this, replLoader);
+    final Paragraph newParagraph = new Paragraph(srcParagraph.getId(), this, this, factory);
 
     Map<String, Object> config = new HashMap<>(srcParagraph.getConfig());
     Map<String, Object> param = new HashMap<>(srcParagraph.settings.getParams());
@@ -272,7 +268,7 @@ public class Note implements Serializable, JobListener {
    * Insert paragraph in given index.
    */
   public Paragraph insertParagraph(int index) {
-    Paragraph p = new Paragraph(this, this, replLoader);
+    Paragraph p = new Paragraph(this, this, factory);
     addLastReplNameIfEmptyText(p);
     synchronized (paragraphs) {
       paragraphs.add(index, p);
@@ -480,9 +476,9 @@ public class Note implements Serializable, JobListener {
         AuthenticationInfo authenticationInfo = new AuthenticationInfo();
         authenticationInfo.setUser(cronExecutingUser);
         p.setAuthenticationInfo(authenticationInfo);
-        p.setNoteReplLoader(replLoader);
+        p.setInterpreterFactory(factory);
         p.setListener(jobListenerFactory.getParagraphJobListener(this));
-        Interpreter intp = replLoader.get(p.getRequiredReplName());
+        Interpreter intp = factory.getInterpreter(getId(), p.getRequiredReplName());
         intp.getScheduler().submit(p);
       }
     }
@@ -493,13 +489,13 @@ public class Note implements Serializable, JobListener {
    */
   public void run(String paragraphId) {
     Paragraph p = getParagraph(paragraphId);
-    p.setNoteReplLoader(replLoader);
+    p.setInterpreterFactory(factory);
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     String requiredReplName = p.getRequiredReplName();
-    Interpreter intp = replLoader.get(requiredReplName);
+    Interpreter intp = factory.getInterpreter(getId(), requiredReplName);
     if (intp == null) {
       // TODO(jongyoul): Make "%jdbc" configurable from JdbcInterpreter
-      if (conf.getUseJdbcAlias() && null != (intp = replLoader.get("jdbc"))) {
+      if (conf.getUseJdbcAlias() && null != (intp = factory.getInterpreter(getId(), "jdbc"))) {
         String pText = p.getText().replaceFirst(requiredReplName, "jdbc(" + requiredReplName + ")");
         logger.debug("New paragraph: {}", pText);
         p.setEffectiveText(pText);
@@ -514,7 +510,7 @@ public class Note implements Serializable, JobListener {
 
   public List<InterpreterCompletion> completion(String paragraphId, String buffer, int cursor) {
     Paragraph p = getParagraph(paragraphId);
-    p.setNoteReplLoader(replLoader);
+    p.setInterpreterFactory(factory);
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     List completion = p.completion(buffer, cursor);
 
@@ -530,7 +526,7 @@ public class Note implements Serializable, JobListener {
   private void snapshotAngularObjectRegistry() {
     angularObjects = new HashMap<>();
 
-    List<InterpreterSetting> settings = replLoader.getInterpreterSettings();
+    List<InterpreterSetting> settings = factory.getInterpreterSettings(getId());
     if (settings == null || settings.size() == 0) {
       return;
     }
@@ -545,7 +541,7 @@ public class Note implements Serializable, JobListener {
   private void removeAllAngularObjectInParagraph(String paragraphId) {
     angularObjects = new HashMap<String, List<AngularObject>>();
 
-    List<InterpreterSetting> settings = replLoader.getInterpreterSettings();
+    List<InterpreterSetting> settings = factory.getInterpreterSettings(getId());
     if (settings == null || settings.size() == 0) {
       return;
     }

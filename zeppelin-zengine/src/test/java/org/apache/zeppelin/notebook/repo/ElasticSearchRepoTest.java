@@ -153,7 +153,6 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
   @Test
   public void testSaveNotebook() throws IOException, InterruptedException {
     Note note = notebook.createNote("user1");
-    note.getNoteReplLoader().setInterpreters(factory.getDefaultInterpreterSettingList());
 
     Paragraph p1 = note.addParagraph();
     Map<String, Object> config = p1.getConfig();
