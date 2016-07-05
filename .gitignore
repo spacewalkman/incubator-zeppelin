@@ -44,6 +44,7 @@ zeppelin-web/.sass-cache
 zeppelin-web/bower_components
 **nbproject/
 **node/
+**reporterOutput
 
 # R
 /r/lib/
