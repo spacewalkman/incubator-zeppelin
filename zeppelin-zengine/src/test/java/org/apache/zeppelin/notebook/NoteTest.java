@@ -17,8 +17,6 @@
 
 package org.apache.zeppelin.notebook;
 
-import com.google.common.base.Optional;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
