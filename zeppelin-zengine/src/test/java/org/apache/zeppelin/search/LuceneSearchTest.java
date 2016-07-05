@@ -292,7 +292,7 @@ public class LuceneSearchTest {
   }
 
   private Note newNote(String name) {
-    Note note = new Note(notebookRepoMock, interpreterFactory, null, notebookIndex, null, "anonymous");
+    Note note = new Note(notebookRepoMock, interpreterFactory, null, notebookIndex, null, "anonymous", null);
     note.setName(name);
     return note;
   }

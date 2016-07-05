@@ -32,6 +32,7 @@ import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.resource.ResourcePoolUtils;
+import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
@@ -65,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection of Notes.
  */
-public class Notebook {
+public class Notebook implements NoteEventListener {
   static Logger logger = LoggerFactory.getLogger(Notebook.class);
 
   @SuppressWarnings("unused")
@@ -84,6 +85,8 @@ public class Notebook {
   private NotebookRepo notebookRepo;
   private SearchService notebookIndex;
   private NotebookAuthorization notebookAuthorization;
+  private final List<NotebookEventListener> notebookEventListeners =
+          Collections.synchronizedList(new LinkedList<NotebookEventListener>());
   private Credentials credentials;
 
   /**
@@ -141,7 +144,13 @@ public class Notebook {
    */
   public Note createNote(List<String> interpreterIds, String principal)
           throws IOException {
-    Note note = new Note(notebookRepo, replFactory, jobListenerFactory, notebookIndex, credentials, principal);
+    Note note = new Note(
+            notebookRepo,
+            replFactory,
+            jobListenerFactory,
+            notebookIndex,
+            credentials, principal,
+            this);
     synchronized (notes) {
       notes.put(note.id(), note);
     }
@@ -153,6 +162,8 @@ public class Notebook {
     note.setLastUpdated(new Date());
     //notebookIndex.addIndexDoc(note);
     //note.persist();
+
+    fireNoteCreateEvent(note);
     return note;
   }
 
@@ -252,6 +263,13 @@ public class Notebook {
                                      List<String> interpreterSettingIds) throws IOException {
     Note note = getNote(id);
     if (note != null) {
+      List<InterpreterSetting> currentBindings = replFactory.getInterpreterSettings(id);
+      for (InterpreterSetting setting : currentBindings) {
+        if (!interpreterSettingIds.contains(setting.id())) {
+          fireUnbindInterpreter(note, setting);
+        }
+      }
+
       replFactory.setInterpreters(note.getId(), interpreterSettingIds);
       // comment out while note.getNoteReplLoader().setInterpreters(...) do the same
       // replFactory.putNoteInterpreterSettingBinding(id, interpreterSettingIds);
@@ -299,6 +317,15 @@ public class Notebook {
         // remove paragraph scope object
         for (Paragraph p : note.getParagraphs()) {
           ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(id, p.getId());
+
+          // remove app scope object
+          List<ApplicationState> appStates = p.getAllApplicationStates();
+          if (appStates != null) {
+            for (ApplicationState app : appStates) {
+              ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(
+                      id, app.getId());
+            }
+          }
         }
         // remove notebook scope object
         ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(id, null);
@@ -306,6 +333,14 @@ public class Notebook {
         // remove paragraph scope object
         for (Paragraph p : note.getParagraphs()) {
           registry.removeAll(id, p.getId());
+
+          // remove app scope object
+          List<ApplicationState> appStates = p.getAllApplicationStates();
+          if (appStates != null) {
+            for (ApplicationState app : appStates) {
+              registry.removeAll(id, app.getId());
+            }
+          }
         }
         // remove notebook scope object
         registry.removeAll(id, null);
@@ -313,6 +348,8 @@ public class Notebook {
     }
 
     ResourcePoolUtils.removeResourcesBelongsToNote(id);
+
+    fireNoteRemoveEvent(note);
 
     try {
       note.unpersist();
@@ -374,6 +411,8 @@ public class Notebook {
       }
     }
 
+    note.setNoteEventListener(this);
+
     synchronized (notes) {
       notes.put(note.id(), note);
       refreshCron(note.id());
@@ -397,6 +436,7 @@ public class Notebook {
         }
       }
     }
+
     return note;
   }
 
@@ -737,4 +777,46 @@ public class Notebook {
     }
   }
 
+  public void addNotebookEventListener(NotebookEventListener listener) {
+    notebookEventListeners.add(listener);
+  }
+
+  private void fireNoteCreateEvent(Note note) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onNoteCreate(note);
+    }
+  }
+
+  private void fireNoteRemoveEvent(Note note) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onNoteRemove(note);
+    }
+  }
+
+  private void fireUnbindInterpreter(Note note, InterpreterSetting setting) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onUnbindInterpreter(note, setting);
+    }
+  }
+
+  @Override
+  public void onParagraphRemove(Paragraph p) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onParagraphRemove(p);
+    }
+  }
+
+  @Override
+  public void onParagraphCreate(Paragraph p) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onParagraphCreate(p);
+    }
+  }
+
+  @Override
+  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
+    for (NotebookEventListener listener : notebookEventListeners) {
+      listener.onParagraphStatusChange(p, status);
+    }
+  }
 }

@@ -31,6 +31,7 @@ import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
@@ -39,7 +40,6 @@ import org.apache.zeppelin.notebook.utility.IdHashes;
 import org.apache.zeppelin.resource.ResourcePoolUtils;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Binded interpreters for a note
  */
-public class Note implements Serializable, JobListener {
+public class Note implements Serializable, ParagraphJobListener {
   static Logger logger = LoggerFactory.getLogger(Note.class);
   private static final long serialVersionUID = 7920699076577612429L;
 
@@ -99,6 +99,7 @@ public class Note implements Serializable, JobListener {
   private transient NotebookRepo repo;
   private transient SearchService index;
   private transient ScheduledFuture delayedPersist;
+  private transient NoteEventListener noteEventListener;
   private transient Credentials credentials;
 
   /**
@@ -123,11 +124,12 @@ public class Note implements Serializable, JobListener {
    * @param createdBy note's creator, current principal
    */
   public Note(NotebookRepo repo, InterpreterFactory factory,
-              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, String createdBy) {
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, String createdBy, NoteEventListener noteEventListener) {
     this.repo = repo;
     this.factory = factory;
     this.jobListenerFactory = jlFactory;
     this.index = noteIndex;
+    this.noteEventListener = noteEventListener;
     this.credentials = credentials;
     generateId();
     this.createdBy = createdBy;
@@ -227,6 +229,9 @@ public class Note implements Serializable, JobListener {
     synchronized (paragraphs) {
       paragraphs.add(p);
     }
+    if (noteEventListener != null) {
+      noteEventListener.onParagraphCreate(p);
+    }
     return p;
   }
 
@@ -262,6 +267,9 @@ public class Note implements Serializable, JobListener {
     synchronized (paragraphs) {
       paragraphs.add(newParagraph);
     }
+    if (noteEventListener != null) {
+      noteEventListener.onParagraphCreate(newParagraph);
+    }
   }
 
   /**
@@ -272,6 +280,9 @@ public class Note implements Serializable, JobListener {
     addLastReplNameIfEmptyText(p);
     synchronized (paragraphs) {
       paragraphs.add(index, p);
+    }
+    if (noteEventListener != null) {
+      noteEventListener.onParagraphCreate(p);
     }
     return p;
   }
@@ -317,12 +328,14 @@ public class Note implements Serializable, JobListener {
         if (p.getId().equals(paragraphId)) {
           index.deleteIndexDoc(this, p);
           i.remove();
+
+          if (noteEventListener != null) {
+            noteEventListener.onParagraphRemove(p);
+          }
           return p;
         }
       }
     }
-
-
     return null;
   }
 
@@ -476,9 +489,11 @@ public class Note implements Serializable, JobListener {
         AuthenticationInfo authenticationInfo = new AuthenticationInfo();
         authenticationInfo.setUser(cronExecutingUser);
         p.setAuthenticationInfo(authenticationInfo);
+
         p.setInterpreterFactory(factory);
         p.setListener(jobListenerFactory.getParagraphJobListener(this));
         Interpreter intp = factory.getInterpreter(getId(), p.getRequiredReplName());
+
         intp.getScheduler().submit(p);
       }
     }
@@ -493,6 +508,7 @@ public class Note implements Serializable, JobListener {
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     String requiredReplName = p.getRequiredReplName();
     Interpreter intp = factory.getInterpreter(getId(), requiredReplName);
+
     if (intp == null) {
       // TODO(jongyoul): Make "%jdbc" configurable from JdbcInterpreter
       if (conf.getUseJdbcAlias() && null != (intp = factory.getInterpreter(getId(), "jdbc"))) {
@@ -553,8 +569,25 @@ public class Note implements Serializable, JobListener {
       if (registry instanceof RemoteAngularObjectRegistry) {
         // remove paragraph scope object
         ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(id, paragraphId);
+
+        // remove app scope object
+        List<ApplicationState> appStates = getParagraph(paragraphId).getAllApplicationStates();
+        if (appStates != null) {
+          for (ApplicationState app : appStates) {
+            ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(
+                    id, app.getId());
+          }
+        }
       } else {
         registry.removeAll(id, paragraphId);
+
+        // remove app scope object
+        List<ApplicationState> appStates = getParagraph(paragraphId).getAllApplicationStates();
+        if (appStates != null) {
+          for (ApplicationState app : appStates) {
+            registry.removeAll(id, app.getId());
+          }
+        }
       }
     }
   }
@@ -701,14 +734,36 @@ public class Note implements Serializable, JobListener {
 
   @Override
   public void beforeStatusChange(Job job, Status before, Status after) {
+    if (jobListenerFactory != null) {
+      ParagraphJobListener listener = jobListenerFactory.getParagraphJobListener(this);
+      if (listener != null) {
+        listener.beforeStatusChange(job, before, after);
+      }
+    }
   }
 
   @Override
   public void afterStatusChange(Job job, Status before, Status after) {
+    if (jobListenerFactory != null) {
+      ParagraphJobListener listener = jobListenerFactory.getParagraphJobListener(this);
+      if (listener != null) {
+        listener.afterStatusChange(job, before, after);
+      }
+    }
+
+    if (noteEventListener != null) {
+      noteEventListener.onParagraphStatusChange((Paragraph) job, after);
+    }
   }
 
   @Override
   public void onProgressUpdate(Job job, int progress) {
+    if (jobListenerFactory != null) {
+      ParagraphJobListener listener = jobListenerFactory.getParagraphJobListener(this);
+      if (listener != null) {
+        listener.onProgressUpdate(job, progress);
+      }
+    }
   }
 
   public String getCreatedBy() {
@@ -744,4 +799,35 @@ public class Note implements Serializable, JobListener {
   public void setLastUpdated(Date lastUpdated) {
     this.lastUpdated = lastUpdated;
   }
+
+
+  @Override
+  public void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output) {
+    if (jobListenerFactory != null) {
+      ParagraphJobListener listener = jobListenerFactory.getParagraphJobListener(this);
+      if (listener != null) {
+        listener.onOutputAppend(paragraph, out, output);
+      }
+    }
+  }
+
+  @Override
+  public void onOutputUpdate(Paragraph paragraph, InterpreterOutput out, String output) {
+    if (jobListenerFactory != null) {
+      ParagraphJobListener listener = jobListenerFactory.getParagraphJobListener(this);
+      if (listener != null) {
+        listener.onOutputUpdate(paragraph, out, output);
+      }
+    }
+  }
+
+
+  public NoteEventListener getNoteEventListener() {
+    return noteEventListener;
+  }
+
+  public void setNoteEventListener(NoteEventListener noteEventListener) {
+    this.noteEventListener = noteEventListener;
+  }
+
 }

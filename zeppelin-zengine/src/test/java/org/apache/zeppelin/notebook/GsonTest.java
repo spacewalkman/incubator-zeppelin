@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.dep.DependencyResolver;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
-import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter1;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter2;
 import org.apache.zeppelin.notebook.repo.ElasticSearchRepo;
@@ -42,7 +41,7 @@ public class GsonTest implements JobListenerFactory {
     MockInterpreter2.register("mock2", "org.apache.zeppelin.interpreter.mock.MockInterpreter2");
 
     DependencyResolver depResolver = new DependencyResolver(".tmp/local-repo");
-    InterpreterFactory factory = new InterpreterFactory(conf, new InterpreterOption(false), null, null, depResolver);
+    InterpreterFactory factory = new InterpreterFactory(conf, null, null, null, depResolver);
 
     SearchService search = mock(SearchService.class);
     NotebookRepo notebookRepo = new ElasticSearchRepo(conf);
