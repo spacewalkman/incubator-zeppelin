@@ -184,6 +184,11 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public void setInterpreterFactory(InterpreterFactory factory) {
     this.factory = factory;
+    synchronized (paragraphs) {
+      for (Paragraph p : paragraphs) {
+        p.setInterpreterFactory(factory);
+      }
+    }
   }
 
   public JobListenerFactory getJobListenerFactory() {
@@ -490,7 +495,6 @@ public class Note implements Serializable, ParagraphJobListener {
         authenticationInfo.setUser(cronExecutingUser);
         p.setAuthenticationInfo(authenticationInfo);
 
-        p.setInterpreterFactory(factory);
         p.setListener(jobListenerFactory.getParagraphJobListener(this));
         Interpreter intp = factory.getInterpreter(getId(), p.getRequiredReplName());
 
@@ -504,7 +508,6 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public void run(String paragraphId) {
     Paragraph p = getParagraph(paragraphId);
-    p.setInterpreterFactory(factory);
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     String requiredReplName = p.getRequiredReplName();
     Interpreter intp = factory.getInterpreter(getId(), requiredReplName);
@@ -526,7 +529,6 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public List<InterpreterCompletion> completion(String paragraphId, String buffer, int cursor) {
     Paragraph p = getParagraph(paragraphId);
-    p.setInterpreterFactory(factory);
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     List completion = p.completion(buffer, cursor);
 
