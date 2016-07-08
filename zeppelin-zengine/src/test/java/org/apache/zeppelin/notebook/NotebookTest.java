@@ -153,7 +153,7 @@ public class NotebookTest implements JobListenerFactory {
     FileUtils.copyDirectory(srcDir, destDir);
 
     // when load
-    notebook.reloadAllNotes(null);
+    notebook.reloadAllNotes();
     assertEquals(1, notebook.getAllNotes().size());
 
     // then interpreter factory should be injected into all the paragraphs
