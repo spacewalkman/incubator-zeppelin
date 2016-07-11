@@ -24,8 +24,7 @@ angular.module('zeppelinWebApp').service('searchService', function ($resource, b
     var encQuery = window.encodeURIComponent(term.q);
 
     return $resource(
-      baseUrlSrv.getRestApiBase() + '/notebook/search?q=' + encQuery + '&size=' + term.size
-      + '&from=' + term.from, {}, {
+      baseUrlSrv.getRestApiBase() + '/notebook/search?q=' + encQuery + '&size=' + term.size + '&from=' + term.from, {}, {
         query: {method: 'GET'}
       });
   };
