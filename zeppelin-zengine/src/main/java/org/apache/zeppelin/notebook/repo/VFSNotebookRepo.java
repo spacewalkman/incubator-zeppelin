@@ -150,7 +150,6 @@ public class VFSNotebookRepo implements NotebookRepo {
       throw new IOException(noteJson.getName().toString() + " not found");
     }
 
-
     FileContent content = noteJson.getContent();
     InputStream ins = content.getInputStream();
     String json = IOUtils.toString(ins, conf.getString(ConfVars.ZEPPELIN_ENCODING));
