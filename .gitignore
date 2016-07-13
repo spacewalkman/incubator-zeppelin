@@ -53,7 +53,7 @@ zeppelin-web/bower_components
 # project level
 /logs/
 /run/
-/metastore_db/
+**/metastore_db/
 /*.log
 /jobs/
 /zan-repo/
