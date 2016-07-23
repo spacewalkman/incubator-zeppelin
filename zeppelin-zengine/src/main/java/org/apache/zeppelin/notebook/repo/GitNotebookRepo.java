@@ -45,8 +45,9 @@ import java.util.List;
 /**
  * NotebookRepo that hosts all the notebook FS in a single Git repo
  *
- * This impl intended to be simple and straightforward: - does not handle branches - only basic
- * local git file repo, no remote Github push\pull yet
+ * This impl intended to be simple and straightforward:
+ * - does not handle branches
+ * - only basic local git file repo, no remote Github push\pull yet
  *
  * TODO(bzz): add default .gitignore
  */
@@ -69,8 +70,8 @@ public class GitNotebookRepo extends VFSNotebookRepo {
   }
 
   @Override
-  public synchronized void save(Note note) throws IOException {
-    super.save(note);
+  public synchronized void save(Note note, AuthenticationInfo subject) throws IOException {
+    super.save(note, subject);
   }
 
   /* implemented as git add+commit
@@ -80,7 +81,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
    * @see org.apache.zeppelin.notebook.repo.VFSNotebookRepo#checkpoint(String, String)
    */
   @Override
-  public Revision checkpoint(String pattern, String commitMessage) {
+  public Revision checkpoint(String pattern, String commitMessage, AuthenticationInfo subject) {
     Revision revision = null;
     try {
       List<DiffEntry> gitDiff = git.diff().call();
@@ -106,8 +107,9 @@ public class GitNotebookRepo extends VFSNotebookRepo {
    * 3. get note and checkout back to the head
    * 4. apply stash on top and remove it
    */
+  @Override
   public synchronized Note get(String noteId, Revision rev, AuthenticationInfo subject)
-      throws IOException {
+          throws IOException {
     Note note = null;
     RevCommit stash = null;
     try {
@@ -123,7 +125,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
       // checkout to target revision
       git.checkout().setStartPoint(rev.id).addPath(noteId).call();
       // get the note
-      note = super.get(noteId, rev);
+      note = super.get(noteId, subject);
       // checkout back to head
       git.checkout().setStartPoint(head.getName()).addPath(noteId).call();
       if (modified && stash != null) {
@@ -132,7 +134,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
         ObjectId dropped = git.stashDrop().setStashRef(0).call();
         Collection<RevCommit> stashes = git.stashList().call();
         LOG.debug("Stash applied as : {}, and dropped : {}, stash size: {}", applied, dropped,
-            stashes.size());
+                stashes.size());
       }
     } catch (GitAPIException e) {
       LOG.error("Failed to return note from revision \"{}\"", rev.message, e);
@@ -141,7 +143,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
     List<Revision> history = Lists.newArrayList();
     LOG.debug("Listing history for {}:", noteId);
     try {

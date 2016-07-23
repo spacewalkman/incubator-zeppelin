@@ -20,16 +20,6 @@ package org.apache.zeppelin.notebook.repo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -54,8 +44,19 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Backend for storing Notebooks on S3
@@ -110,8 +111,8 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   /**
-   * Create an instance of a custom encryption materials provider class which supplies encryption
-   * keys to use when reading/writing data in S3.
+   * Create an instance of a custom encryption materials provider class
+   * which supplies encryption keys to use when reading/writing data in S3.
    */
   private EncryptionMaterialsProvider createCustomProvider(ZeppelinConfiguration conf)
           throws IOException {
@@ -135,7 +136,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list() throws IOException {
+  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
     List<NoteInfo> infos = new LinkedList<>();
     NoteInfo info;
     try {
@@ -195,12 +196,12 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId) throws IOException {
+  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
     return getNote(user + "/" + "notebook" + "/" + noteId + "/" + "note.json");
   }
 
   @Override
-  public void save(Note note) throws IOException {
+  public void save(Note note, AuthenticationInfo subject) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -221,7 +222,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId) throws IOException {
+  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
     String key = user + "/" + "notebook" + "/" + noteId;
     final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
             .withBucketName(bucketName).withPrefix(key);
@@ -245,20 +246,20 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg)
+  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject)
           throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, Revision rev) throws IOException {
+  public Note get(String noteId, Revision rev, AuthenticationInfo subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
     // Auto-generated method stub
     return null;
   }

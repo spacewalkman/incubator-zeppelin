@@ -70,7 +70,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class NotebookTest implements JobListenerFactory {
+public class NotebookTest implements JobListenerFactory{
   private static final Logger logger = LoggerFactory.getLogger(NotebookTest.class);
 
   private File tmpDir;
@@ -87,7 +87,7 @@ public class NotebookTest implements JobListenerFactory {
   @Before
   public void setUp() throws Exception {
 
-    tmpDir = new File(System.getProperty("java.io.tmpdir") + "/ZeppelinLTest_" + System.currentTimeMillis());
+    tmpDir = new File(System.getProperty("java.io.tmpdir")+"/ZeppelinLTest_"+System.currentTimeMillis());
     tmpDir.mkdirs();
     new File(tmpDir, "conf").mkdirs();
     notebookDir = new File(tmpDir + "/notebook");
@@ -124,8 +124,9 @@ public class NotebookTest implements JobListenerFactory {
 
   @Test
   public void testSelectingReplImplementation() throws IOException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
+
     // run with defatul repl
     Paragraph p1 = note.addParagraph();
     Map config = p1.getConfig();
@@ -133,7 +134,7 @@ public class NotebookTest implements JobListenerFactory {
     p1.setConfig(config);
     p1.setText("hello world");
     note.run(p1.getId());
-    while (p1.isTerminated() == false || p1.getResult() == null) Thread.yield();
+    while(p1.isTerminated()==false || p1.getResult()==null) Thread.yield();
     assertEquals("repl1: hello world", p1.getResult().message());
 
     // run with specific repl
@@ -141,7 +142,7 @@ public class NotebookTest implements JobListenerFactory {
     p2.setConfig(config);
     p2.setText("%mock2 hello world");
     note.run(p2.getId());
-    while (p2.isTerminated() == false || p2.getResult() == null) Thread.yield();
+    while(p2.isTerminated()==false || p2.getResult()==null) Thread.yield();
     assertEquals("repl2: hello world", p2.getResult().message());
   }
 
@@ -153,7 +154,7 @@ public class NotebookTest implements JobListenerFactory {
     FileUtils.copyDirectory(srcDir, destDir);
 
     // when load
-    notebook.reloadAllNotes();
+    notebook.reloadAllNotes(null);
     assertEquals(1, notebook.getAllNotes().size());
 
     // then interpreter factory should be injected into all the paragraphs
@@ -185,8 +186,8 @@ public class NotebookTest implements JobListenerFactory {
     assertEquals(notes.size(), 0);
 
     // load copied notebook on memory when reloadAllNotes() is called
-    Note copiedNote = notebookRepo.get("2A94M5J1Z");
-    notebook.reloadAllNotes();
+    Note copiedNote = notebookRepo.get("2A94M5J1Z", null);
+    notebook.reloadAllNotes(null);
     notes = notebook.getAllNotes();
     assertEquals(notes.size(), 2);
     assertEquals(notes.get(1).id(), copiedNote.id());
@@ -204,14 +205,14 @@ public class NotebookTest implements JobListenerFactory {
     assertEquals(notes.size(), 2);
 
     // delete notebook from notebook list when reloadAllNotes() is called
-    notebook.reloadAllNotes();
+    notebook.reloadAllNotes(null);
     notes = notebook.getAllNotes();
     assertEquals(notes.size(), 0);
   }
 
   @Test
   public void testPersist() throws IOException, SchedulerException, RepositoryException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
 
     // run with default repl
     Paragraph p1 = note.addParagraph();
@@ -219,7 +220,7 @@ public class NotebookTest implements JobListenerFactory {
     config.put("enabled", true);
     p1.setConfig(config);
     p1.setText("hello world");
-    note.persist();
+    note.persist(null);
 
     Notebook notebook2 = new Notebook(
             conf, notebookRepo, schedulerFactory,
@@ -228,8 +229,8 @@ public class NotebookTest implements JobListenerFactory {
   }
 
   @Test
-  public void testClearParagraphOutput() throws IOException, SchedulerException {
-    Note note = notebook.createNote("anonymous");
+  public void testClearParagraphOutput() throws IOException, SchedulerException{
+    Note note = notebook.createNote(null);
     Paragraph p1 = note.addParagraph();
     Map config = p1.getConfig();
     config.put("enabled", true);
@@ -237,7 +238,7 @@ public class NotebookTest implements JobListenerFactory {
     p1.setText("hello world");
     note.run(p1.getId());
 
-    while (p1.isTerminated() == false || p1.getResult() == null) Thread.yield();
+    while(p1.isTerminated()==false || p1.getResult()==null) Thread.yield();
     assertEquals("repl1: hello world", p1.getResult().message());
 
     // clear paragraph output/result
@@ -247,7 +248,7 @@ public class NotebookTest implements JobListenerFactory {
 
   @Test
   public void testRunAll() throws IOException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     // p1
@@ -272,7 +273,7 @@ public class NotebookTest implements JobListenerFactory {
     note.runAll();
 
     // wait for finish
-    while (p3.isTerminated() == false) {
+    while(p3.isTerminated()==false) {
       Thread.yield();
     }
 
@@ -280,13 +281,13 @@ public class NotebookTest implements JobListenerFactory {
     assertNull(p2.getResult());
     assertEquals("repl1: p3", p3.getResult().message());
 
-    notebook.removeNote(note.getId());
+    notebook.removeNote(note.getId(), null);
   }
 
   @Test
-  public void testSchedule() throws InterruptedException, IOException {
+  public void testSchedule() throws InterruptedException, IOException{
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     Paragraph p = note.addParagraph();
@@ -302,7 +303,7 @@ public class NotebookTest implements JobListenerFactory {
     config.put("cron", "* * * * * ?");
     note.setConfig(config);
     notebook.refreshCron(note.id());
-    Thread.sleep(1 * 1000);
+    Thread.sleep(1*1000);
 
     // remove cron scheduler.
     config.put("cron", null);
@@ -311,33 +312,33 @@ public class NotebookTest implements JobListenerFactory {
     Thread.sleep(1000);
     dateFinished = p.getDateFinished();
     assertNotNull(dateFinished);
-    Thread.sleep(1 * 1000);
+    Thread.sleep(1*1000);
     assertEquals(dateFinished, p.getDateFinished());
   }
 
   @Test
-  public void testAutoRestartInterpreterAfterSchedule() throws InterruptedException, IOException {
+  public void testAutoRestartInterpreterAfterSchedule() throws InterruptedException, IOException{
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     Paragraph p = note.addParagraph();
     Map config = new HashMap<String, Object>();
     p.setConfig(config);
-    p.setText("p1");
+    p.setText("sleep 1000");
+
+    Paragraph p2 = note.addParagraph();
+    p2.setConfig(config);
+    p2.setText("%mock2 sleep 500");
 
     // set cron scheduler, once a second
     config = note.getConfig();
     config.put("enabled", true);
-    config.put("cron", "* * * * * ?");
-    config.put("releaseresource", "true");
+    config.put("cron", "1/3 * * * * ?");
+    config.put("releaseresource", true);
     note.setConfig(config);
     notebook.refreshCron(note.id());
-    while (p.getStatus() != Status.FINISHED) {
-      Thread.sleep(100);
-    }
-    Date dateFinished = p.getDateFinished();
-    assertNotNull(dateFinished);
+
 
     MockInterpreter1 mock1 = ((MockInterpreter1) (((ClassloaderInterpreter)
             ((LazyOpenInterpreter) factory.getInterpreter(note.getId(), "mock1")).getInnerInterpreter())
@@ -352,22 +353,25 @@ public class NotebookTest implements JobListenerFactory {
       Thread.yield();
     }
 
-    Thread.sleep(1000);
-    while (p.getStatus() != Status.FINISHED) {
-      Thread.sleep(100);
+    // wait until interpreters are closed
+    while (mock1.isOpen() || mock2.isOpen()) {
+      Thread.yield();
     }
-    assertNotEquals(dateFinished, p.getDateFinished());
 
     // remove cron scheduler.
     config.put("cron", null);
     note.setConfig(config);
     notebook.refreshCron(note.id());
+
+    // make sure all paragraph has been executed
+    assertNotNull(p.getDateFinished());
+    assertNotNull(p2.getDateFinished());
   }
 
   @Test
   public void testExportAndImportNote() throws IOException, CloneNotSupportedException,
           InterruptedException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     final Paragraph p = note.addParagraph();
@@ -381,7 +385,8 @@ public class NotebookTest implements JobListenerFactory {
 
     String exportedNoteJson = notebook.exportNote(note.getId());
 
-    Note importedNote = notebook.importNote(exportedNoteJson, "Title", "anonymous");
+    Note importedNote = notebook.importNote(exportedNoteJson, "Title", null);
+
     Paragraph p2 = importedNote.getParagraphs().get(0);
 
     // Test
@@ -393,16 +398,16 @@ public class NotebookTest implements JobListenerFactory {
   @Test
   public void testCloneNote() throws IOException, CloneNotSupportedException,
           InterruptedException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     final Paragraph p = note.addParagraph();
     p.setText("hello world");
     note.runAll();
-    while (p.isTerminated() == false || p.getResult() == null) Thread.yield();
+    while(p.isTerminated()==false || p.getResult()==null) Thread.yield();
 
     p.setStatus(Status.RUNNING);
-    Note cloneNote = notebook.cloneNote(note.getId(), "clone note", "anonymous");
+    Note cloneNote = notebook.cloneNote(note.getId(), "clone note", null);
     Paragraph cp = cloneNote.paragraphs.get(0);
     assertEquals(cp.getStatus(), Status.READY);
 
@@ -415,7 +420,7 @@ public class NotebookTest implements JobListenerFactory {
   @Test
   public void testCloneNoteWithExceptionResult() throws IOException, CloneNotSupportedException,
           InterruptedException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     final Paragraph p = note.addParagraph();
@@ -427,9 +432,7 @@ public class NotebookTest implements JobListenerFactory {
     // Force paragraph to have String type object
     p.setResult("Exception");
 
-
-    Note cloneNote = notebook.cloneNote(note.getId(), "clone note with Exception result", "anonymous");
-
+    Note cloneNote = notebook.cloneNote(note.getId(), "clone note with Exception result", null);
     Paragraph cp = cloneNote.paragraphs.get(0);
 
     // Keep same ParagraphID
@@ -440,7 +443,7 @@ public class NotebookTest implements JobListenerFactory {
 
   @Test
   public void testResourceRemovealOnParagraphNoteRemove() throws IOException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
     for (InterpreterGroup intpGroup : InterpreterGroup.getAll()) {
       intpGroup.setResourcePool(new LocalResourcePool(intpGroup.getId()));
@@ -451,8 +454,8 @@ public class NotebookTest implements JobListenerFactory {
     p2.setText("%mock2 world");
 
     note.runAll();
-    while (p1.isTerminated() == false || p1.getResult() == null) Thread.yield();
-    while (p2.isTerminated() == false || p2.getResult() == null) Thread.yield();
+    while(p1.isTerminated()==false || p1.getResult()==null) Thread.yield();
+    while(p2.isTerminated()==false || p2.getResult()==null) Thread.yield();
 
     assertEquals(2, ResourcePoolUtils.getAllResources().size());
 
@@ -461,7 +464,7 @@ public class NotebookTest implements JobListenerFactory {
     assertEquals(1, ResourcePoolUtils.getAllResources().size());
 
     // remove note
-    notebook.removeNote(note.id());
+    notebook.removeNote(note.id(), null);
     assertEquals(0, ResourcePoolUtils.getAllResources().size());
   }
 
@@ -469,7 +472,7 @@ public class NotebookTest implements JobListenerFactory {
   public void testAngularObjectRemovalOnNotebookRemove() throws InterruptedException,
           IOException {
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     AngularObjectRegistry registry = factory
@@ -488,7 +491,7 @@ public class NotebookTest implements JobListenerFactory {
     registry.add("o3", "object3", null, null);
 
     // remove notebook
-    notebook.removeNote(note.id());
+    notebook.removeNote(note.id(), null);
 
     // notebook scope or paragraph scope object should be removed
     assertNull(registry.get("o1", note.id(), null));
@@ -502,7 +505,7 @@ public class NotebookTest implements JobListenerFactory {
   public void testAngularObjectRemovalOnParagraphRemove() throws InterruptedException,
           IOException {
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     AngularObjectRegistry registry = factory
@@ -535,7 +538,7 @@ public class NotebookTest implements JobListenerFactory {
   public void testAngularObjectRemovalOnInterpreterRestart() throws InterruptedException,
           IOException {
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     AngularObjectRegistry registry = factory
@@ -548,20 +551,20 @@ public class NotebookTest implements JobListenerFactory {
     registry.add("o2", "object2", null, null);
 
     // restart interpreter
-    factory.restart(factory.getInterpreterSettings(note.getId()).get(0).id());
+    factory.restart(factory.getInterpreterSettings(note.getId()).get(0).getId());
     registry = factory.getInterpreterSettings(note.getId()).get(0).getInterpreterGroup("sharedProcess")
             .getAngularObjectRegistry();
 
     // local and global scope object should be removed
     assertNull(registry.get("o1", note.id(), null));
     assertNull(registry.get("o2", null, null));
-    notebook.removeNote(note.id());
+    notebook.removeNote(note.id(), null);
   }
 
   @Test
   public void testPermissions() throws IOException {
     // create a note and a paragraph
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
     // empty owners, readers and writers means note is public
     assertEquals(notebookAuthorization.isOwner(note.id(),
@@ -600,13 +603,13 @@ public class NotebookTest implements JobListenerFactory {
     assertEquals(notebookAuthorization.isReader(note.id(),
             new HashSet<String>(Arrays.asList("user3"))), true);
 
-    notebook.removeNote(note.id());
+    notebook.removeNote(note.id(), null);
   }
 
   @Test
   public void testAbortParagraphStatusOnInterpreterRestart() throws InterruptedException,
           IOException {
-    Note note = notebook.createNote("anonymous");
+    Note note = notebook.createNote(null);
     factory.setInterpreters(note.getId(), factory.getDefaultInterpreterSettingList());
 
     ArrayList<Paragraph> paragraphs = new ArrayList<>();
@@ -624,7 +627,7 @@ public class NotebookTest implements JobListenerFactory {
 
     while (paragraphs.get(0).getStatus() != Status.FINISHED) Thread.yield();
 
-    factory.restart(factory.getInterpreterSettings(note.getId()).get(0).id());
+    factory.restart(factory.getInterpreterSettings(note.getId()).get(0).getId());
 
     boolean isAborted = false;
     for (Paragraph p : paragraphs) {
@@ -643,14 +646,14 @@ public class NotebookTest implements JobListenerFactory {
   @Test
   public void testPerSessionInterpreterCloseOnNoteRemoval() throws IOException {
     // create a notes
-    Note note1 = notebook.createNote("anonymous");
+    Note note1  = notebook.createNote(null);
     Paragraph p1 = note1.addParagraph();
     p1.setText("getId");
 
     // restart interpreter with per note session enabled
     for (InterpreterSetting setting : factory.getInterpreterSettings(note1.getId())) {
       setting.getOption().setPerNoteSession(true);
-      notebook.getInterpreterFactory().restart(setting.id());
+      notebook.getInterpreterFactory().restart(setting.getId());
     }
 
     note1.run(p1.getId());
@@ -658,8 +661,8 @@ public class NotebookTest implements JobListenerFactory {
     InterpreterResult result = p1.getResult();
 
     // remove note and recreate
-    notebook.removeNote(note1.getId());
-    note1 = notebook.createNote("anonymous");
+    notebook.removeNote(note1.getId(), null);
+    note1 = notebook.createNote(null);
     p1 = note1.addParagraph();
     p1.setText("getId");
 
@@ -667,16 +670,16 @@ public class NotebookTest implements JobListenerFactory {
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     assertNotEquals(p1.getResult().message(), result.message());
 
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
   @Test
   public void testPerSessionInterpreter() throws IOException {
     // create two notes
-    Note note1 = notebook.createNote("anonymous");
+    Note note1  = notebook.createNote(null);
     Paragraph p1 = note1.addParagraph();
 
-    Note note2 = notebook.createNote("anonymous");
+    Note note2  = notebook.createNote(null);
     Paragraph p2 = note2.addParagraph();
 
     p1.setText("getId");
@@ -695,7 +698,7 @@ public class NotebookTest implements JobListenerFactory {
     // restart interpreter with per note session enabled
     for (InterpreterSetting setting : notebook.getInterpreterFactory().getInterpreterSettings(note1.getId())) {
       setting.getOption().setPerNoteSession(true);
-      notebook.getInterpreterFactory().restart(setting.id());
+      notebook.getInterpreterFactory().restart(setting.getId());
     }
 
     // run per note session enabled
@@ -707,21 +710,21 @@ public class NotebookTest implements JobListenerFactory {
 
     assertNotEquals(p1.getResult().message(), p2.getResult().message());
 
-    notebook.removeNote(note1.getId());
-    notebook.removeNote(note2.getId());
+    notebook.removeNote(note1.getId(), null);
+    notebook.removeNote(note2.getId(), null);
   }
 
   @Test
   public void testPerSessionInterpreterCloseOnUnbindInterpreterSetting() throws IOException {
     // create a notes
-    Note note1 = notebook.createNote("anonymous");
+    Note note1  = notebook.createNote(null);
     Paragraph p1 = note1.addParagraph();
     p1.setText("getId");
 
     // restart interpreter with per note session enabled
     for (InterpreterSetting setting : factory.getInterpreterSettings(note1.getId())) {
       setting.getOption().setPerNoteSession(true);
-      notebook.getInterpreterFactory().restart(setting.id());
+      notebook.getInterpreterFactory().restart(setting.getId());
     }
 
     note1.run(p1.getId());
@@ -739,7 +742,7 @@ public class NotebookTest implements JobListenerFactory {
 
     assertNotEquals(result.message(), p1.getResult().message());
 
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
   @Test
@@ -797,7 +800,7 @@ public class NotebookTest implements JobListenerFactory {
     notebook.bindInterpretersToNote(note1.id(), new LinkedList<String>());
     assertEquals(settings.size(), unbindInterpreter.get());
 
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
     assertEquals(1, onNoteRemove.get());
     assertEquals(1, onParagraphRemove.get());
   }
@@ -805,7 +808,7 @@ public class NotebookTest implements JobListenerFactory {
   @Test
   public void testNormalizeNoteName() throws IOException {
     // create a notes
-    Note note1 = notebook.createNote("anonymous");
+    Note note1  = notebook.createNote(null);
 
     note1.setName("MyNote");
     assertEquals(note1.getName(), "MyNote");
@@ -825,15 +828,15 @@ public class NotebookTest implements JobListenerFactory {
     note1.setName("\\\\\\MyNote///sub");
     assertEquals(note1.getName(), "/MyNote/sub");
 
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
-  private void delete(File file) {
-    if (file.isFile()) file.delete();
-    else if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null && files.length > 0) {
-        for (File f : files) {
+  private void delete(File file){
+    if(file.isFile()) file.delete();
+    else if(file.isDirectory()){
+      File [] files = file.listFiles();
+      if(files!=null && files.length>0){
+        for(File f : files){
           delete(f);
         }
       }
@@ -843,7 +846,7 @@ public class NotebookTest implements JobListenerFactory {
 
   @Override
   public ParagraphJobListener getParagraphJobListener(Note note) {
-    return new ParagraphJobListener() {
+    return new ParagraphJobListener(){
 
       @Override
       public void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output) {

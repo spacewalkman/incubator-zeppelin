@@ -10,6 +10,7 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.search.SearchService;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.util.GsonUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -105,7 +106,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   @Override
-  public List<NoteInfo> list() throws IOException {
+  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
     SearchResponse response = client.prepareSearch(indexName)
             .setTypes(noteTypeName)
             .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -124,7 +125,6 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
         Note noteParsed = GsonUtil.fromJson(hit.getSourceAsString(), Note.class);
         results.add(new NoteInfo(noteParsed));
       }
-
     }
 
     //TODO: search with aggs,fields tags/topic?(qy)
@@ -167,7 +167,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public Note get(String noteId) throws IOException {
+  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
     if (null == noteId || noteId.isEmpty()) {
       LOG.error("noteId can't be null");
       return null;
@@ -198,7 +198,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public void save(Note note) throws IOException {
+  public void save(Note note, AuthenticationInfo subject) throws IOException {
     indexNoteAndParagraphs(note);
   }
 
@@ -284,7 +284,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   @Override
-  public void remove(String noteId) throws IOException {
+  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
     //query note's pargraphs and delete
     HasParentQueryBuilder qb = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
 
@@ -447,7 +447,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     if (collection != null && collection.size() > 0) {
       for (Note note : collection) {
         try {
-          this.save(note);
+          this.save(note, null);
         } catch (IOException e) {
           LOG.error("Failed to index note, id={}", note.getId(), e);
         }
@@ -458,7 +458,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   @Override
   public void addIndexDoc(Note note) {
     try {
-      this.save(note);
+      this.save(note, null);
     } catch (IOException e) {
       LOG.error("index failed", e);
     }
@@ -470,7 +470,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   @Override
   public void deleteIndexDocs(Note note) {
     try {
-      this.remove(note.getId());
+      this.remove(note.getId(), null);
     } catch (IOException e) {
       LOG.error("delete note id={} failed", note.getId(), e);
     }
@@ -517,17 +517,20 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   //TODO:(qy) below are really interface pollution
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject) throws IOException {
+    // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, Revision rev) throws IOException {
+  public Note get(String noteId, Revision rev, AuthenticationInfo subject) throws IOException {
+    // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+    // Auto-generated method stub
     return null;
   }
 }

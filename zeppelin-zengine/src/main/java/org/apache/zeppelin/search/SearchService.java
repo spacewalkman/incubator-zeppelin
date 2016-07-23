@@ -40,48 +40,48 @@ public interface SearchService {
    * @param queryStr a query
    * @return A list of matching paragraphs (id, text, snippet w/ highlight)
    */
-  public List<Map<String, String>> query(String queryStr, int size, int form);
+  List<Map<String, String>> query(String queryStr, int size, int form);
 
   /**
    * Updates all documents in index for the given note: - name - all paragraphs
    *
    * @param note a Note to update index for
    */
-  public void updateIndexDoc(Note note) throws IOException;
+  void updateIndexDoc(Note note) throws IOException;
 
 
   /**
    * partial update note, update a single paragraph in a note
    */
-  public void updateIndexParagraph(Note note, Paragraph paragraph) throws IOException;
+  void updateIndexParagraph(Note note, Paragraph paragraph) throws IOException;
 
   /**
    * Indexes full collection of notes: all the paragraphs + Note names
    *
    * @param collection of Notes
    */
-  public void addIndexDocs(Collection<Note> collection);
+  void addIndexDocs(Collection<Note> collection);
 
   /**
    * Indexes the given notebook.
    *
    * @throws IOException If there is a low-level I/O error
    */
-  public void addIndexDoc(Note note);
+  void addIndexDoc(Note note);
 
   /**
    * Deletes all docs on given Note from index
    */
-  public void deleteIndexDocs(Note note);
+  void deleteIndexDocs(Note note);
 
   /**
    * Deletes doc for a given
    */
-  public void deleteIndexDoc(Note note, Paragraph p);
+  void deleteIndexDoc(Note note, Paragraph p);
 
   /**
    * Frees the recourses used by index
    */
-  public void close();
+  void close();
 
 }

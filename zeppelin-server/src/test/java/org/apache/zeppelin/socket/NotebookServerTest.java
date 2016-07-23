@@ -9,7 +9,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,11 +88,11 @@ public class NotebookServerTest extends AbstractTestRestApi {
     String origin = "http://" + InetAddress.getLocalHost().getHostName() + ":8080";
 
     assertTrue("Origin " + origin + " is not allowed. Please check your hostname.",
-          server.checkOrigin(new TestHttpServletRequest(), origin));
+            server.checkOrigin(new TestHttpServletRequest(), origin));
   }
 
   @Test
-  public void checkInvalidOrigin(){
+  public void checkInvalidOrigin() {
     NotebookServer server = new NotebookServer();
     assertFalse(server.checkOrigin(new TestHttpServletRequest(), "http://evillocalhost:8080"));
   }
@@ -100,7 +100,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
   @Test
   public void testMakeSureNoAngularObjectBroadcastToWebsocketWhoFireTheEvent() throws IOException {
     // create a notebook
-    Note note1 = notebook.createNote("anonymous");
+    Note note1 = notebook.createNote(null);
 
     // get reference to interpreterGroup
     InterpreterGroup interpreterGroup = null;
@@ -139,43 +139,43 @@ public class NotebookServerTest extends AbstractTestRestApi {
 
     // update object from sock1
     notebookServer.onMessage(sock1, gson.toJson(
-        new Message(OP.ANGULAR_OBJECT_UPDATED)
-        .put("noteId", note1.getId())
-        .put("name", "object1")
-        .put("value", "value1")
-        .put("interpreterGroupId", interpreterGroup.getId())));
+            new Message(OP.ANGULAR_OBJECT_UPDATED)
+                    .put("noteId", note1.getId())
+                    .put("name", "object1")
+                    .put("value", "value1")
+                    .put("interpreterGroupId", interpreterGroup.getId())));
 
 
     // expect object is broadcasted except for where the update is created
     verify(sock1, times(0)).send(anyString());
     verify(sock2, times(1)).send(anyString());
 
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
   @Test
   public void testImportNotebook() throws IOException {
     String msg = "{\"op\":\"IMPORT_NOTE\",\"data\":" +
-        "{\"notebook\":{\"paragraphs\": [{\"text\": \"Test " +
-        "paragraphs import\",\"config\":{},\"settings\":{}}]," +
-        "\"name\": \"Test Zeppelin notebook import\",\"config\": " +
-        "{}}}}";
+            "{\"notebook\":{\"paragraphs\": [{\"text\": \"Test " +
+            "paragraphs import\",\"config\":{},\"settings\":{}}]," +
+            "\"name\": \"Test Zeppelin notebook import\",\"config\": " +
+            "{}}}}";
     Message messageReceived = notebookServer.deserializeMessage(msg);
     Note note = null;
-    HashSet<String> userAndRoles=new HashSet<String>();
-    userAndRoles.add("anonymous");
+    HashSet<String> userAndRoles = new HashSet<String>();
+    userAndRoles.add(null);
     try {
       note = notebookServer.importNote(null, userAndRoles, notebook, messageReceived);
     } catch (NullPointerException e) {
       //broadcastNoteList(); failed nothing to worry.
       LOG.error("Exception in NotebookServerTest while testImportNotebook, failed nothing to " +
-          "worry ", e);
+              "worry ", e);
     }
 
     assertNotEquals(null, notebook.getNote(note.getId()));
     assertEquals("Test Zeppelin notebook import", notebook.getNote(note.getId()).getName());
     assertEquals("Test paragraphs import", notebook.getNote(note.getId()).getParagraphs().get(0).getText());
-    notebook.removeNote(note.getId());
+    notebook.removeNote(note.getId(), null);
   }
 
   @Test
@@ -212,7 +212,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     NotebookSocket conn = mock(NotebookSocket.class);
     NotebookSocket otherConn = mock(NotebookSocket.class);
 
-    final String mdMsg1 =  server.serializeMessage(new Message(OP.ANGULAR_OBJECT_UPDATE)
+    final String mdMsg1 = server.serializeMessage(new Message(OP.ANGULAR_OBJECT_UPDATE)
             .put("angularObject", ao1)
             .put("interpreterGroupId", "mdGroup")
             .put("noteId", "noteId")
@@ -261,7 +261,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     NotebookSocket conn = mock(NotebookSocket.class);
     NotebookSocket otherConn = mock(NotebookSocket.class);
 
-    final String mdMsg1 =  server.serializeMessage(new Message(OP.ANGULAR_OBJECT_UPDATE)
+    final String mdMsg1 = server.serializeMessage(new Message(OP.ANGULAR_OBJECT_UPDATE)
             .put("angularObject", ao1)
             .put("interpreterGroupId", "mdGroup")
             .put("noteId", "noteId")
@@ -304,7 +304,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     NotebookSocket conn = mock(NotebookSocket.class);
     NotebookSocket otherConn = mock(NotebookSocket.class);
 
-    final String mdMsg1 =  server.serializeMessage(new Message(OP.ANGULAR_OBJECT_REMOVE)
+    final String mdMsg1 = server.serializeMessage(new Message(OP.ANGULAR_OBJECT_REMOVE)
             .put("angularObject", ao1)
             .put("interpreterGroupId", "mdGroup")
             .put("noteId", "noteId")
@@ -352,7 +352,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     NotebookSocket conn = mock(NotebookSocket.class);
     NotebookSocket otherConn = mock(NotebookSocket.class);
 
-    final String mdMsg1 =  server.serializeMessage(new Message(OP.ANGULAR_OBJECT_REMOVE)
+    final String mdMsg1 = server.serializeMessage(new Message(OP.ANGULAR_OBJECT_REMOVE)
             .put("angularObject", ao1)
             .put("interpreterGroupId", "mdGroup")
             .put("noteId", "noteId")

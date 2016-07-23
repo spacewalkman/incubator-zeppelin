@@ -19,15 +19,9 @@ package org.apache.zeppelin.notebook.repo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
-import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.azure.storage.file.ListFileItem;
-
+import com.microsoft.azure.storage.file.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -36,14 +30,10 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Date;
@@ -83,7 +73,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list() throws IOException {
+  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
     List<NoteInfo> infos = new LinkedList<NoteInfo>();
     NoteInfo info = null;
 
@@ -134,7 +124,7 @@ public class AzureNotebookRepo implements NotebookRepo {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.registerTypeAdapter(Date.class, new NotebookImportDeserializer())
-        .create();
+            .create();
 
     Note note = gson.fromJson(json, Note.class);
 
@@ -148,12 +138,12 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId) throws IOException {
+  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
     return getNote(noteId);
   }
 
   @Override
-  public void save(Note note) throws IOException {
+  public void save(Note note, AuthenticationInfo subject) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -200,7 +190,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId) throws IOException {
+  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
     try {
       CloudFileDirectory dir = rootDir.getDirectoryReference(noteId);
 
@@ -219,7 +209,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg)
+  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject)
           throws IOException {
     // no-op
     LOG.info("Checkpoint feature isn't supported in {}", this.getClass().toString());
@@ -227,13 +217,13 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Revision rev) throws IOException {
+  public Note get(String noteId, Revision rev, AuthenticationInfo subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
     // Auto-generated method stub
     return null;
   }

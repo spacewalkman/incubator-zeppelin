@@ -19,6 +19,7 @@ package org.apache.zeppelin.helium;
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.dep.DependencyResolver;
+import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterOption;
@@ -172,7 +173,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
 
     // clean
     heliumAppFactory.unload(p1, appId);
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
   @Test
@@ -209,7 +210,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
     assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 
     // clean
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
 
@@ -247,7 +248,28 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
     assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 
     // clean
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
+  }
+
+  @Test
+  public void testInterpreterUnbindOfNullReplParagraph() throws IOException {
+    // create note
+    Note note1 = notebook.createNote(null);
+
+    // add paragraph with invalid magic
+    Paragraph p1 = note1.addParagraph();
+    p1.setText("%fake ");
+
+    // make sure that p1's repl is null
+    Interpreter intp = p1.getCurrentRepl();
+    assertEquals(intp, null);
+
+    // Unbind all interpreter from note
+    // NullPointerException shouldn't occur here
+    notebook.bindInterpretersToNote(note1.id(), new LinkedList<String>());
+
+    // remove note
+    notebook.removeNote(note1.getId(), null);
   }
 
 
@@ -266,7 +288,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
     String mock1IntpSettingId = null;
     for (InterpreterSetting setting : notebook.getBindedInterpreterSettings(note1.id())) {
       if (setting.getName().equals("mock1")) {
-        mock1IntpSettingId = setting.id();
+        mock1IntpSettingId = setting.getId();
         break;
       }
     }
@@ -296,7 +318,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
     assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 
     // clean
-    notebook.removeNote(note1.getId());
+    notebook.removeNote(note1.getId(), null);
   }
 
   @Override

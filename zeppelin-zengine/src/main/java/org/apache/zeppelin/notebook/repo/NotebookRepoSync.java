@@ -22,6 +22,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +50,6 @@ public class NotebookRepoSync implements NotebookRepo {
 
   private List<NotebookRepo> repos = new ArrayList<NotebookRepo>();
 
-  /**
-   * @throws - Exception
-   */
   @SuppressWarnings("static-access")
   public NotebookRepoSync(ZeppelinConfiguration conf) {
     config = conf;
@@ -112,37 +111,37 @@ public class NotebookRepoSync implements NotebookRepo {
    * Lists Notebooks from the first repository
    */
   @Override
-  public List<NoteInfo> list() throws IOException {
-    return getRepo(0).list();
+  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
+    return getRepo(0).list(subject);
   }
 
   /* list from specific repo (for tests) */
-  List<NoteInfo> list(int repoIndex) throws IOException {
-    return getRepo(repoIndex).list();
+  List<NoteInfo> list(int repoIndex, AuthenticationInfo subject) throws IOException {
+    return getRepo(repoIndex).list(subject);
   }
 
   /**
    * Returns from Notebook from the first repository
    */
   @Override
-  public Note get(String noteId) throws IOException {
-    return getRepo(0).get(noteId);
+  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+    return getRepo(0).get(noteId, subject);
   }
 
   /* get note from specific repo (for tests) */
-  Note get(int repoIndex, String noteId) throws IOException {
-    return getRepo(repoIndex).get(noteId);
+  Note get(int repoIndex, String noteId, AuthenticationInfo subject) throws IOException {
+    return getRepo(repoIndex).get(noteId, subject);
   }
 
   /**
    * Saves to all repositories
    */
   @Override
-  public void save(Note note) throws IOException {
-    getRepo(0).save(note);
+  public void save(Note note, AuthenticationInfo subject) throws IOException {
+    getRepo(0).save(note, subject);
     if (getRepoCount() > 1) {
       try {
-        getRepo(1).save(note);
+        getRepo(1).save(note, subject);
       } catch (IOException e) {
         LOG.info(e.getMessage() + ": Failed to write to secondary storage");
       }
@@ -150,17 +149,18 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   /* save note to specific repo (for tests) */
-  void save(int repoIndex, Note note) throws IOException {
-    getRepo(repoIndex).save(note);
+  void save(int repoIndex, Note note, AuthenticationInfo subject) throws IOException {
+    getRepo(repoIndex).save(note, subject);
   }
 
   @Override
-  public void remove(String noteId) throws IOException {
+  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
     for (NotebookRepo repo : repos) {
-      repo.remove(noteId);
+      repo.remove(noteId, subject);
     }
     /* TODO(khalid): handle case when removing from secondary storage fails */
   }
+
 
   /**
    * Copies new/updated notes from source to destination storage
@@ -169,8 +169,8 @@ public class NotebookRepoSync implements NotebookRepo {
     LOG.info("Sync started");
     NotebookRepo srcRepo = getRepo(sourceRepoIndex);
     NotebookRepo dstRepo = getRepo(destRepoIndex);
-    List<NoteInfo> srcNotes = srcRepo.list();
-    List<NoteInfo> dstNotes = dstRepo.list();
+    List<NoteInfo> srcNotes = srcRepo.list(null);
+    List<NoteInfo> dstNotes = dstRepo.list(null);
 
     Map<String, List<String>> noteIDs = notesCheckDiff(srcNotes, srcRepo, dstNotes, dstRepo);
     List<String> pushNoteIDs = noteIDs.get(pushKey);
@@ -205,7 +205,7 @@ public class NotebookRepoSync implements NotebookRepo {
   private void pushNotes(List<String> ids, NotebookRepo localRepo,
                          NotebookRepo remoteRepo) throws IOException {
     for (String id : ids) {
-      remoteRepo.save(localRepo.get(id));
+      remoteRepo.save(localRepo.get(id, null), null);
     }
   }
 
@@ -237,8 +237,8 @@ public class NotebookRepoSync implements NotebookRepo {
       dnote = containsID(destNotes, snote.getId());
       if (dnote != null) {
         /* note exists in source and destination storage systems */
-        sdate = lastModificationDate(sourceRepo.get(snote.getId()));
-        ddate = lastModificationDate(destRepo.get(dnote.getId()));
+        sdate = lastModificationDate(sourceRepo.get(snote.getId(), null));
+        ddate = lastModificationDate(destRepo.get(dnote.getId(), null));
         if (sdate.after(ddate)) {
           /* source contains more up to date note - push */
           pushIDs.add(snote.getId());
@@ -306,41 +306,6 @@ public class NotebookRepoSync implements NotebookRepo {
     return latest;
   }
 
-  @SuppressWarnings("unused")
-  private void printParagraphs(Note note) {
-    LOG.info("Note name :  " + note.getName());
-    LOG.info("Note ID :  " + note.id());
-    for (Paragraph p : note.getParagraphs()) {
-      printParagraph(p);
-    }
-  }
-
-  private void printParagraph(Paragraph paragraph) {
-    LOG.info("Date created :  " + paragraph.getDateCreated());
-    LOG.info("Date started :  " + paragraph.getDateStarted());
-    LOG.info("Date finished :  " + paragraph.getDateFinished());
-    LOG.info("Paragraph ID : " + paragraph.getId());
-    LOG.info("Paragraph title : " + paragraph.getTitle());
-  }
-
-  @SuppressWarnings("unused")
-  private void printNoteInfos(List<NoteInfo> notes) {
-    LOG.info("The following is a list of note infos");
-    for (NoteInfo note : notes) {
-      printNoteInfo(note);
-    }
-  }
-
-  private void printNoteInfo(NoteInfo note) {
-    LOG.info("Note info of notebook with name : " + note.getName());
-    LOG.info("ID : " + note.getId());
-    Map<String, Object> configs = note.getConfig();
-    for (Map.Entry<String, Object> entry : configs.entrySet()) {
-      LOG.info("Config Key = " + entry.getKey() + "  , Value = " +
-              entry.getValue().toString() + "of class " + entry.getClass());
-    }
-  }
-
   @Override
   public void close() {
     LOG.info("Closing all notebook storages");
@@ -351,7 +316,7 @@ public class NotebookRepoSync implements NotebookRepo {
 
   //checkpoint to all available storages
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject) throws IOException {
     int repoCount = getRepoCount();
     int repoBound = Math.min(repoCount, getMaxRepoNum());
     int errorCount = 0;
@@ -360,7 +325,7 @@ public class NotebookRepoSync implements NotebookRepo {
     Revision rev = null;
     for (int i = 0; i < repoBound; i++) {
       try {
-        allRepoCheckpoints.add(getRepo(i).checkpoint(noteId, checkpointMsg));
+        allRepoCheckpoints.add(getRepo(i).checkpoint(noteId, checkpointMsg, subject));
       } catch (IOException e) {
         LOG.warn("Couldn't checkpoint in {} storage with index {} for note {}",
                 getRepo(i).getClass().toString(), i, noteId);
@@ -384,15 +349,25 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Revision rev) throws IOException {
-    // Auto-generated method stub
-    return null;
+  public Note get(String noteId, Revision rev, AuthenticationInfo subject) {
+    Note revisionNote = null;
+    try {
+      revisionNote = getRepo(0).get(noteId, rev, subject);
+    } catch (IOException e) {
+      LOG.error("Failed to get revision {} of note {}", rev.id, noteId, e);
+    }
+    return revisionNote;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
-    // Auto-generated method stub
-    return null;
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+    List<Revision> revisions = Collections.emptyList();
+    try {
+      revisions = getRepo(0).revisionHistory(noteId, subject);
+    } catch (IOException e) {
+      LOG.error("Failed to list revision history", e);
+    }
+    return revisions;
   }
 
   /**

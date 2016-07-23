@@ -1,4 +1,3 @@
-/* jshint loopfunc: true */
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +14,7 @@
 'use strict';
 
 angular.module('zeppelinWebApp').controller('InterpreterCtrl',
-  function($scope, $route, $routeParams, $location, $rootScope, $http, baseUrlSrv, ngToast) {
+  function($scope, $http, baseUrlSrv, ngToast) {
     var interpreterSettingsTmp = [];
     $scope.interpreterSettings = [];
     $scope.availableInterpreters = {};
@@ -194,15 +193,14 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl',
     };
 
     $scope.newInterpreterGroupChange = function() {
-      var el = _.pluck(_.filter($scope.availableInterpreters, {'group': $scope.newInterpreterSetting.group}),
+      var el = _.pluck(_.filter($scope.availableInterpreters, {'name': $scope.newInterpreterSetting.group}),
         'properties');
-
       var properties = {};
       for (var i = 0; i < el.length; i++) {
         var intpInfo = el[i];
         for (var key in intpInfo) {
           properties[key] = {
-            value: intpInfo[key].defaultValue,
+            value: intpInfo[key],
             description: intpInfo[key].description
           };
         }

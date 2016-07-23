@@ -57,7 +57,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
   @Test
   public void testPermissions() throws IOException {
-    Note note1 = ZeppelinServer.notebook.createNote("anonymous");
+    Note note1 = ZeppelinServer.notebook.createNote(null);
     // Set only readers
     String jsonRequest = "{\"readers\":[\"admin-team\"],\"owners\":[]," +
             "\"writers\":[]}";
@@ -75,12 +75,12 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
     // Check that both owners and writers is set to the princpal if empty
     assertEquals(authInfo.get("readers"), Lists.newArrayList("admin-team"));
-    assertEquals(authInfo.get("owners"), Lists.newArrayList("anonymous"));
-    assertEquals(authInfo.get("writers"), Lists.newArrayList("anonymous"));
+    assertEquals(authInfo.get("owners"), Lists.newArrayList((Object) null));
+    assertEquals(authInfo.get("writers"), Lists.newArrayList((Object) null));
     get.releaseConnection();
 
 
-    Note note2 = ZeppelinServer.notebook.createNote("anonymous");
+    Note note2 = ZeppelinServer.notebook.createNote(null);
     // Set only writers
     jsonRequest = "{\"readers\":[],\"owners\":[]," +
             "\"writers\":[\"admin-team\"]}";
@@ -94,7 +94,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
     }.getType());
     authInfo = (Map<String, Set<String>>) resp.get("body");
     // Check that owners is set to the princpal if empty
-    assertEquals(authInfo.get("owners"), Lists.newArrayList("anonymous"));
+    assertEquals(authInfo.get("owners"), Lists.newArrayList((Object) null));
     assertEquals(authInfo.get("writers"), Lists.newArrayList("admin-team"));
     get.releaseConnection();
 
@@ -114,8 +114,8 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
     assertEquals(authInfo.get("owners"), Lists.newArrayList());
     get.releaseConnection();
     //cleanup
-    ZeppelinServer.notebook.removeNote(note1.getId());
-    ZeppelinServer.notebook.removeNote(note2.getId());
+    ZeppelinServer.notebook.removeNote(note1.getId(), null);
+    ZeppelinServer.notebook.removeNote(note2.getId(), null);
 
   }
 }

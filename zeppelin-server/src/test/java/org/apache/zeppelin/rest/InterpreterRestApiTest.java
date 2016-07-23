@@ -70,7 +70,7 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
     Map<String, Object> resp = gson.fromJson(get.getResponseBodyAsString(), new TypeToken<Map<String, Object>>() {
     }.getType());
     Map<String, Object> body = (Map<String, Object>) resp.get("body");
-    assertEquals(ZeppelinServer.notebook.getInterpreterFactory().getRegisteredInterpreterList().size(), body.size());
+    assertEquals(ZeppelinServer.notebook.getInterpreterFactory().getAvailableInterpreterSettings().size(), body.size());
     get.releaseConnection();
   }
 
@@ -90,9 +90,9 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
   public void testSettingsCRUD() throws IOException {
     // Call Create Setting REST API
     String jsonRequest = "{\"name\":\"md2\",\"group\":\"md\",\"properties\":{\"propname\":\"propvalue\"}," +
-        "\"interpreterGroup\":[{\"class\":\"org.apache.zeppelin.markdown.Markdown\",\"name\":\"md\"}]," +
-        "\"dependencies\":[]," +
-        "\"option\": { \"remote\": true, \"perNoteSession\": false }}";
+            "\"interpreterGroup\":[{\"class\":\"org.apache.zeppelin.markdown.Markdown\",\"name\":\"md\"}]," +
+            "\"dependencies\":[]," +
+            "\"option\": { \"remote\": true, \"perNoteSession\": false }}";
     PostMethod post = httpPost("/interpreter/setting/", jsonRequest);
     LOG.info("testSettingCRUD create response\n" + post.getResponseBodyAsString());
     assertThat("test create method:", post, isCreated());
@@ -106,9 +106,9 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
 
     // Call Update Setting REST API
     jsonRequest = "{\"name\":\"md2\",\"group\":\"md\",\"properties\":{\"propname\":\"Otherpropvalue\"}," +
-        "\"interpreterGroup\":[{\"class\":\"org.apache.zeppelin.markdown.Markdown\",\"name\":\"md\"}]," +
-        "\"dependencies\":[]," +
-        "\"option\": { \"remote\": true, \"perNoteSession\": false }}";
+            "\"interpreterGroup\":[{\"class\":\"org.apache.zeppelin.markdown.Markdown\",\"name\":\"md\"}]," +
+            "\"dependencies\":[]," +
+            "\"option\": { \"remote\": true, \"perNoteSession\": false }}";
     PutMethod put = httpPut("/interpreter/setting/" + newSettingId, jsonRequest);
     LOG.info("testSettingCRUD update response\n" + put.getResponseBodyAsString());
     assertThat("test update method:", put, isAllowed());
@@ -124,7 +124,7 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
   @Test
   public void testInterpreterAutoBinding() throws IOException {
     // create note
-    Note note = ZeppelinServer.notebook.createNote("anonymous");
+    Note note = ZeppelinServer.notebook.createNote(null);
 
     // check interpreter is binded
     GetMethod get = httpGet("/notebook/interpreter/bind/" + note.id());
@@ -137,13 +137,13 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
 
     get.releaseConnection();
     //cleanup
-    ZeppelinServer.notebook.removeNote(note.getId());
+    ZeppelinServer.notebook.removeNote(note.getId(), null);
   }
 
   @Test
   public void testInterpreterRestart() throws IOException, InterruptedException {
     // create new note
-    Note note = ZeppelinServer.notebook.createNote("anonymous");
+    Note note = ZeppelinServer.notebook.createNote(null);
     note.addParagraph();
     Paragraph p = note.getLastParagraph();
     Map config = p.getConfig();
@@ -163,7 +163,7 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
     for (InterpreterSetting setting : ZeppelinServer.notebook.getInterpreterFactory().getInterpreterSettings(note.getId())) {
       if (setting.getName().equals("md")) {
         // Call Restart Interpreter REST API
-        PutMethod put = httpPut("/interpreter/setting/restart/" + setting.id(), "");
+        PutMethod put = httpPut("/interpreter/setting/restart/" + setting.getId(), "");
         assertThat("test interpreter restart:", put, isAllowed());
         put.releaseConnection();
         break;
@@ -180,7 +180,7 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
     }
     assertEquals("<p>markdown restarted</p>\n", p.getResult().message());
     //cleanup
-    ZeppelinServer.notebook.removeNote(note.getId());
+    ZeppelinServer.notebook.removeNote(note.getId(), null);
   }
 
   @Test
@@ -195,7 +195,7 @@ public class InterpreterRestApiTest extends AbstractTestRestApi {
     // Call create repository REST API
     String repoId = "securecentral";
     String jsonRequest = "{\"id\":\"" + repoId +
-        "\",\"url\":\"https://repo1.maven.org/maven2\",\"snapshot\":\"false\"}";
+            "\",\"url\":\"https://repo1.maven.org/maven2\",\"snapshot\":\"false\"}";
 
     PostMethod post = httpPost("/interpreter/repository/", jsonRequest);
     assertThat("Test create method:", post, isCreated());

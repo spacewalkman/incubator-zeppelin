@@ -26,6 +26,7 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.rest.ZeppelinhubRestApiHandler;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.Client;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   static final String ZEPPELIN_CONF_PROP_NAME_SERVER = "zeppelinhub.api.address";
   static final String ZEPPELIN_CONF_PROP_NAME_TOKEN = "zeppelinhub.api.token";
   public static final String TOKEN_HEADER = "X-Zeppelin-Token";
-  private static final Gson GSON = new Gson();//don't use GsonUtil.getGson(), Date format is incompatiable
+  private static final Gson GSON = new Gson();
   private static final Note EMPTY_NOTE = new Note();
   private final Client websocketClient;
 
@@ -141,10 +142,9 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list() throws IOException {
+  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
     String response = restApiClient.asyncGet("");
-    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {
-    }.getType());
+    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {}.getType());
     if (notes == null) {
       return Collections.emptyList();
     }
@@ -153,7 +153,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId) throws IOException {
+  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
     if (StringUtils.isBlank(noteId)) {
       return EMPTY_NOTE;
     }
@@ -168,7 +168,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note) throws IOException {
+  public void save(Note note, AuthenticationInfo subject) throws IOException {
     if (note == null) {
       throw new IOException("Zeppelinhub failed to save empty note");
     }
@@ -178,7 +178,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId) throws IOException {
+  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
     restApiClient.asyncDel(noteId);
     LOG.info("ZeppelinHub REST API removing note {} ", noteId);
   }
@@ -189,20 +189,20 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg)
+  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject)
           throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, Revision rev) throws IOException {
+  public Note get(String noteId, Revision rev, AuthenticationInfo subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId) {
+  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
     // Auto-generated method stub
     return null;
   }

@@ -104,13 +104,13 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
     String[] users = {"user1", "user2"};
 
     int count = 0;
-    for (NoteInfo info : vfsNoteRepo.list()) {
-      Note note = vfsNoteRepo.get(info.getId());
+    for (NoteInfo info : vfsNoteRepo.list(null)) {
+      Note note = vfsNoteRepo.get(info.getId(), null);
       if (note.getCreatedBy() == null || note.getCreatedBy().isEmpty()) {
         note.setCreatedBy(users[rand.nextInt(2)]);
       }
 
-      notebookRepo.save(note);
+      notebookRepo.save(note, null);
       count++;
       if (count == 1) {
         break;
@@ -120,11 +120,11 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
 
   @Test
   public void testGet() throws IOException, InterruptedException {
-    List<NoteInfo> noteInfos = notebookRepo.list();
+    List<NoteInfo> noteInfos = notebookRepo.list(null);
     if (noteInfos != null && noteInfos.size() > 0) {
       for (NoteInfo noteinfo :
               noteInfos) {
-        Note note = notebookRepo.get(noteinfo.getId());
+        Note note = notebookRepo.get(noteinfo.getId(), null);
 
         assertNotNull(note);
         assertNotNull(note.getCreatedBy());
@@ -143,7 +143,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
 
   @Test
   public void testList() throws IOException, InterruptedException {
-    List<NoteInfo> noteInfos = notebookRepo.list();
+    List<NoteInfo> noteInfos = notebookRepo.list(null);
     LOG.debug("total count={}", noteInfos.size());
 
     assertNotNull(noteInfos);
@@ -151,7 +151,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
 
   @Test
   public void testSaveNotebook() throws IOException, InterruptedException {
-    Note note = notebook.createNote("user1");
+    Note note = notebook.createNote(null);
 
     Paragraph p1 = note.addParagraph();
     Map<String, Object> config = p1.getConfig();
@@ -167,7 +167,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
     tags.add("zeppelin");
     tags.add("分析");
     note.setTags(tags);
-    notebookRepo.save(note);
+    notebookRepo.save(note, null);
     assertEquals(note.getName(), "testSaveNotebook");
   }
 

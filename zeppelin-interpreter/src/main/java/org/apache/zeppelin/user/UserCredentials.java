@@ -45,7 +45,7 @@ public class UserCredentials {
   @Override
   public String toString() {
     return "UserCredentials{" +
-        "userCredentials=" + userCredentials +
-        '}';
+            "userCredentials=" + userCredentials +
+            '}';
   }
 }

@@ -27,12 +27,12 @@ import java.util.Map;
  * NewInterpreterSetting rest api request message
  */
 public class NewInterpreterSettingRequest extends PrincipalAndRoles {
-  String name;
-  String group;
+  private String name;
+  private String group;
 
-  Map<String, String> properties;
-  List<Dependency> dependencies;
-  InterpreterOption option;
+  private Map<String, String> properties;
+  private List<Dependency> dependencies;
+  private InterpreterOption option;
 
   public NewInterpreterSettingRequest() {
 
