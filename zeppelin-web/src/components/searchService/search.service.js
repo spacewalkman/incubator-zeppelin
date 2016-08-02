@@ -13,9 +13,8 @@
  */
 'use strict';
 
-angular.module('zeppelinWebApp').service('searchService', function ($resource, baseUrlSrv) {
-
-  this.search = function (term) {
+angular.module('zeppelinWebApp').service('searchService', function($resource, baseUrlSrv) {
+  this.search = function(term) {
     this.searchTerm = term.q;
     console.log('Searching for: %o', term.q);
     if (!term.q) { //TODO(bzz): empty string check
@@ -24,7 +23,8 @@ angular.module('zeppelinWebApp').service('searchService', function ($resource, b
     var encQuery = window.encodeURIComponent(term.q);
 
     return $resource(
-      baseUrlSrv.getRestApiBase() + '/notebook/search?q=' + encQuery + '&size=' + term.size + '&from=' + term.from, {}, {
+      baseUrlSrv.getRestApiBase() +
+       '/notebook/search?q=' + encQuery + '&size=' + term.size + '&from=' + term.from, {}, {
         query: {method: 'GET'}
       });
   };
