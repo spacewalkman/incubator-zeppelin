@@ -99,6 +99,24 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           ZeppelinServer.notebook.getInterpreterFactory().restart(setting.getId());
           break;
         }
+
+        String sqlContextName = "sqlContext";
+        if (sparkVersion >= 20) {
+          sqlContextName = "spark";
+        }
+        Paragraph p = note.addParagraph();
+        Map config = p.getConfig();
+        config.put("enabled", true);
+        p.setConfig(config);
+        p.setText("%r localDF <- data.frame(name=c(\"a\", \"b\", \"c\"), age=c(19, 23, 18))\n" +
+            "df <- createDataFrame(" + sqlContextName + ", localDF)\n" +
+            "count(df)"
+        );
+        note.run(p.getId());
+        waitForFinish(p);
+        System.err.println("sparkRTest=" + p.getResult().message());
+        assertEquals(Status.FINISHED, p.getStatus());
+        assertEquals("[1] 3", p.getResult().message());
       }
 
       // run markdown paragraph, again
