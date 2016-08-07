@@ -94,6 +94,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     this.defaultPageSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
     this.defaultTermsAggSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE);
 
+//    Settings settings = Settings.settingsBuilder()
+//            .put("cluster.name", "zeppelin").build();
 
     TransportClient transportClient = TransportClient.builder().build()
             .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
