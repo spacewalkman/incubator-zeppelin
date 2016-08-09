@@ -7,25 +7,25 @@
       "default.url": {
         "envName": null,
         "propertyName": "default.url",
-        "defaultValue": "jdbc:postgresql://localhost:5432/",
+        "defaultValue": "jdbc:hive2://172.23.219.12:10000",
         "description": "The URL for JDBC."
       },
       "default.user": {
         "envName": null,
         "propertyName": "default.user",
-        "defaultValue": "gpadmin",
+        "defaultValue": "dm",
         "description": "The JDBC user name"
       },
       "default.password": {
         "envName": null,
         "propertyName": "default.password",
-        "defaultValue": "",
+        "defaultValue": "o6AkyMAzkT",
         "description": "The JDBC user password"
       },
       "default.driver": {
         "envName": null,
         "propertyName": "default.driver",
-        "defaultValue": "org.postgresql.Driver",
+        "defaultValue": "org.apache.hive.jdbc.HiveDriver",
         "description": "JDBC Driver Name"
       },
       "common.max_count": {

@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.display.AngularObject;
@@ -35,12 +36,7 @@ import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.notebook.JobListenerFactory;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.notebook.ParagraphJobListener;
+
 import org.apache.zeppelin.notebook.*;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo.Revision;
@@ -50,7 +46,10 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.server.ZeppelinServer;
 import org.apache.zeppelin.ticket.TicketContainer;
+import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.utils.InterpreterBindingUtils;
+
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -58,21 +57,12 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Zeppelin websocket service.
@@ -147,8 +137,17 @@ public class NotebookServer extends WebSocketServlet implements
       }
 
       String ticket = TicketContainer.instance.getTicket(messagereceived.principal);
-      if (ticket != null && !ticket.equals(messagereceived.ticket))
-        throw new Exception("Invalid ticket " + messagereceived.ticket + " != " + ticket);
+      if (ticket != null && !ticket.equals(messagereceived.ticket)){
+        /* not to pollute logs, log instead of exception */
+        if (StringUtils.isEmpty(messagereceived.ticket)) {
+          LOG.debug("{} message: invalid ticket {} != {}", messagereceived.op,
+              messagereceived.ticket, ticket);
+        } else {
+          LOG.warn("{} message: invalid ticket {} != {}", messagereceived.op,
+              messagereceived.ticket, ticket);
+        }
+        return;
+      }
 
       ZeppelinConfiguration conf = ZeppelinConfiguration.create();
       boolean allowAnonymous = conf.
@@ -172,88 +171,95 @@ public class NotebookServer extends WebSocketServlet implements
 
       /** Lets be elegant here */
       switch (messagereceived.op) {
-        case LIST_NOTES:
-          unicastNoteList(conn, subject);
-          break;
-        case RELOAD_NOTES_FROM_REPO:
-          unicastNoteList(conn, subject);
-          break;
-        case GET_HOME_NOTE:
-          sendHomeNote(conn, userAndRoles, notebook);
-          break;
-        case GET_NOTE:
-          sendNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case NEW_NOTE:
-          createNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case SET_NOTE_TOPIC://set topic TODO:update note,only
-          setNoteTopic(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case SET_NOTE_TAGS://set tags TODO:update note,only
-          setNoteTags(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case DEL_NOTE:
-          removeNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case CLONE_NOTE:
-          cloneNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case IMPORT_NOTE:
-          importNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case COMMIT_PARAGRAPH:
-          updateParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case RUN_PARAGRAPH:
-          runParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case CANCEL_PARAGRAPH:
-          cancelParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case MOVE_PARAGRAPH:
-          moveParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case INSERT_PARAGRAPH:
-          insertParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case PARAGRAPH_REMOVE:
-          removeParagraph(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case PARAGRAPH_CLEAR_OUTPUT:
-          clearParagraphOutput(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case NOTE_UPDATE:
-          updateNote(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case COMPLETION:
-          completion(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case PING:
-          break; //do nothing
-        case ANGULAR_OBJECT_UPDATED:
-          angularObjectUpdated(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case ANGULAR_OBJECT_CLIENT_BIND:
-          angularObjectClientBind(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case ANGULAR_OBJECT_CLIENT_UNBIND:
-          angularObjectClientUnbind(conn, userAndRoles, notebook, messagereceived);
-          break;
-        case LIST_CONFIGURATIONS:
-          sendAllConfigurations(conn, userAndRoles, notebook);
-          break;
-        case CHECKPOINT_NOTEBOOK:
-          checkpointNotebook(conn, notebook, messagereceived);
-          break;
-        case LIST_NOTEBOOK_JOBS:
-          unicastNotebookJobInfo(conn, messagereceived);
-          break;
-        case LIST_UPDATE_NOTEBOOK_JOBS:
-          unicastUpdateNotebookJobInfo(conn, messagereceived);
-          break;
-        default:
-          break;
+          case LIST_NOTES:
+            unicastNoteList(conn, subject);
+            break;
+          case RELOAD_NOTES_FROM_REPO:
+            unicastNoteList(conn, subject);
+            //broadcastReloadedNoteList(subject);
+            break;
+          case GET_HOME_NOTE:
+            sendHomeNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case GET_NOTE:
+            sendNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case NEW_NOTE:
+            createNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case DEL_NOTE:
+            removeNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case CLONE_NOTE:
+            cloneNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case IMPORT_NOTE:
+            importNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case COMMIT_PARAGRAPH:
+            updateParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case RUN_PARAGRAPH:
+            runParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case CANCEL_PARAGRAPH:
+            cancelParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case MOVE_PARAGRAPH:
+            moveParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case INSERT_PARAGRAPH:
+            insertParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case PARAGRAPH_REMOVE:
+            removeParagraph(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case PARAGRAPH_CLEAR_OUTPUT:
+            clearParagraphOutput(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case NOTE_UPDATE:
+            updateNote(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case COMPLETION:
+            completion(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case PING:
+            break; //do nothing
+          case ANGULAR_OBJECT_UPDATED:
+            angularObjectUpdated(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case ANGULAR_OBJECT_CLIENT_BIND:
+            angularObjectClientBind(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case ANGULAR_OBJECT_CLIENT_UNBIND:
+            angularObjectClientUnbind(conn, userAndRoles, notebook, messagereceived);
+            break;
+          case LIST_CONFIGURATIONS:
+            sendAllConfigurations(conn, userAndRoles, notebook);
+            break;
+          case CHECKPOINT_NOTEBOOK:
+            checkpointNotebook(conn, notebook, messagereceived);
+            break;
+          case LIST_REVISION_HISTORY:
+            listRevisionHistory(conn, notebook, messagereceived);
+            break;
+          case NOTE_REVISION:
+            getNoteRevision(conn, notebook, messagereceived);
+            break;
+          case LIST_NOTEBOOK_JOBS:
+            unicastNotebookJobInfo(conn, messagereceived);
+            break;
+          case LIST_UPDATE_NOTEBOOK_JOBS:
+            unicastUpdateNotebookJobInfo(conn, messagereceived);
+            break;
+          case GET_INTERPRETER_BINDINGS:
+            getInterpreterBindings(conn, messagereceived);
+            break;
+          case SAVE_INTERPRETER_BINDINGS:
+            saveInterpreterBindings(conn, messagereceived);
+            break;
+          default:
+            break;
       }
     } catch (Exception e) {
       LOG.error("Can't handle message", e);
@@ -428,6 +434,29 @@ public class NotebookServer extends WebSocketServlet implements
             .put("notebookRunningJobs", response)));
   }
 
+  public void saveInterpreterBindings(NotebookSocket conn, Message fromMessage) {
+    String noteId = (String) fromMessage.data.get("noteID");
+    try {
+      List<String> settingIdList = gson.fromJson(String.valueOf(
+          fromMessage.data.get("selectedSettingIds")), new TypeToken<ArrayList<String>>() {
+          }.getType());
+      notebook().bindInterpretersToNote(noteId, settingIdList);
+      broadcastInterpreterBindings(noteId,
+          InterpreterBindingUtils.getInterpreterBindings(notebook(), noteId));
+    } catch (Exception e) {
+      LOG.error("Error while saving interpreter bindings", e);
+    }
+  }
+
+  public void getInterpreterBindings(NotebookSocket conn, Message fromMessage)
+      throws IOException {
+    String noteID = (String) fromMessage.data.get("noteID");
+    List<InterpreterSettingsList> settingList =
+        InterpreterBindingUtils.getInterpreterBindings(notebook(), noteID);
+    conn.send(serializeMessage(new Message(OP.INTERPRETER_BINDINGS)
+        .put("interpreterBindings", settingList)));
+  }
+
   public List<Map<String, String>> generateNotebooksInfo(boolean needsReload, AuthenticationInfo subject) {
     return refreshNotesAndFilter(needsReload, subject);
   }
@@ -498,6 +527,12 @@ public class NotebookServer extends WebSocketServlet implements
   /**
    * get all existing notes, filter by userAndRoles
    */
+  public void broadcastInterpreterBindings(String noteId,
+                                           List settingList) {
+    broadcast(noteId, new Message(OP.INTERPRETER_BINDINGS)
+        .put("interpreterBindings", settingList));
+  }
+
   public void broadcastNoteList(AuthenticationInfo subject) {
     List<Map<String, String>> notesInfo = generateNotebooksInfo(false, subject);
     broadcastAll(new Message(OP.NOTES_INFO).put("notes", notesInfo));
@@ -550,7 +585,7 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private void sendHomeNote(NotebookSocket conn, HashSet<String> userAndRoles,
-                            Notebook notebook) throws IOException {
+                            Notebook notebook,Message fromMessage) throws IOException {
     String noteId = notebook.getConf().getString(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
     Note note = null;

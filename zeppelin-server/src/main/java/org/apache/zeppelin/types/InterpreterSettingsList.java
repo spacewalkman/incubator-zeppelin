@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.rest.message;
+package org.apache.zeppelin.types;
 
 import org.apache.zeppelin.interpreter.InterpreterInfo;
 
@@ -24,14 +24,14 @@ import java.util.List;
 /**
  * InterpreterSetting information for binding
  */
-public class InterpreterSettingListForNoteBind extends PrincipalAndRoles {
+public class InterpreterSettingsList {
   private String id;
   private String name;
   private boolean selected;
   private List<InterpreterInfo> interpreters;
 
-  public InterpreterSettingListForNoteBind(String id, String name,
-                                           List<InterpreterInfo> interpreters, boolean selected) {
+  public InterpreterSettingsList(String id, String name,
+      List<InterpreterInfo> interpreters, boolean selected) {
     this.id = id;
     this.name = name;
     this.interpreters = interpreters;

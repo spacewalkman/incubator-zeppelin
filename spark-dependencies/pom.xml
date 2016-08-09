@@ -62,7 +62,7 @@
     <spark.bin.download.url>
       http://archive.apache.org/dist/spark/spark-${spark.version}/spark-${spark.version}-bin-without-hadoop.tgz
     </spark.bin.download.url>
-    <spark.dist.cache>${project.build.directory}/../../.spark-dist</spark.dist.cache>
+    <spark.dist.cache>${project.basedir}/../.spark-dist</spark.dist.cache>
     <py4j.version>0.8.2.1</py4j.version>
   </properties>
 
@@ -834,6 +834,7 @@
                 <configuration>
                   <url>${spark.download.url}</url>
                   <outputDirectory>${spark.dist.cache}</outputDirectory>
+                  <overwrite>true</overwrite>
                 </configuration>
               </execution>
             </executions>

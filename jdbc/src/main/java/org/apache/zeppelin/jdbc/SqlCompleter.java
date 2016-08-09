@@ -136,6 +136,7 @@ public class SqlCompleter extends StringsCompleter {
       DatabaseMetaData metaData = connection.getMetaData();
 
       // Add the driver specific SQL completions
+      /*
       String driverSpecificKeywords =
           "/" + metaData.getDriverName().replace(" ", "-").toLowerCase() + "-sql.keywords";
 
@@ -143,10 +144,11 @@ public class SqlCompleter extends StringsCompleter {
 
       if (SqlCompleter.class.getResource(driverSpecificKeywords) != null) {
         String driverKeywords =
-            new BufferedReader(new InputStreamReader(
-                SqlCompleter.class.getResourceAsStream(driverSpecificKeywords))).readLine();
+                new BufferedReader(new InputStreamReader(
+                        SqlCompleter.class.getResourceAsStream(driverSpecificKeywords))).readLine();
         keywords += "," + driverKeywords.toUpperCase();
       }
+      */
 
 
       // Add the keywords from the current JDBC connection

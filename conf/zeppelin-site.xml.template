@@ -20,6 +20,12 @@
 <configuration>
 
 <property>
+  <name>zeppelin.es.search.repo.host</name>
+  <value>172.23.225.184</value>
+  <description>ES server host</description>
+</property>
+
+<property>
   <name>zeppelin.server.addr</name>
   <value>0.0.0.0</value>
   <description>Server address</description>
