@@ -16,8 +16,6 @@
  */
 package org.apache.zeppelin.interpreter;
 
-import org.apache.commons.lang.NullArgumentException;
-
 /**
  * Created InterpreterGroup
  */

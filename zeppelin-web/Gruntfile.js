@@ -365,21 +365,23 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
-        mangle: {
-          'screw_ie8': true
-        },
+        mangle: false,
+        // {
+        //   'screw_ie8': true
+        // },
         preserveComments: 'some',
-        compress: {
-          'screw_ie8': true,
-          sequences: true,
-          'dead_code': true,
-          conditionals: true,
-          booleans: true,
-          unused: true,
-          'if_return': true,
-          'join_vars': true,
-          'drop_console': true
-        }
+        compress: false
+        // {
+        //   'screw_ie8': true,
+        //   sequences: true,
+        //   'dead_code': true,
+        //   conditionals: true,
+        //   booleans: true,
+        //   unused: true,
+        //   'if_return': true,
+        //   'join_vars': true,
+        //   'drop_console': true
+        // }
       }
     },
     // concat: {
@@ -543,9 +545,9 @@ module.exports = function(grunt) {
     'ngAnnotate',
     'copy:dist',
     'cssmin',
-    //'uglify',
+    'uglify',
     'usemin',
-    //'htmlmin',
+    'htmlmin',
     'cacheBust'
   ]);
 

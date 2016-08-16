@@ -90,12 +90,12 @@ public interface NotebookRepo {
    * Get particular revision of the Notebook.
    *
    * @param noteId Id of the Notebook
-   * @param rev    revision of the Notebook
+   * @param revId    revision of the Notebook
    * @return a Notebook
    */
-  @ZeppelinApi
-  Note get(String noteId, Revision rev, AuthenticationInfo subject)
-          throws IOException;
+
+  @ZeppelinApi public Note get(String noteId, String revId, AuthenticationInfo subject)
+      throws IOException;
 
   /**
    * List of revisions of the given Notebook.
