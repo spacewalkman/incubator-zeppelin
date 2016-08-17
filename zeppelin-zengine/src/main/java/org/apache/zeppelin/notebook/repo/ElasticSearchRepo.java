@@ -525,8 +525,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public Note get(String noteId, Revision rev, AuthenticationInfo subject) throws IOException {
-    // Auto-generated method stub
+  public Note get(String noteId, String revId, AuthenticationInfo subject) throws IOException {
     return null;
   }
 
