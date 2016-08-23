@@ -98,13 +98,13 @@ public class InterpreterFactory implements InterpreterGroupFactory {
    * This is only references with default settings, name and properties
    * key: InterpreterSetting.name
    */
-  private Map<String, InterpreterSetting> interpreterSettingsRef = new HashMap<>();
+  private final Map<String, InterpreterSetting> interpreterSettingsRef = new HashMap<>();
 
   /**
    * This is used by creating and running Interpreters
    * key: InterpreterSetting.id <- This is becuase backward compatibility
    */
-  private Map<String, InterpreterSetting> interpreterSettings = new HashMap<>();
+  private final Map<String, InterpreterSetting> interpreterSettings = new HashMap<>();
 
   private Map<String, List<String>> interpreterBindings = new HashMap<>();
   private List<RemoteRepository> interpreterRepositories;
@@ -176,7 +176,7 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
         registerInterpreterFromResource(cl, interpreterDirString, interpreterJson);
 
-        /**
+        /*
          * TODO(jongyoul)
          * - Remove these codes below because of legacy code
          * - Support ThreadInterpreter
@@ -529,6 +529,10 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
   /**
    * @param group InterpreterSetting reference name
+<<<<<<< HEAD
+=======
+   * @return
+>>>>>>> upstream/master
    */
   public InterpreterSetting add(String group, ArrayList<InterpreterInfo> interpreterInfos,
                                 List<Dependency> dependencies, InterpreterOption option, Properties properties, String path) {
@@ -576,8 +580,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
       } else {
         interpreterSetting =
-                new InterpreterSetting(group, null, interpreterInfos, properties, dependencies,
-                        option, path);
+            new InterpreterSetting(group, null, interpreterInfos, properties, dependencies, option,
+                path);
         interpreterSettingsRef.put(group, interpreterSetting);
       }
     }
@@ -1163,6 +1167,16 @@ public class InterpreterFactory implements InterpreterGroupFactory {
         List<Interpreter> interpreters = createOrGetInterpreterList(noteId, setting);
         if (null != interpreters) {
           return interpreters.get(0);
+        }
+      }
+
+      // Support the legacy way to use it
+      for (InterpreterSetting s : settings) {
+        if (s.getGroup().equals(replName)) {
+          List<Interpreter> interpreters = createOrGetInterpreterList(noteId, s);
+          if (null != interpreters) {
+            return interpreters.get(0);
+          }
         }
       }
     }
