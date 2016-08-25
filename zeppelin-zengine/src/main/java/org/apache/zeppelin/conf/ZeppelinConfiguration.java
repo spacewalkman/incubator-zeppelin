@@ -470,7 +470,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
    * Wrapper class.
    */
   public static enum ConfVars {
-    ZEPPELIN_HOME("zeppelin.home", "../"),//TODO: restore to ./
+    ZEPPELIN_HOME("zeppelin.home", "./"),
     ZEPPELIN_ADDR("zeppelin.server.addr", "0.0.0.0"),
     ZEPPELIN_PORT("zeppelin.server.port", 8080),
     ZEPPELIN_SERVER_CONTEXT_PATH("zeppelin.server.context.path", "/"),
