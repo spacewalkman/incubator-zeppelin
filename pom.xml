@@ -566,10 +566,11 @@
           <version>2.4</version>
         </plugin>
 
+        <!--upgrade from 1.2.1 to 1.5.0,so in zeppelin-server module,can use 'additionalClasspathElements' to add 'conf' dir to classpath when using exec:java plugin to debug ZeppelinServer-->
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>1.2.1</version>
+          <version>1.5.0</version>
         </plugin>
 
         <plugin>
