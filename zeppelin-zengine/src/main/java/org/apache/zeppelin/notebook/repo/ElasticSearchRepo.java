@@ -5,6 +5,9 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import org.apache.lucene.queryparser.xml.builders.FilteredQueryBuilder;
+import org.apache.lucene.queryparser.xml.builders.TermQueryBuilder;
+import org.apache.lucene.search.TermQuery;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
@@ -26,6 +29,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -40,6 +44,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.sort.SortParseElement;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,34 +112,45 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
 
+  /**
+   * use ES scroll api to handler large dataset
+   *
+   * @param subject contains user information.
+   * @return notes from all shards within scroll time range
+   */
   @Override
   public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
-    SearchResponse response = client.prepareSearch(indexName)
-            .setTypes(noteTypeName)
-            .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(noteTypeName)
+            .addSort(AGGREGATION_FILED_LAST_UPDATED, SortOrder.DESC)
+            .setScroll(new TimeValue(60000))
+            .setQuery(subject == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
+                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, subject.getUser())))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
-            .execute()
-            .actionGet();
+            .setSize(100).execute().actionGet(); //100 hits per shard will be returned for each scroll
 
     List<NoteInfo> results = new LinkedList<NoteInfo>();
-    SearchHits hits = response.getHits();
-    long count = hits.getTotalHits();
-    if (count > 0) {
-      results = new ArrayList<NoteInfo>((int) count);
-      for (SearchHit hit : hits.getHits()) {
+    //Scroll until no hits are returned
+    while (true) {
+      for (SearchHit hit : scrollResp.getHits().getHits()) {
+        //handle hitted note
         Note noteParsed = GsonUtil.fromJson(hit.getSourceAsString(), Note.class);
         results.add(new NoteInfo(noteParsed));
+
+        //aggregation parse
+        //TODO: search with aggs,fields tags/topic?(qy)
+        Aggregations aggregations = scrollResp.getAggregations();
+        termsAggregationParse(aggregations, AGGREGATION_NAME_TAGS);
+        termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
+        dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
+      }
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
+      //Break condition: No hits are returned
+      if (scrollResp.getHits().getHits().length == 0) {
+        break;
       }
     }
-
-    //TODO: search with aggs,fields tags/topic?(qy)
-    //aggregation parse
-    Aggregations aggregations = response.getAggregations();
-    termsAggregationParse(aggregations, AGGREGATION_NAME_TAGS);
-    termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
-    dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
 
     return results;
   }
