@@ -533,12 +533,12 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   public void broadcastNoteList(AuthenticationInfo subject) {
-    List<Map<String, String>> notesInfo = generateNotebooksInfo(false, subject);
+    List<Map<String, String>> notesInfo = generateNotebooksInfo(true, subject);
     broadcastAll(new Message(OP.NOTES_INFO).put("notes", notesInfo));
   }
 
   public void unicastNoteList(NotebookSocket conn, AuthenticationInfo subject) {
-    List<Map<String, String>> notesInfo = generateNotebooksInfo(false, subject);
+    List<Map<String, String>> notesInfo = generateNotebooksInfo(true, subject);
     unicast(new Message(OP.NOTES_INFO).put("notes", notesInfo), conn);
   }
 
