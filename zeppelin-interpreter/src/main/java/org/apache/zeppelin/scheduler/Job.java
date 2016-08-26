@@ -22,21 +22,21 @@ import java.util.Date;
 import java.util.Map;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 /**
  * Skeletal implementation of the Job concept.
- *  - designed for inheritance
- *  - should be run on a separate thread
- *  - maintains internal state: it's status
- *  - supports listeners who are updated on status change
+ * - designed for inheritance
+ * - should be run on a separate thread
+ * - maintains internal state: it's status
+ * - supports listeners who are updated on status change
  *
- *  Job class is serialized/deserialized and used server<->client communication
- *  and saving/loading jobs from disk.
- *  Changing/adding/deleting non transitive field name need consideration of that.
- *
+ * Job class is serialized/deserialized and used server<->client communication
+ * and saving/loading jobs from disk.
+ * Changing/adding/deleting non transitive field name need consideration of that.
  */
 public abstract class Job {
   /**
@@ -48,7 +48,6 @@ public abstract class Job {
    * FINISHED - Job finished run. with success
    * ERROR - Job finished run. with error
    * ABORT - Job finished by abort
-   *
    */
   public static enum Status {
     READY,
@@ -57,6 +56,7 @@ public abstract class Job {
     FINISHED,
     ERROR,
     ABORT;
+
     public boolean isReady() {
       return this == READY;
     }
@@ -182,14 +182,14 @@ public abstract class Job {
       LOGGER.error("Job failed", e);
       progressUpdator.terminate();
       this.exception = e;
-      result = e.getMessage();
+      result = new InterpreterResult(InterpreterResult.Code.ERROR, e.getMessage());//qy, change from e.getMessage() to  InterpreterResult instance,so that ES don't throw MapperParsingException[object mapping for [result] tried to parse field [result] as object, but found a concrete value]
       errorMessage = getStack(e);
       dateFinished = new Date();
     } catch (Throwable e) {
       LOGGER.error("Job failed", e);
       progressUpdator.terminate();
       this.exception = e;
-      result = e.getMessage();
+      result = new InterpreterResult(InterpreterResult.Code.ERROR, e.getMessage());//same rational as line 185
       errorMessage = getStack(e);
       dateFinished = new Date();
     } finally {
