@@ -353,6 +353,15 @@
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-web</artifactId>
     </dependency>
+
+    <!--for shiro JdbcRealm-->
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.6</version>
+      <scope>runtime</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
