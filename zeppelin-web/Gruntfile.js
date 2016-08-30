@@ -331,8 +331,8 @@ module.exports = function(grunt) {
         flow: {
           html: {
             steps: {
-              js: ['concat']//, 'uglifyjs'],
-              //css: ['cssmin']
+              js: ['concat'],//, 'uglifyjs'],
+              css: ['cssmin']
             },
             post: {}
           }
@@ -365,23 +365,21 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
-        mangle: false,
-        // {
-        //   'screw_ie8': true
-        // },
+        mangle: {
+          'screw_ie8': true
+        },
         preserveComments: 'some',
-        compress: false
-        // {
-        //   'screw_ie8': true,
-        //   sequences: true,
-        //   'dead_code': true,
-        //   conditionals: true,
-        //   booleans: true,
-        //   unused: true,
-        //   'if_return': true,
-        //   'join_vars': true,
-        //   'drop_console': true
-        // }
+        compress: {
+          'screw_ie8': true,
+          sequences: true,
+          'dead_code': true,
+          conditionals: true,
+          booleans: true,
+          unused: true,
+          'if_return': true,
+          'join_vars': true,
+          'drop_console': true
+        }
       }
     },
     // concat: {
