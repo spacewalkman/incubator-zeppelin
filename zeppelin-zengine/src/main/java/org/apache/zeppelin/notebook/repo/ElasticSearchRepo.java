@@ -84,7 +84,10 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   private Client client;
   private String indexName;
   private String noteTypeName;
-  private String paragraphTypeName;//note-to-pargraph modeled as parent-to-child relation in ES
+  /**
+   * note-to-pargraph modeled as parent-to-child relation in ES
+   */
+  private String paragraphTypeName;
   private int defaultPageSize;
   private int defaultTermsAggSize;
 
@@ -244,6 +247,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
       int size = paras.size();
       BulkRequestBuilder bulkIndex = client.prepareBulk();
 
+      //padding to mantain paragraphs order to each other when retrieved back
       int padLeft = getPadding(size);
       String padding = padLeft > 0 ? "%0" + (padLeft + 1) + "d" : "%d";
 
