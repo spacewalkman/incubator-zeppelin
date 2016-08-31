@@ -62,16 +62,16 @@ public class RemoteInterpreterOutputTestStream implements RemoteInterpreterProce
 
   private RemoteInterpreter createMockInterpreter() {
     RemoteInterpreter intp = new RemoteInterpreter(
-        new Properties(),
-        "note",
-        MockInterpreterOutputStream.class.getName(),
-        new File(INTERPRETER_SCRIPT).getAbsolutePath(),
-        "fake",
-        "fakeRepo",
-        env,
-        10 * 1000,
-        this,
-        null);
+            new Properties(),
+            "note",
+            MockInterpreterOutputStream.class.getName(),
+            new File(INTERPRETER_SCRIPT).getAbsolutePath(),
+            "fake",
+            "fakeRepo",
+            env,
+            10 * 1000,
+            this,
+            null);
 
     intpGroup.get("note").add(intp);
     intp.setInterpreterGroup(intpGroup);
@@ -80,16 +80,16 @@ public class RemoteInterpreterOutputTestStream implements RemoteInterpreterProce
 
   private InterpreterContext createInterpreterContext() {
     return new InterpreterContext(
-        "noteId",
-        "id",
-        "title",
-        "text",
-        new AuthenticationInfo(),
-        new HashMap<String, Object>(),
-        new GUI(),
-        new AngularObjectRegistry(intpGroup.getId(), null),
-        null,
-        new LinkedList<InterpreterContextRunner>(), null);
+            "noteId",
+            "id",
+            "title",
+            "text",
+            null,
+            new HashMap<String, Object>(),
+            new GUI(),
+            new AngularObjectRegistry(intpGroup.getId(), null),
+            null,
+            new LinkedList<InterpreterContextRunner>(), null);
   }
 
   @Test

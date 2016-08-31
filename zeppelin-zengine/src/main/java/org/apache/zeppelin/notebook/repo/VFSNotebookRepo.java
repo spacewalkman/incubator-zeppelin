@@ -25,6 +25,7 @@ import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.NameScope;
 import org.apache.commons.vfs2.Selectors;
 import org.apache.commons.vfs2.VFS;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.ApplicationState;
@@ -104,7 +105,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(AuthenticationInfo subjec) throws IOException {
+  public List<NoteInfo> list(Subject subject) throws IOException {
     FileObject rootDir = getRootDir();
 
     FileObject[] children = rootDir.getChildren();
@@ -184,7 +185,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, Subject subject) throws IOException {
     FileObject rootDir = fsManager.resolveFile(getPath("/"));
     FileObject noteDir = rootDir.resolveFile(noteId, NameScope.CHILD);
 
@@ -206,7 +207,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public synchronized void save(Note note, AuthenticationInfo subject) throws IOException {
+  public synchronized void save(Note note, Subject subject) throws IOException {
     String json = GsonUtil.toJson(note);
 
     FileObject rootDir = getRootDir();
@@ -228,7 +229,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, Subject subject) throws IOException {
     FileObject rootDir = fsManager.resolveFile(getPath("/"));
     FileObject noteDir = rootDir.resolveFile(noteId, NameScope.CHILD);
 
@@ -251,19 +252,19 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String revId, Subject subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     // Auto-generated method stub
     return null;
   }

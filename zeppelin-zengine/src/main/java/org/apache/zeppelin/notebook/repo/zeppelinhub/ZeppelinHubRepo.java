@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
@@ -144,7 +145,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public List<NoteInfo> list(Subject subject) throws IOException {
     String response = restApiClient.asyncGet("");
     List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {}.getType());
     if (notes == null) {
@@ -155,7 +156,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, Subject subject) throws IOException {
     if (StringUtils.isBlank(noteId)) {
       return EMPTY_NOTE;
     }
@@ -170,7 +171,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note, Subject subject) throws IOException {
     if (note == null) {
       throw new IOException("Zeppelinhub failed to save empty note");
     }
@@ -180,7 +181,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, Subject subject) throws IOException {
     restApiClient.asyncDel(noteId);
     LOG.info("ZeppelinHub REST API removing note {} ", noteId);
   }
@@ -191,7 +192,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject)
+  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject)
       throws IOException {
     if (StringUtils.isBlank(noteId)) {
       return null;
@@ -204,7 +205,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String revId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String revId, Subject subject) throws IOException {
     if (StringUtils.isBlank(noteId) || StringUtils.isBlank(revId)) {
       return EMPTY_NOTE;
     }
@@ -219,7 +220,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     if (StringUtils.isBlank(noteId)) {
       return Collections.emptyList();
     }

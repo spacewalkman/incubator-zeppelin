@@ -575,7 +575,7 @@ public class NotebookTest implements JobListenerFactory{
   public void testPermissions() throws IOException {
     // create a note and a paragraph
     Note note = notebook.createNote(null);
-    NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     // empty owners, readers and writers means note is public
     assertEquals(notebookAuthorization.isOwner(note.getId(),
             new HashSet<String>(Arrays.asList("user2"))), true);

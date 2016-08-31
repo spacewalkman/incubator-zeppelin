@@ -141,17 +141,17 @@ public class RemoteInterpreterTest {
     assertEquals(2, process.referenceCount());
 
     intpA.interpret("1",
-        new InterpreterContext(
-            "note",
-            "id",
-            "title",
-            "text",
-            new AuthenticationInfo(),
-            new HashMap<String, Object>(),
-            new GUI(),
-            new AngularObjectRegistry(intpGroup.getId(), null),
-            new LocalResourcePool("pool1"),
-            new LinkedList<InterpreterContextRunner>(), null));
+            new InterpreterContext(
+                    "note",
+                    "id",
+                    "title",
+                    "text",
+                    null,
+                    new HashMap<String, Object>(),
+                    new GUI(),
+                    new AngularObjectRegistry(intpGroup.getId(), null),
+                    new LocalResourcePool("pool1"),
+                    new LinkedList<InterpreterContextRunner>(), null));
 
     intpB.open();
     assertEquals(2, process.referenceCount());
@@ -177,17 +177,17 @@ public class RemoteInterpreterTest {
 
     intpA.open();
     InterpreterResult ret = intpA.interpret("non numeric value",
-        new InterpreterContext(
-            "noteId",
-            "id",
-            "title",
-            "text",
-            new AuthenticationInfo(),
-            new HashMap<String, Object>(),
-            new GUI(),
-            new AngularObjectRegistry(intpGroup.getId(), null),
-            new LocalResourcePool("pool1"),
-            new LinkedList<InterpreterContextRunner>(), null));
+            new InterpreterContext(
+                    "noteId",
+                    "id",
+                    "title",
+                    "text",
+                    null,
+                    new HashMap<String, Object>(),
+                    new GUI(),
+                    new AngularObjectRegistry(intpGroup.getId(), null),
+                    new LocalResourcePool("pool1"),
+                    new LinkedList<InterpreterContextRunner>(), null));
 
     assertEquals(Code.ERROR, ret.code());
   }
@@ -198,32 +198,32 @@ public class RemoteInterpreterTest {
     intpGroup.put("note", new LinkedList<Interpreter>());
 
     RemoteInterpreter intpA = new RemoteInterpreter(
-        p,
-        "note",
-        MockInterpreterA.class.getName(),
-        new File(INTERPRETER_SCRIPT).getAbsolutePath(),
-        "fake",
-        "fakeRepo",
-        env,
-        10 * 1000,
-        null,
-        null);
+            p,
+            "note",
+            MockInterpreterA.class.getName(),
+            new File(INTERPRETER_SCRIPT).getAbsolutePath(),
+            "fake",
+            "fakeRepo",
+            env,
+            10 * 1000,
+            null,
+            null);
 
 
     intpGroup.get("note").add(intpA);
     intpA.setInterpreterGroup(intpGroup);
 
     RemoteInterpreter intpB = new RemoteInterpreter(
-        p,
-        "note",
-        MockInterpreterB.class.getName(),
-        new File(INTERPRETER_SCRIPT).getAbsolutePath(),
-        "fake",
-        "fakeRepo",
-        env,
-        10 * 1000,
-        null,
-        null);
+            p,
+            "note",
+            MockInterpreterB.class.getName(),
+            new File(INTERPRETER_SCRIPT).getAbsolutePath(),
+            "fake",
+            "fakeRepo",
+            env,
+            10 * 1000,
+            null,
+            null);
 
     intpGroup.get("note").add(intpB);
     intpB.setInterpreterGroup(intpGroup);
@@ -233,31 +233,31 @@ public class RemoteInterpreterTest {
 
     long start = System.currentTimeMillis();
     InterpreterResult ret = intpA.interpret("500",
-        new InterpreterContext(
-            "note",
-            "id",
-            "title",
-            "text",
-            new AuthenticationInfo(),
-            new HashMap<String, Object>(),
-            new GUI(),
-            new AngularObjectRegistry(intpGroup.getId(), null),
-            new LocalResourcePool("pool1"),
-            new LinkedList<InterpreterContextRunner>(), null));
+            new InterpreterContext(
+                    "note",
+                    "id",
+                    "title",
+                    "text",
+                    null,
+                    new HashMap<String, Object>(),
+                    new GUI(),
+                    new AngularObjectRegistry(intpGroup.getId(), null),
+                    new LocalResourcePool("pool1"),
+                    new LinkedList<InterpreterContextRunner>(), null));
     assertEquals("500", ret.message());
 
     ret = intpB.interpret("500",
-        new InterpreterContext(
-            "note",
-            "id",
-            "title",
-            "text",
-            new AuthenticationInfo(),
-            new HashMap<String, Object>(),
-            new GUI(),
-            new AngularObjectRegistry(intpGroup.getId(), null),
-            new LocalResourcePool("pool1"),
-            new LinkedList<InterpreterContextRunner>(), null));
+            new InterpreterContext(
+                    "note",
+                    "id",
+                    "title",
+                    "text",
+                    null,
+                    new HashMap<String, Object>(),
+                    new GUI(),
+                    new AngularObjectRegistry(intpGroup.getId(), null),
+                    new LocalResourcePool("pool1"),
+                    new LinkedList<InterpreterContextRunner>(), null));
     assertEquals("1000", ret.message());
     long end = System.currentTimeMillis();
     assertTrue(end - start >= 1000);
@@ -301,17 +301,17 @@ public class RemoteInterpreterTest {
       @Override
       protected Object jobRun() throws Throwable {
         return intpA.interpret("500",
-            new InterpreterContext(
-                "note",
-                "jobA",
-                "title",
-                "text",
-                new AuthenticationInfo(),
-                new HashMap<String, Object>(),
-                new GUI(),
-                new AngularObjectRegistry(intpGroup.getId(), null),
-                new LocalResourcePool("pool1"),
-                new LinkedList<InterpreterContextRunner>(), null));
+                new InterpreterContext(
+                        "note",
+                        "jobA",
+                        "title",
+                        "text",
+                        null,
+                        new HashMap<String, Object>(),
+                        new GUI(),
+                        new AngularObjectRegistry(intpGroup.getId(), null),
+                        new LocalResourcePool("pool1"),
+                        new LinkedList<InterpreterContextRunner>(), null));
       }
 
       @Override
@@ -337,17 +337,17 @@ public class RemoteInterpreterTest {
       @Override
       protected Object jobRun() throws Throwable {
         return intpB.interpret("500",
-            new InterpreterContext(
-                "note",
-                "jobB",
-                "title",
-                "text",
-                new AuthenticationInfo(),
-                new HashMap<String, Object>(),
-                new GUI(),
-                new AngularObjectRegistry(intpGroup.getId(), null),
-                new LocalResourcePool("pool1"),
-                new LinkedList<InterpreterContextRunner>(), null));
+                new InterpreterContext(
+                        "note",
+                        "jobB",
+                        "title",
+                        "text",
+                        null,
+                        new HashMap<String, Object>(),
+                        new GUI(),
+                        new AngularObjectRegistry(intpGroup.getId(), null),
+                        new LocalResourcePool("pool1"),
+                        new LinkedList<InterpreterContextRunner>(), null));
       }
 
       @Override
@@ -359,7 +359,7 @@ public class RemoteInterpreterTest {
     intpB.getScheduler().submit(jobB);
     // wait until both job finished
     while (jobA.getStatus() != Status.FINISHED ||
-           jobB.getStatus() != Status.FINISHED) {
+            jobB.getStatus() != Status.FINISHED) {
       Thread.sleep(100);
     }
     long end = System.currentTimeMillis();
@@ -404,16 +404,16 @@ public class RemoteInterpreterTest {
         @Override
         protected Object jobRun() throws Throwable {
           InterpreterResult ret = intpA.interpret(getJobName(), new InterpreterContext(
-              "note",
-              jobId,
-              "title",
-              "text",
-              new AuthenticationInfo(),
-              new HashMap<String, Object>(),
-              new GUI(),
-              new AngularObjectRegistry(intpGroup.getId(), null),
-              new LocalResourcePool("pool1"),
-              new LinkedList<InterpreterContextRunner>(), null));
+                  "note",
+                  jobId,
+                  "title",
+                  "text",
+                  null,
+                  new HashMap<String, Object>(),
+                  new GUI(),
+                  new AngularObjectRegistry(intpGroup.getId(), null),
+                  new LocalResourcePool("pool1"),
+                  new LinkedList<InterpreterContextRunner>(), null));
 
           synchronized (results) {
             results.add(ret.message());
@@ -484,16 +484,16 @@ public class RemoteInterpreterTest {
         protected Object jobRun() throws Throwable {
           String stmt = Integer.toString(timeToSleep);
           InterpreterResult ret = intpA.interpret(stmt, new InterpreterContext(
-              "note",
-              jobId,
-              "title",
-              "text",
-              new AuthenticationInfo(),
-              new HashMap<String, Object>(),
-              new GUI(),
-              new AngularObjectRegistry(intpGroup.getId(), null),
-              new LocalResourcePool("pool1"),
-              new LinkedList<InterpreterContextRunner>(), null));
+                  "note",
+                  jobId,
+                  "title",
+                  "text",
+                  null,
+                  new HashMap<String, Object>(),
+                  new GUI(),
+                  new AngularObjectRegistry(intpGroup.getId(), null),
+                  new LocalResourcePool("pool1"),
+                  new LinkedList<InterpreterContextRunner>(), null));
 
           synchronized (results) {
             results.add(ret.message());
@@ -585,17 +585,17 @@ public class RemoteInterpreterTest {
       @Override
       protected Object jobRun() throws Throwable {
         return intpA.interpret("2000",
-            new InterpreterContext(
-                "note",
-                "jobA",
-                "title",
-                "text",
-                new AuthenticationInfo(),
-                new HashMap<String, Object>(),
-                new GUI(),
-                new AngularObjectRegistry(intpGroup.getId(), null),
-                new LocalResourcePool("pool1"),
-                new LinkedList<InterpreterContextRunner>(), null));
+                new InterpreterContext(
+                        "note",
+                        "jobA",
+                        "title",
+                        "text",
+                        null,
+                        new HashMap<String, Object>(),
+                        new GUI(),
+                        new AngularObjectRegistry(intpGroup.getId(), null),
+                        new LocalResourcePool("pool1"),
+                        new LinkedList<InterpreterContextRunner>(), null));
       }
 
       @Override
@@ -616,7 +616,7 @@ public class RemoteInterpreterTest {
     intpA.close();
 
     InterpreterGroup newInterpreterGroup =
-        new InterpreterGroup(intpA.getInterpreterGroup().getId());
+            new InterpreterGroup(intpA.getInterpreterGroup().getId());
     newInterpreterGroup.put("note", new LinkedList<Interpreter>());
 
     intpA.setInterpreterGroup(newInterpreterGroup);
@@ -687,7 +687,7 @@ public class RemoteInterpreterTest {
     //Given
     final Client client = Mockito.mock(Client.class);
     final RemoteInterpreter intr = new RemoteInterpreter(new Properties(), "noteId",
-            MockInterpreterA.class.getName(), "runner", "path","localRepo", env, 10 * 1000, null, null);
+            MockInterpreterA.class.getName(), "runner", "path", "localRepo", env, 10 * 1000, null, null);
     final AngularObjectRegistry registry = new AngularObjectRegistry("spark", null);
     registry.add("name", "DuyHai DOAN", "nodeId", "paragraphId");
     final InterpreterGroup interpreterGroup = new InterpreterGroup("groupId");
@@ -695,7 +695,8 @@ public class RemoteInterpreterTest {
     intr.setInterpreterGroup(interpreterGroup);
 
     final java.lang.reflect.Type registryType = new TypeToken<Map<String,
-                Map<String, AngularObject>>>() {}.getType();
+            Map<String, AngularObject>>>() {
+    }.getType();
     final Gson gson = new Gson();
     final String expected = gson.toJson(registry.getRegistry(), registryType);
 
@@ -724,16 +725,16 @@ public class RemoteInterpreterTest {
     p.setProperty("my.property.1", "property value 1");
 
     RemoteInterpreter intp = new RemoteInterpreter(
-        p,
-        "note",
-        MockInterpreterEnv.class.getName(),
-        new File(INTERPRETER_SCRIPT).getAbsolutePath(),
-        "fake",
-        "fakeRepo",
-        env,
-        10 * 1000,
-        null,
-        null);
+            p,
+            "note",
+            MockInterpreterEnv.class.getName(),
+            new File(INTERPRETER_SCRIPT).getAbsolutePath(),
+            "fake",
+            "fakeRepo",
+            env,
+            10 * 1000,
+            null,
+            null);
 
     intpGroup.put("note", new LinkedList<Interpreter>());
     intpGroup.get("note").add(intp);
@@ -742,16 +743,16 @@ public class RemoteInterpreterTest {
     intp.open();
 
     InterpreterContext context = new InterpreterContext(
-        "noteId",
-        "id",
-        "title",
-        "text",
-        new AuthenticationInfo(),
-        new HashMap<String, Object>(),
-        new GUI(),
-        new AngularObjectRegistry(intpGroup.getId(), null),
-        new LocalResourcePool("pool1"),
-        new LinkedList<InterpreterContextRunner>(), null);
+            "noteId",
+            "id",
+            "title",
+            "text",
+            null,
+            new HashMap<String, Object>(),
+            new GUI(),
+            new AngularObjectRegistry(intpGroup.getId(), null),
+            new LocalResourcePool("pool1"),
+            new LinkedList<InterpreterContextRunner>(), null);
 
 
     assertEquals("env value 1", intp.interpret("getEnv MY_ENV1", context).message());

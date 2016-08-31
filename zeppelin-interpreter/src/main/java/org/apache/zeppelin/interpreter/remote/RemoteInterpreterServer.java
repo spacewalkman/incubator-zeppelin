@@ -25,6 +25,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.apache.shiro.subject.Subject;
 import org.apache.thrift.TException;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -489,7 +490,7 @@ public class RemoteInterpreterServer
         ric.getParagraphId(),
         ric.getParagraphTitle(),
         ric.getParagraphText(),
-        gson.fromJson(ric.getAuthenticationInfo(), AuthenticationInfo.class),
+        gson.fromJson(ric.getAuthenticationInfo(), Subject.class),
         (Map<String, Object>) gson.fromJson(ric.getConfig(),
             new TypeToken<Map<String, Object>>() {}.getType()),
         gson.fromJson(ric.getGui(), GUI.class),

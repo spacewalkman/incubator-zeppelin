@@ -20,6 +20,7 @@ package org.apache.zeppelin.notebook;
 import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.GUI;
@@ -61,7 +62,6 @@ import java.util.Set;
 
 /**
  * Paragraph is a representation of an execution unit.
- *
  */
 public class Paragraph extends Job implements Serializable, Cloneable {
   private static final long serialVersionUID = -6328572073497992016L;
@@ -70,6 +70,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   private transient InterpreterFactory factory;
   private transient Note note;
   private transient AuthenticationInfo authenticationInfo;
+  private transient Subject subject;
 
   String title;
   String text;
@@ -81,7 +82,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   /**
    * Applicaiton states in this paragraph
    */
-  private final List<ApplicationState> apps =  new LinkedList<ApplicationState>();
+  private final List<ApplicationState> apps = new LinkedList<ApplicationState>();
 
   @VisibleForTesting
   Paragraph() {
@@ -97,7 +98,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
-    authenticationInfo = null;
+    subject = null;
     user = null;
     dateUpdated = null;
     settings = new GUI();
@@ -110,7 +111,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
-    authenticationInfo = null;
+    subject = null;
     dateUpdated = null;
     settings = new GUI();
     config = new HashMap<String, Object>();
@@ -118,7 +119,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
 
   private static String generateId() {
     return "paragraph_" + System.currentTimeMillis() + "_"
-           + new Random(System.currentTimeMillis()).nextInt();
+            + new Random(System.currentTimeMillis()).nextInt();
   }
 
   public String getText() {
@@ -134,9 +135,13 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return authenticationInfo;
   }
 
-  public void setAuthenticationInfo(AuthenticationInfo authenticationInfo) {
-    this.authenticationInfo = authenticationInfo;
-    this.user = authenticationInfo.getUser();
+  public Subject getSubject() {
+    return subject;
+  }
+
+  public void setSubject(Subject subject) {
+    this.subject = subject;
+    this.user = (String) (subject.getPrincipal());
   }
 
   public String getTitle() {
@@ -218,10 +223,10 @@ public class Paragraph extends Job implements Serializable, Cloneable {
 
   public List<InterpreterCompletion> getInterpreterCompletion() {
     List<InterpreterCompletion> completion = new LinkedList();
-    for (InterpreterSetting intp: factory.getInterpreterSettings(note.getId())){
+    for (InterpreterSetting intp : factory.getInterpreterSettings(note.getId())) {
       List<InterpreterInfo> intInfo = intp.getInterpreterInfos();
       if (intInfo.size() > 1) {
-        for (InterpreterInfo info : intInfo){
+        for (InterpreterInfo info : intInfo) {
           String name = intp.getName() + "." + info.getName();
           completion.add(new InterpreterCompletion(name, name));
         }
@@ -235,8 +240,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   public List<InterpreterCompletion> completion(String buffer, int cursor) {
     String lines[] = buffer.split(System.getProperty("line.separator"));
     if (lines.length > 0
-      && lines[0].startsWith("%")
-      && cursor <= lines[0].trim().length()) {
+            && lines[0].startsWith("%")
+            && cursor <= lines[0].trim().length()) {
 
       int idx = lines[0].indexOf(' ');
       if (idx < 0 || (idx > 0 && cursor <= idx)) {
@@ -283,19 +288,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return null;
   }
 
-  private boolean hasPermission(String user, List<String> intpUsers) {
-    if (1 > intpUsers.size()) {
-      return true;
-    }
-
-    for (String u: intpUsers) {
-      if (user.trim().equals(u.trim())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   protected Object jobRun() throws Throwable {
     String replName = getRequiredReplName();
@@ -309,11 +301,11 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     if (this.noteHasUser() && this.noteHasInterpreters()) {
       InterpreterSetting intp = getInterpreterSettingById(repl.getInterpreterGroup().getId());
       if (intp != null &&
-        interpreterHasUser(intp) &&
-        isUserAuthorizedToAccessInterpreter(intp.getOption()) == false) {
-        logger.error("{} has no permission for {} ", authenticationInfo.getUser(), repl);
-        return new InterpreterResult(Code.ERROR, authenticationInfo.getUser() +
-          " has no permission for " + getRequiredReplName());
+              interpreterHasUser(intp) &&
+              isUserAuthorizedToAccessInterpreter(intp.getOption()) == false) {
+        logger.error("{} has no permission for {} ", subject.getPrincipal(), repl);
+        return new InterpreterResult(Code.ERROR, subject.getPrincipal() +
+                " has no permission for " + getRequiredReplName());
       }
     }
 
@@ -324,7 +316,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     } else if (repl.getFormType() == FormType.SIMPLE) {
       String scriptBody = getScriptBody();
       Map<String, Input> inputs = Input.extractSimpleQueryParam(scriptBody); // inputs will be built
-                                                                             // from script body
+      // from script body
 
       final AngularObjectRegistry angularRegistry = repl.getInterpreterGroup()
               .getAngularObjectRegistry();
@@ -382,14 +374,16 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return intp.getOption().permissionIsSet() && intp.getOption().getUsers() != null;
   }
 
-  private boolean isUserAuthorizedToAccessInterpreter(InterpreterOption intpOpt){
-    return intpOpt.permissionIsSet() &&
-      hasPermission(authenticationInfo.getUser(), intpOpt.getUsers());
+  /**
+   * use shiro wildcardPermission to authorize interpters' using
+   */
+  private boolean isUserAuthorizedToAccessInterpreter(InterpreterOption intpOpt) {
+    return intpOpt.permissionIsSet() && subject.isPermitted(String.format(getRequiredReplName()));
   }
 
   private InterpreterSetting getInterpreterSettingById(String id) {
     InterpreterSetting setting = null;
-    for (InterpreterSetting i: factory.getInterpreterSettings(note.getId())) {
+    for (InterpreterSetting i : factory.getInterpreterSettings(note.getId())) {
       if (id.startsWith(i.getId())) {
         setting = i;
         break;
@@ -434,7 +428,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       public void onUpdate(InterpreterOutput out, byte[] output) {
         updateParagraphResult(out);
         ((ParagraphJobListener) getListener()).onOutputUpdate(self, out,
-            new String(output));
+                new String(output));
       }
 
       private void updateParagraphResult(InterpreterOutput out) {
@@ -467,12 +461,10 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       runners.add(new ParagraphRunner(note, note.getId(), p.getId()));
     }
 
-    final Paragraph self = this;
-
     Credentials credentials = note.getCredentials();
     if (authenticationInfo != null) {
       UserCredentials userCredentials = credentials.getUserCredentials(
-          authenticationInfo.getUser());
+          authenticationInfo.getPrincipal());
       authenticationInfo.setUserCredentials(userCredentials);
     }
 
@@ -481,7 +473,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
         getId(),
         this.getTitle(),
         this.getText(),
-        this.getAuthenticationInfo(),
+        this.getSubject(),
         this.getConfig(),
         this.settings,
         registry,

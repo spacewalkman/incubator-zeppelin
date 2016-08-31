@@ -32,8 +32,6 @@ import java.util.Map;
  */
 public interface SearchService {
 
-  int DEFUALT_PAGE_SIZE = 20;
-
   /**
    * Full-text search in all the notebooks
    *

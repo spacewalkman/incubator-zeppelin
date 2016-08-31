@@ -152,6 +152,7 @@ public class Message {
   public Map<String, Object> data = new HashMap<String, Object>();
   public String ticket = "anonymous";
   public String principal = "anonymous";
+  public String group="default_team";//TODO:qy,default team name
   public String roles = "";
 
   public Message(OP op) {

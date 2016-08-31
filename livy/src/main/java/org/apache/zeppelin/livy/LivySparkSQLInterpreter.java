@@ -57,13 +57,14 @@ public class LivySparkSQLInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String line, InterpreterContext interpreterContext) {
     try {
-      if (userSessionMap.get(interpreterContext.getAuthenticationInfo().getUser()) == null) {
+      String principal = (String) (interpreterContext.getSubject().getPrincipal());
+      if (userSessionMap.get(principal) == null) {
         try {
           userSessionMap.put(
-              interpreterContext.getAuthenticationInfo().getUser(),
-              livyHelper.createSession(
-                  interpreterContext,
-                  "spark")
+                  principal,
+                  livyHelper.createSession(
+                          interpreterContext,
+                          "spark")
           );
           livyHelper.initializeSpark(interpreterContext, userSessionMap);
         } catch (Exception e) {
@@ -77,11 +78,11 @@ public class LivySparkSQLInterpreter extends Interpreter {
       }
 
       InterpreterResult res = livyHelper.interpret("sqlContext.sql(\"" +
-              line.replaceAll("\"", "\\\\\"")
-                  .replaceAll("\\n", " ")
-              + "\").show(" +
-              property.get("zeppelin.livy.spark.sql.maxResult") + ")",
-          interpreterContext, userSessionMap);
+                      line.replaceAll("\"", "\\\\\"")
+                              .replaceAll("\\n", " ")
+                      + "\").show(" +
+                      property.get("zeppelin.livy.spark.sql.maxResult") + ")",
+              interpreterContext, userSessionMap);
 
       if (res.code() == InterpreterResult.Code.SUCCESS) {
         StringBuilder resMsg = new StringBuilder();
@@ -109,7 +110,7 @@ public class LivySparkSQLInterpreter extends Interpreter {
         }
 
         return new InterpreterResult(InterpreterResult.Code.SUCCESS,
-            resMsg.toString()
+                resMsg.toString()
         );
       } else {
         return res;
@@ -119,7 +120,7 @@ public class LivySparkSQLInterpreter extends Interpreter {
     } catch (Exception e) {
       LOGGER.error("Exception in LivySparkSQLInterpreter while interpret ", e);
       return new InterpreterResult(InterpreterResult.Code.ERROR,
-          InterpreterUtils.getMostRelevantMessage(e));
+              InterpreterUtils.getMostRelevantMessage(e));
     }
   }
 
@@ -147,10 +148,10 @@ public class LivySparkSQLInterpreter extends Interpreter {
     if (concurrentSQL()) {
       int maxConcurrency = 10;
       return SchedulerFactory.singleton().createOrGetParallelScheduler(
-          LivySparkInterpreter.class.getName() + this.hashCode(), maxConcurrency);
+              LivySparkInterpreter.class.getName() + this.hashCode(), maxConcurrency);
     } else {
       Interpreter intp =
-          getInterpreterInTheSameSessionByClassName(LivySparkInterpreter.class.getName());
+              getInterpreterInTheSameSessionByClassName(LivySparkInterpreter.class.getName());
       if (intp != null) {
         return intp.getScheduler();
       } else {

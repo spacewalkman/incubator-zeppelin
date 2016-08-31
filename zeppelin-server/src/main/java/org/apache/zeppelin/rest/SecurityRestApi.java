@@ -66,7 +66,6 @@ public class SecurityRestApi {
   @Path("ticket")
   @ZeppelinApi
   public Response ticket() {
-    ZeppelinConfiguration conf = ZeppelinConfiguration.create();
     String principal = SecurityUtils.getPrincipal();
     HashSet<String> roles = SecurityUtils.getRoles();
     JsonResponse response;
@@ -75,7 +74,7 @@ public class SecurityRestApi {
     if ("anonymous".equals(principal))
       ticket = "anonymous";
     else
-      ticket = TicketContainer.instance.getTicket(principal);
+      ticket = TicketContainer.instance.getTicket(org.apache.shiro.SecurityUtils.getSubject());
 
     Map<String, String> data = new HashMap<>();
     data.put("principal", principal);

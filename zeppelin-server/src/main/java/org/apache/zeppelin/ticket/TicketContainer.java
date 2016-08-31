@@ -17,6 +17,12 @@
 
 package org.apache.zeppelin.ticket;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+
 import java.util.Calendar;
 import java.util.Map;
 import java.util.UUID;
@@ -28,27 +34,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * The Map size is at most the number of different user names having access to a Zeppelin instance
  */
 
-
+//TODO: use shiro session managment
 public class TicketContainer {
-  private static class Entry {
+  public static final class Entry {
     public final String ticket;
+    public final Subject subject;
     // lastAccessTime still unused
     public final long lastAccessTime;
 
-    Entry(String ticket) {
+    Entry(Subject subject, String ticket) {
+      this.subject = subject;
       this.ticket = ticket;
       this.lastAccessTime = Calendar.getInstance().getTimeInMillis();
     }
   }
 
   private Map<String, Entry> sessions = new ConcurrentHashMap<>();
-
   public static final TicketContainer instance = new TicketContainer();
 
   /**
    * For test use
-   * @param principal
-   * @param ticket
+   *
    * @return true if ticket assigned to principal.
    */
   public boolean isValid(String principal, String ticket) {
@@ -59,24 +65,32 @@ public class TicketContainer {
   }
 
   /**
+   * get current principal's entry
+   */
+  public Subject getSubjectFromEntry(String principal, String ticket) {
+    Entry entry = sessions.get(principal);
+    if (entry != null && entry.ticket.equals(ticket))
+      return entry.subject;
+    return null;
+  }
+
+  /**
    * get or create ticket for Websocket authentication assigned to authenticated shiro user
    * For unathenticated user (anonymous), always return ticket value "anonymous"
-   * @param principal
-   * @return
    */
-  public synchronized String getTicket(String principal) {
-    Entry entry = sessions.get(principal);
+  public synchronized String getTicket(Subject subject) {
+    Entry entry = sessions.get(subject.getPrincipal());
     String ticket;
     if (entry == null) {
-      if (principal.equals("anonymous"))
+      if (subject.equals("anonymous"))
         ticket = "anonymous";
       else
         ticket = UUID.randomUUID().toString();
     } else {
       ticket = entry.ticket;
     }
-    entry = new Entry(ticket);
-    sessions.put(principal, entry);
+    entry = new Entry(subject, ticket);
+    sessions.put((String) (subject.getPrincipal()), entry);
     return ticket;
   }
 }

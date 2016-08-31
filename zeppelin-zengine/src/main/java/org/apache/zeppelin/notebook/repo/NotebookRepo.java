@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.notebook.repo;
 
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
@@ -35,7 +36,7 @@ public interface NotebookRepo {
    * @param subject contains user information.
    */
   @ZeppelinApi
-  List<NoteInfo> list(AuthenticationInfo subject) throws IOException;
+  List<NoteInfo> list(Subject subject) throws IOException;
 
   /**
    * Get the notebook with the given id.
@@ -44,7 +45,7 @@ public interface NotebookRepo {
    * @param subject contains user information.
    */
   @ZeppelinApi
-  Note get(String noteId, AuthenticationInfo subject) throws IOException;
+  Note get(String noteId, Subject subject) throws IOException;
 
   /**
    * Save given note in storage
@@ -53,7 +54,7 @@ public interface NotebookRepo {
    * @param subject contains user information.
    */
   @ZeppelinApi
-  void save(Note note, AuthenticationInfo subject) throws IOException;
+  void save(Note note, Subject subject) throws IOException;
 
   /**
    * Remove note with given id.
@@ -62,7 +63,7 @@ public interface NotebookRepo {
    * @param subject contains user information.
    */
   @ZeppelinApi
-  void remove(String noteId, AuthenticationInfo subject) throws IOException;
+  void remove(String noteId, Subject subject) throws IOException;
 
   /**
    * Release any underlying resources
@@ -83,19 +84,20 @@ public interface NotebookRepo {
    */
   @ZeppelinApi
   Revision checkpoint(String noteId, String checkpointMsg,
-                      AuthenticationInfo subject) throws IOException;
+                      Subject subject) throws IOException;
 
 
   /**
    * Get particular revision of the Notebook.
    *
    * @param noteId Id of the Notebook
-   * @param revId    revision of the Notebook
+   * @param revId  revision of the Notebook
    * @return a Notebook
    */
 
-  @ZeppelinApi public Note get(String noteId, String revId, AuthenticationInfo subject)
-      throws IOException;
+  @ZeppelinApi
+  Note get(String noteId, String revId, Subject subject)
+          throws IOException;
 
   /**
    * List of revisions of the given Notebook.
@@ -104,7 +106,7 @@ public interface NotebookRepo {
    * @return list of revisions
    */
   @ZeppelinApi
-  List<Revision> revisionHistory(String noteId, AuthenticationInfo subject);
+  List<Revision> revisionHistory(String noteId, Subject subject);
 
   /**
    * Represents the 'Revision' a point in life of the notebook

@@ -30,12 +30,8 @@ import java.util.*;
 /**
  * Contains authorization information for notes
  */
-public class NotebookAuthorization {
+public class NotebookAuthorization extends NotebookAuthorizationAdaptor {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
-
-  public static final String READERS = "readers";
-  public static final String WRITERS = "writers";
-  public static final String OWNERS = "owners";
 
   /*
    * { "note1": { "owners": ["u1"], "readers": ["u1", "u2"], "writers": ["u1"] },  "note2": ... } }
@@ -110,6 +106,7 @@ public class NotebookAuthorization {
   /**
    * add a new owner to note
    */
+  @Override
   public void addOwner(String noteId, String principal) {
     Set<String> lastOwners = this.getOwners(noteId);
 
@@ -119,6 +116,7 @@ public class NotebookAuthorization {
     }
   }
 
+  @Override
   public void addReader(String noteId, String principal) {
     Set<String> lastReaders = this.getReaders(noteId);
 
@@ -128,6 +126,7 @@ public class NotebookAuthorization {
     }
   }
 
+  @Override
   public void addWriters(String noteId, String principal) {
     Set<String> lastWriters = this.getWriters(noteId);
 
@@ -138,6 +137,7 @@ public class NotebookAuthorization {
 
   }
 
+  @Override
   public void setOwners(String noteId, Set<String> entities) {
     Set<String> owners = getOrInitAuthInfoForNote(noteId).get(OWNERS);
     owners.clear();
@@ -145,6 +145,7 @@ public class NotebookAuthorization {
     saveToFile();
   }
 
+  @Override
   public void setReaders(String noteId, Set<String> entities) {
     Set<String> readers = getOrInitAuthInfoForNote(noteId).get(READERS);
     readers.clear();
@@ -152,6 +153,7 @@ public class NotebookAuthorization {
     saveToFile();
   }
 
+  @Override
   public void setWriters(String noteId, Set<String> entities) {
     Set<String> writers = getOrInitAuthInfoForNote(noteId).get(WRITERS);
     writers.clear();
@@ -172,26 +174,32 @@ public class NotebookAuthorization {
     return noteAuthInfo;
   }
 
+  @Override
   public Set<String> getOwners(String noteId) {
     return getOrInitAuthInfoForNote(noteId).get(OWNERS);
   }
 
+  @Override
   public Set<String> getReaders(String noteId) {
     return getOrInitAuthInfoForNote(noteId).get(READERS);
   }
 
+  @Override
   public Set<String> getWriters(String noteId) {
     return getOrInitAuthInfoForNote(noteId).get(WRITERS);
   }
 
+  @Override
   public boolean isOwner(String noteId, Set<String> entities) {
     return isMember(entities, getOwners(noteId));
   }
 
+  @Override
   public boolean isWriter(String noteId, Set<String> entities) {
     return isMember(entities, getWriters(noteId)) || isMember(entities, getOwners(noteId));
   }
 
+  @Override
   public boolean isReader(String noteId, Set<String> entities) {
     return isMember(entities, getReaders(noteId)) ||
             isMember(entities, getOwners(noteId)) ||
@@ -205,6 +213,7 @@ public class NotebookAuthorization {
     return intersection.size() > 0;//(b.isEmpty() || (intersection.size() > 0));
   }
 
+  @Override
   public void removeNote(String noteId) {
     authInfo.remove(noteId);
     saveToFile();

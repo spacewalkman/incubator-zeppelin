@@ -65,7 +65,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
 
   }
 
-
   /**
    * Load from resource. url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
    */
@@ -478,6 +477,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_HOME("zeppelin.home", "../"), //TODO(qy): restore to ./
     ZEPPELIN_ADDR("zeppelin.server.addr", "0.0.0.0"),
     ZEPPELIN_PORT("zeppelin.server.port", 8080),
+    ZEPPELIN_SHIRO_REALM_NAME("zeppelin.shiro.realm", "mysqlJdbcRealm"),//TODO:如何做成runtime的const,需要shiro.ini中
     ZEPPELIN_SERVER_CONTEXT_PATH("zeppelin.server.context.path", "/"),
     ZEPPELIN_SSL("zeppelin.ssl", false),
     ZEPPELIN_SSL_CLIENT_AUTH("zeppelin.ssl.client.auth", false),

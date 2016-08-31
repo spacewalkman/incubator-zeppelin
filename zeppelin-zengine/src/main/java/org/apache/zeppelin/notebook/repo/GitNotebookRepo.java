@@ -20,6 +20,7 @@ package org.apache.zeppelin.notebook.repo;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.user.AuthenticationInfo;
@@ -70,7 +71,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
   }
 
   @Override
-  public synchronized void save(Note note, AuthenticationInfo subject) throws IOException {
+  public synchronized void save(Note note, Subject subject) throws IOException {
     super.save(note, subject);
   }
 
@@ -81,7 +82,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
    * @see org.apache.zeppelin.notebook.repo.VFSNotebookRepo#checkpoint(String, String)
    */
   @Override
-  public Revision checkpoint(String pattern, String commitMessage, AuthenticationInfo subject) {
+  public Revision checkpoint(String pattern, String commitMessage, Subject subject) {
     Revision revision = null;
     try {
       List<DiffEntry> gitDiff = git.diff().call();
@@ -108,7 +109,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
    * 4. apply stash on top and remove it
    */
   @Override
-  public synchronized Note get(String noteId, String revId, AuthenticationInfo subject)
+  public synchronized Note get(String noteId, String revId, Subject subject)
           throws IOException {
     Note note = null;
     RevCommit stash = null;
@@ -143,7 +144,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     List<Revision> history = Lists.newArrayList();
     LOG.debug("Listing history for {}:", noteId);
     try {
