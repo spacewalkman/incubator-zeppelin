@@ -111,11 +111,11 @@ public class JDBCInterpreter extends Interpreter {
   private final Map<String, SqlCompleter> propertyKeySqlCompleterMap;
 
   private static final Function<CharSequence, InterpreterCompletion> sequenceToStringTransformer =
-      new Function<CharSequence, InterpreterCompletion>() {
-        public InterpreterCompletion apply(CharSequence seq) {
-          return new InterpreterCompletion(seq.toString(), seq.toString());
-        }
-      };
+          new Function<CharSequence, InterpreterCompletion>() {
+            public InterpreterCompletion apply(CharSequence seq) {
+              return new InterpreterCompletion(seq.toString(), seq.toString());
+            }
+          };
 
   private static final List<InterpreterCompletion> NO_COMPLETION = new ArrayList<>();
 
@@ -156,7 +156,7 @@ public class JDBCInterpreter extends Interpreter {
         Properties properties = propertiesMap.get(key);
         if (!properties.containsKey(DRIVER_KEY) || !properties.containsKey(URL_KEY)) {
           logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
-              key, DRIVER_KEY, key, key, URL_KEY);
+                  key, DRIVER_KEY, key, key, URL_KEY);
           removeKeySet.add(key);
         }
       }
@@ -182,7 +182,7 @@ public class JDBCInterpreter extends Interpreter {
     try {
       Set<String> keywordsCompletions = SqlCompleter.getSqlKeywordsCompletions(jdbcConnection);
       Set<String> dataModelCompletions =
-          SqlCompleter.getDataModelMetadataCompletions(jdbcConnection);
+              SqlCompleter.getDataModelMetadataCompletions(jdbcConnection);
       SetView<String> allCompletions = Sets.union(keywordsCompletions, dataModelCompletions);
       completer = new SqlCompleter(allCompletions, dataModelCompletions);
 
@@ -194,7 +194,7 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   public Connection getConnection(String propertyKey, String user)
-      throws ClassNotFoundException, SQLException, InterpreterException {
+          throws ClassNotFoundException, SQLException, InterpreterException {
     Connection connection = null;
     if (propertyKey == null || propertiesMap.get(propertyKey) == null) {
       return null;
@@ -268,15 +268,16 @@ public class JDBCInterpreter extends Interpreter {
 
   public Statement getStatement(String propertyKey, String paragraphId,
                                 InterpreterContext interpreterContext)
-      throws SQLException, ClassNotFoundException, InterpreterException {
+          throws SQLException, ClassNotFoundException, InterpreterException {
     Connection connection;
 
-    if (paragraphIdConnectionMap.containsKey(paragraphId +
-        interpreterContext.getAuthenticationInfo().getUser())) {
+    String principal = (String) (interpreterContext.getSubject().getPrincipal());
+    if (paragraphIdConnectionMap.containsKey(paragraphId + principal
+    )) {
       connection = paragraphIdConnectionMap.get(paragraphId +
-          interpreterContext.getAuthenticationInfo().getUser());
+              principal);
     } else {
-      connection = getConnection(propertyKey, interpreterContext.getAuthenticationInfo().getUser());
+      connection = getConnection(propertyKey, principal);
     }
 
     if (connection == null) {
@@ -285,13 +286,13 @@ public class JDBCInterpreter extends Interpreter {
 
     Statement statement = connection.createStatement();
     if (isStatementClosed(statement)) {
-      connection = getConnection(propertyKey, interpreterContext.getAuthenticationInfo().getUser());
+      connection = getConnection(propertyKey, principal);
       statement = connection.createStatement();
     }
-    paragraphIdConnectionMap.put(paragraphId + interpreterContext.getAuthenticationInfo().getUser(),
-        connection);
-    paragraphIdStatementMap.put(paragraphId + interpreterContext.getAuthenticationInfo().getUser(),
-        statement);
+    paragraphIdConnectionMap.put(paragraphId + principal,
+            connection);
+    paragraphIdStatementMap.put(paragraphId + principal,
+            statement);
 
     return statement;
   }
@@ -341,7 +342,7 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   private InterpreterResult executeSql(String propertyKey, String sql,
-      InterpreterContext interpreterContext) {
+                                       InterpreterContext interpreterContext) {
 
     String paragraphId = interpreterContext.getParagraphId();
 
@@ -462,8 +463,9 @@ public class JDBCInterpreter extends Interpreter {
     logger.info("Cancel current query statement.");
 
     String paragraphId = context.getParagraphId();
+    String principal = (String) (context.getSubject().getPrincipal());
     try {
-      paragraphIdStatementMap.get(paragraphId + context.getAuthenticationInfo().getUser()).cancel();
+      paragraphIdStatementMap.get(paragraphId + principal).cancel();
     } catch (SQLException e) {
       logger.error("Error while cancelling...", e);
     }
@@ -500,7 +502,7 @@ public class JDBCInterpreter extends Interpreter {
     String schedulerName = JDBCInterpreter.class.getName() + this.hashCode();
     return isConcurrentExecution() ?
             SchedulerFactory.singleton().createOrGetParallelScheduler(schedulerName,
-                getMaxConcurrentConnection())
+                    getMaxConcurrentConnection())
             : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
   }
 
@@ -520,7 +522,7 @@ public class JDBCInterpreter extends Interpreter {
 
   public int getMaxResult() {
     return Integer.valueOf(
-        propertiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY, MAX_LINE_DEFAULT));
+            propertiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY, MAX_LINE_DEFAULT));
   }
 
   boolean isConcurrentExecution() {

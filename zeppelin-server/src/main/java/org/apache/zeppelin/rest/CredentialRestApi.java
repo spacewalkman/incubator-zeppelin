@@ -86,7 +86,7 @@ public class CredentialRestApi {
 
   /**
    * Get User Credentials list REST API
-   * @param
+   * @param message
    * @return JSON with status.OK
    * @throws IOException, IllegalArgumentException
    */

@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.notebook.repo;
 
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
@@ -114,12 +115,12 @@ public class NotebookRepoSync implements NotebookRepo {
    * Lists Notebooks from the first repository
    */
   @Override
-  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public List<NoteInfo> list(Subject subject) throws IOException {
     return getRepo(0).list(subject);
   }
 
   /* list from specific repo (for tests) */
-  List<NoteInfo> list(int repoIndex, AuthenticationInfo subject) throws IOException {
+  List<NoteInfo> list(int repoIndex, Subject subject) throws IOException {
     return getRepo(repoIndex).list(subject);
   }
 
@@ -127,12 +128,12 @@ public class NotebookRepoSync implements NotebookRepo {
    * Returns from Notebook from the first repository
    */
   @Override
-  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, Subject subject) throws IOException {
     return getRepo(0).get(noteId, subject);
   }
 
   /* get note from specific repo (for tests) */
-  Note get(int repoIndex, String noteId, AuthenticationInfo subject) throws IOException {
+  Note get(int repoIndex, String noteId, Subject subject) throws IOException {
     return getRepo(repoIndex).get(noteId, subject);
   }
 
@@ -140,7 +141,7 @@ public class NotebookRepoSync implements NotebookRepo {
    * Saves to all repositories
    */
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note, Subject subject) throws IOException {
     getRepo(0).save(note, subject);
     if (getRepoCount() > 1) {
       try {
@@ -152,12 +153,12 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   /* save note to specific repo (for tests) */
-  void save(int repoIndex, Note note, AuthenticationInfo subject) throws IOException {
+  void save(int repoIndex, Note note, Subject subject) throws IOException {
     getRepo(repoIndex).save(note, subject);
   }
 
   @Override
-  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, Subject subject) throws IOException {
     for (NotebookRepo repo : repos) {
       repo.remove(noteId, subject);
     }
@@ -351,7 +352,7 @@ public class NotebookRepoSync implements NotebookRepo {
 
   //checkpoint to all available storages
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
     int repoCount = getRepoCount();
     int repoBound = Math.min(repoCount, getMaxRepoNum());
     int errorCount = 0;
@@ -384,7 +385,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String revId, AuthenticationInfo subject) {
+  public Note get(String noteId, String revId, Subject subject) {
     Note revisionNote = null;
     try {
       revisionNote = getRepo(0).get(noteId, revId, subject);
@@ -395,7 +396,7 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     List<Revision> revisions = Collections.emptyList();
     try {
       revisions = getRepo(0).revisionHistory(noteId, subject);

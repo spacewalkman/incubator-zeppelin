@@ -20,6 +20,7 @@ package org.apache.zeppelin.livy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.zeppelin.interpreter.InterpreterContext;
@@ -62,56 +63,56 @@ public class LivyHelper {
       while (it.hasNext()) {
         Entry<Object, Object> pair = it.next();
         if (pair.getKey().toString().startsWith("livy.spark.") &&
-            !pair.getValue().toString().isEmpty())
+                !pair.getValue().toString().isEmpty())
           conf.put(pair.getKey().toString().substring(5), pair.getValue().toString());
       }
 
       String confData = gson.toJson(conf);
-      String user = context.getAuthenticationInfo().getUser();
+      String user = (String) (context.getSubject().getPrincipal());
 
       String json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions", "POST",
-          "{" +
-              "\"kind\": \"" + kind + "\", " +
-              "\"conf\": " + confData + ", " +
-              "\"proxyUser\": " + (StringUtils.isEmpty(user) ? null : "\"" + user + "\"") +
-              "}",
-          context.getParagraphId()
+              "{" +
+                      "\"kind\": \"" + kind + "\", " +
+                      "\"conf\": " + confData + ", " +
+                      "\"proxyUser\": " + (StringUtils.isEmpty(user) ? null : "\"" + user + "\"") +
+                      "}",
+              context.getParagraphId()
       );
 
       Map jsonMap = (Map<Object, Object>) gson.fromJson(json,
-          new TypeToken<Map<Object, Object>>() {
-          }.getType());
+              new TypeToken<Map<Object, Object>>() {
+              }.getType());
       Integer sessionId = ((Double) jsonMap.get("id")).intValue();
       if (!jsonMap.get("state").equals("idle")) {
         Integer retryCount = 60;
 
         try {
           retryCount = Integer.valueOf(
-              property.getProperty("zeppelin.livy.create.session.retries"));
+                  property.getProperty("zeppelin.livy.create.session.retries"));
         } catch (Exception e) {
           LOGGER.info("zeppelin.livy.create.session.retries property is not configured." +
-              " Using default retry count.");
+                  " Using default retry count.");
         }
 
         while (retryCount >= 0) {
           LOGGER.error(String.format("sessionId:%s state is %s",
-              jsonMap.get("id"), jsonMap.get("state")));
+                  jsonMap.get("id"), jsonMap.get("state")));
           Thread.sleep(1000);
           json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions/" +
-              sessionId, "GET", null, context.getParagraphId());
+                  sessionId, "GET", null, context.getParagraphId());
           jsonMap = (Map<Object, Object>) gson.fromJson(json,
-              new TypeToken<Map<Object, Object>>() {
-              }.getType());
+                  new TypeToken<Map<Object, Object>>() {
+                  }.getType());
           if (jsonMap.get("state").equals("idle")) {
             break;
           } else if (jsonMap.get("state").equals("error") || jsonMap.get("state").equals("dead")) {
             json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions/" +
-                    sessionId + "/log",
-                "GET", null,
-                context.getParagraphId());
+                            sessionId + "/log",
+                    "GET", null,
+                    context.getParagraphId());
             jsonMap = (Map<Object, Object>) gson.fromJson(json,
-                new TypeToken<Map<Object, Object>>() {
-                }.getType());
+                    new TypeToken<Map<Object, Object>>() {
+                    }.getType());
             String logs = StringUtils.join((ArrayList<String>) jsonMap.get("log"), '\n');
             LOGGER.error(String.format("Cannot start  %s.\n%s", kind, logs));
             throw new Exception(String.format("Cannot start  %s.\n%s", kind, logs));
@@ -133,7 +134,7 @@ public class LivyHelper {
   protected void initializeSpark(final InterpreterContext context,
                                  final Map<String, Integer> userSessionMap) throws Exception {
     interpret("val sqlContext = new org.apache.spark.sql.SQLContext(sc)\n" +
-        "import sqlContext.implicits._", context, userSessionMap);
+            "import sqlContext.implicits._", context, userSessionMap);
   }
 
   public InterpreterResult interpretInput(String stringLines,
@@ -162,9 +163,9 @@ public class LivyHelper {
           String nextLine = linesToRun[l + 1].trim();
           boolean continuation = false;
           if (nextLine.isEmpty()
-              || nextLine.startsWith("//")         // skip empty line or comment
-              || nextLine.startsWith("}")
-              || nextLine.startsWith("object")) {  // include "} object" for Scala companion object
+                  || nextLine.startsWith("//")         // skip empty line or comment
+                  || nextLine.startsWith("}")
+                  || nextLine.startsWith("object")) {  // include "} object" for Scala companion object
             continuation = true;
           } else if (!inComment && nextLine.startsWith("/*")) {
             inComment = true;
@@ -173,9 +174,9 @@ public class LivyHelper {
             inComment = false;
             continuation = true;
           } else if (nextLine.length() > 1
-              && nextLine.charAt(0) == '.'
-              && nextLine.charAt(1) != '.'     // ".."
-              && nextLine.charAt(1) != '/') {  // "./"
+                  && nextLine.charAt(0) == '.'
+                  && nextLine.charAt(1) != '.'     // ".."
+                  && nextLine.charAt(1) != '/') {  // "./"
             continuation = true;
           } else if (inComment) {
             continuation = true;
@@ -224,16 +225,16 @@ public class LivyHelper {
   public InterpreterResult interpret(String stringLines,
                                      final InterpreterContext context,
                                      final Map<String, Integer> userSessionMap)
-      throws Exception {
+          throws Exception {
     stringLines = stringLines
-        //for "\n" present in string
-        .replaceAll("\\\\n", "\\\\\\\\n")
-        //for new line present in string
-        .replaceAll("\\n", "\\\\n")
-        // for \" present in string
-        .replaceAll("\\\\\"", "\\\\\\\\\"")
-        // for " present in string
-        .replaceAll("\"", "\\\\\"");
+            //for "\n" present in string
+            .replaceAll("\\\\n", "\\\\\\\\n")
+            //for new line present in string
+            .replaceAll("\\n", "\\\\n")
+            // for \" present in string
+            .replaceAll("\\\\\"", "\\\\\\\\\"")
+            // for " present in string
+            .replaceAll("\"", "\\\\\"");
 
     if (stringLines.trim().equals("")) {
       return new InterpreterResult(Code.SUCCESS, "");
@@ -262,30 +263,30 @@ public class LivyHelper {
     if (jsonMap.get("state").equals("available")) {
       if (((Map) jsonMap.get("output")).get("status").equals("error")) {
         StringBuilder errorMessage = new StringBuilder((String) ((Map) jsonMap
-            .get("output")).get("evalue"));
+                .get("output")).get("evalue"));
         if (errorMessage.toString().equals("incomplete statement")
-            || errorMessage.toString().contains("EOF")) {
+                || errorMessage.toString().contains("EOF")) {
           return new InterpreterResult(Code.INCOMPLETE, "");
         }
         String traceback = gson.toJson(((Map) jsonMap.get("output")).get("traceback"));
         if (!traceback.equals("[]")) {
           errorMessage
-              .append("\n")
-              .append("traceback: \n")
-              .append(traceback);
+                  .append("\n")
+                  .append("traceback: \n")
+                  .append(traceback);
         }
 
         return new InterpreterResult(Code.ERROR, errorMessage.toString());
       }
       if (((Map) jsonMap.get("output")).get("status").equals("ok")) {
         String result = (String) ((Map) ((Map) jsonMap.get("output"))
-            .get("data")).get("text/plain");
+                .get("data")).get("text/plain");
         if (result != null) {
           result = result.trim();
           if (result.startsWith("<link")
-              || result.startsWith("<script")
-              || result.startsWith("<style")
-              || result.startsWith("<div")) {
+                  || result.startsWith("<script")
+                  || result.startsWith("<style")
+                  || result.startsWith("<div")) {
             result = "%html " + result;
           }
         }
@@ -298,19 +299,19 @@ public class LivyHelper {
   private Map executeCommand(String lines, InterpreterContext context,
                              Map<String, Integer> userSessionMap) throws Exception {
     String json = executeHTTP(property.get("zeppelin.livy.url") + "/sessions/"
-            + userSessionMap.get(context.getAuthenticationInfo().getUser())
-            + "/statements",
-        "POST",
-        "{\"code\": \"" + lines + "\" }",
-        context.getParagraphId());
+                    + userSessionMap.get((String) (context.getSubject().getPrincipal()))
+                    + "/statements",
+            "POST",
+            "{\"code\": \"" + lines + "\" }",
+            context.getParagraphId());
     if (json.matches("^(\")?Session (\'[0-9]\' )?not found(.?\"?)$")) {
       throw new Exception("Exception: Session not found, Livy server would have restarted, " +
-          "or lost session.");
+              "or lost session.");
     }
     try {
       Map jsonMap = gson.fromJson(json,
-          new TypeToken<Map>() {
-          }.getType());
+              new TypeToken<Map>() {
+              }.getType());
       return jsonMap;
     } catch (Exception e) {
       LOGGER.error("Error executeCommand", e);
@@ -321,13 +322,13 @@ public class LivyHelper {
   private Map getStatusById(InterpreterContext context,
                             Map<String, Integer> userSessionMap, Integer id) throws Exception {
     String json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions/"
-            + userSessionMap.get(context.getAuthenticationInfo().getUser())
+            + userSessionMap.get((String)(context.getSubject().getPrincipal()))
             + "/statements/" + id,
-        "GET", null, context.getParagraphId());
+    "GET", null, context.getParagraphId());
     try {
       Map jsonMap = gson.fromJson(json,
-          new TypeToken<Map>() {
-          }.getType());
+              new TypeToken<Map>() {
+              }.getType());
       return jsonMap;
     } catch (Exception e) {
       LOGGER.error("Error getStatusById", e);
@@ -345,7 +346,7 @@ public class LivyHelper {
   }
 
   protected String executeHTTP(String targetURL, String method, String jsonData, String paragraphId)
-      throws Exception {
+          throws Exception {
     RestTemplate restTemplate = getRestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
@@ -368,7 +369,7 @@ public class LivyHelper {
     } catch (HttpClientErrorException e) {
       response = new ResponseEntity(e.getResponseBodyAsString(), e.getStatusCode());
       LOGGER.error(String.format("Error with %s StatusCode: %s",
-          response.getStatusCode().value(), e.getResponseBodyAsString()));
+              response.getStatusCode().value(), e.getResponseBodyAsString()));
     }
     if (response == null) {
       return null;
@@ -398,11 +399,11 @@ public class LivyHelper {
     for (Map.Entry<String, Integer> entry : userSessionMap.entrySet()) {
       try {
         executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions/"
-                + entry.getValue(),
-            "DELETE", null, null);
+                        + entry.getValue(),
+                "DELETE", null, null);
       } catch (Exception e) {
         LOGGER.error(String.format("Error closing session for user with session ID: %s",
-            entry.getValue()), e);
+                entry.getValue()), e);
       }
     }
   }

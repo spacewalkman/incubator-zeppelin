@@ -19,7 +19,6 @@ package org.apache.zeppelin.notebook;
 
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.search.SearchService;
@@ -28,11 +27,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NoteTest {
@@ -66,7 +69,7 @@ public class NoteTest {
     when(interpreter.getScheduler()).thenReturn(scheduler);
 
     String pText = "%spark sc.version";
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p = note.addParagraph();
     p.setText(pText);
     note.run(p.getId());
@@ -80,7 +83,7 @@ public class NoteTest {
 
   @Test
   public void addParagraphWithEmptyReplNameTest() {
-      Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p = note.addParagraph();
     assertNull(p.getText());
   }
@@ -89,7 +92,7 @@ public class NoteTest {
   public void addParagraphWithLastReplNameTest() {
     when(interpreterFactory.getInterpreter(anyString(), eq("spark"))).thenReturn(interpreter);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials,"anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p1 = note.addParagraph();
     p1.setText("%spark ");
     Paragraph p2 = note.addParagraph();
@@ -101,7 +104,7 @@ public class NoteTest {
   public void insertParagraphWithLastReplNameTest() {
     when(interpreterFactory.getInterpreter(anyString(), eq("spark"))).thenReturn(interpreter);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials,"anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p1 = note.addParagraph();
     p1.setText("%spark ");
     Paragraph p2 = note.insertParagraph(note.getParagraphs().size());
@@ -113,7 +116,7 @@ public class NoteTest {
   public void insertParagraphWithInvalidReplNameTest() {
     when(interpreterFactory.getInterpreter(anyString(), eq("invalid"))).thenReturn(null);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous",noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p1 = note.addParagraph();
     p1.setText("%invalid ");
     Paragraph p2 = note.insertParagraph(note.getParagraphs().size());

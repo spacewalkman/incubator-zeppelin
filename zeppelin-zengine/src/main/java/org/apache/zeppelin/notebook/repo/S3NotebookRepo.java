@@ -37,6 +37,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
@@ -136,7 +137,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public List<NoteInfo> list(Subject subject) throws IOException {
     List<NoteInfo> infos = new LinkedList<>();
     NoteInfo info;
     try {
@@ -196,12 +197,12 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, Subject subject) throws IOException {
     return getNote(user + "/" + "notebook" + "/" + noteId + "/" + "note.json");
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note, Subject subject) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -222,7 +223,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, Subject subject) throws IOException {
     String key = user + "/" + "notebook" + "/" + noteId;
     final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
             .withBucketName(bucketName).withPrefix(key);
@@ -246,20 +247,20 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject)
+  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject)
           throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String revId, Subject subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     // Auto-generated method stub
     return null;
   }

@@ -93,7 +93,7 @@ public class SparkInterpreterTest {
     }
 
     context = new InterpreterContext("note", "id", "title", "text",
-        new AuthenticationInfo(),
+        null,
         new HashMap<String, Object>(),
         new GUI(),
         new AngularObjectRegistry(intpGroup.getId(), null),

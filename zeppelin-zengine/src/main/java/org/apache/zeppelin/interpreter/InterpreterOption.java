@@ -19,9 +19,6 @@ package org.apache.zeppelin.interpreter;
 
 import java.util.List;
 
-/**
- *
- */
 public class InterpreterOption {
   boolean remote;
   String host = null;
