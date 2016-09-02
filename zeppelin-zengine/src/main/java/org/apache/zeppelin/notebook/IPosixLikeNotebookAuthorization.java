@@ -5,7 +5,7 @@ import java.util.Set;
 /**
  * Reader/Writer/Owner based的Posix file sytem like NotebookAuthorization
  */
-public interface PosixLikeNotebookAuthorization {
+public interface IPosixLikeNotebookAuthorization {
 
   /**
    * const identifier used in permission expression,such as "groupX:readers:*"
@@ -17,6 +17,7 @@ public interface PosixLikeNotebookAuthorization {
   /**
    * add principal to note's owner
    *
+   * @param noteId    note's id
    * @param principal current principal
    */
   void addOwner(String noteId, String principal);

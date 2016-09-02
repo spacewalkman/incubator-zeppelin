@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.display.AngularObject;
@@ -85,7 +86,7 @@ public class Notebook implements NoteEventListener {
   private JobListenerFactory jobListenerFactory;
   private NotebookRepo notebookRepo;
   private SearchService notebookIndex;
-  private NotebookAuthorization notebookAuthorization;
+  private NotebookAuthorizationAdaptor notebookAuthorization;
   private final List<NotebookEventListener> notebookEventListeners =
           Collections.synchronizedList(new LinkedList<NotebookEventListener>());
   private Credentials credentials;
@@ -98,7 +99,7 @@ public class Notebook implements NoteEventListener {
   public Notebook(ZeppelinConfiguration conf, NotebookRepo notebookRepo,
                   SchedulerFactory schedulerFactory, InterpreterFactory replFactory,
                   JobListenerFactory jobListenerFactory, SearchService notebookIndex,
-                  NotebookAuthorization notebookAuthorization, Credentials credentials)
+                  NotebookAuthorizationAdaptor notebookAuthorization, Credentials credentials)
           throws IOException, SchedulerException {
     this.conf = conf;
     this.notebookRepo = notebookRepo;
@@ -127,7 +128,7 @@ public class Notebook implements NoteEventListener {
   /**
    * Create new note.
    */
-  public Note createNote(AuthenticationInfo subject) throws IOException {
+  public Note createNote(Subject subject) throws IOException {
     Note note;
     if (conf.getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_AUTO_INTERPRETER_BINDING)) {
       note = createNote(replFactory.getDefaultInterpreterSettingList(), subject);
@@ -142,14 +143,14 @@ public class Notebook implements NoteEventListener {
   /**
    * Create new note.
    */
-  public Note createNote(List<String> interpreterIds, AuthenticationInfo subject)
+  public Note createNote(List<String> interpreterIds, Subject subject)
           throws IOException {
     Note note = new Note(
             notebookRepo,
             replFactory,
             jobListenerFactory,
             notebookIndex,
-            credentials, subject.getUser(),
+            credentials, subject,
             this);
     synchronized (notes) {
       notes.put(note.getId(), note);
@@ -193,7 +194,7 @@ public class Notebook implements NoteEventListener {
    * @param subject    current subject
    * @return notebook ID
    */
-  public Note importNote(String sourceJson, String noteName, AuthenticationInfo subject) throws IOException {
+  public Note importNote(String sourceJson, String noteName, Subject subject) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
 
@@ -214,7 +215,8 @@ public class Notebook implements NoteEventListener {
         newNote.addCloneParagraph(p);
       }
 
-      notebookAuthorization.addOwner(newNote.getId(), subject.getUser());
+      //TODO:import时authenttication问题
+      //notebookAuthorization.addOwner(newNote.id(), subject.getPrincipal());
       newNote.persist(subject);
     } catch (IOException e) {
       logger.error(e.toString(), e);
@@ -233,7 +235,7 @@ public class Notebook implements NoteEventListener {
    * @return noteId
    * @throws IOException, CloneNotSupportedException, IllegalArgumentException
    */
-  public Note cloneNote(String sourceNoteID, String newNoteName, AuthenticationInfo subject) throws
+  public Note cloneNote(String sourceNoteID, String newNoteName, Subject subject) throws
           IOException, CloneNotSupportedException, IllegalArgumentException {
     Note sourceNote = getNote(sourceNoteID);
     if (sourceNote == null) {
@@ -254,7 +256,7 @@ public class Notebook implements NoteEventListener {
       newNote.addCloneParagraph(p);
     }
 
-    notebookAuthorization.addOwner(newNote.getId(), subject.getUser());
+    //notebookAuthorization.addOwner(newNote.id(), subject.getPrincipal()); TODO:这里如果要控制per-note的权限,则需要设置note的owner角色
     //notebookIndex.addIndexDoc(newNote); TODO:check comment do no harm
     newNote.persist(subject);
     return newNote;
@@ -301,7 +303,7 @@ public class Notebook implements NoteEventListener {
     }
   }
 
-  public void removeNote(String id, AuthenticationInfo subject) {
+  public void removeNote(String id, Subject subject) {
     Note note;
 
     synchronized (notes) {
@@ -361,22 +363,22 @@ public class Notebook implements NoteEventListener {
 
 
   public Revision checkpointNote(String noteId, String checkpointMessage,
-                                 AuthenticationInfo subject) throws IOException {
+                                 Subject subject) throws IOException {
     return notebookRepo.checkpoint(noteId, checkpointMessage, subject);
   }
 
   public List<Revision> listRevisionHistory(String noteId,
-      AuthenticationInfo subject) {
+                                            Subject subject) {
     return notebookRepo.revisionHistory(noteId, subject);
   }
 
-  public Note getNoteByRevision(String noteId, String revisionId, AuthenticationInfo subject)
-      throws IOException {
+  public Note getNoteByRevision(String noteId, String revisionId, Subject subject)
+          throws IOException {
     return notebookRepo.get(noteId, revisionId, subject);
   }
 
   @SuppressWarnings("rawtypes")
-  private Note loadNoteFromRepo(String id, AuthenticationInfo subject) {
+  private Note loadNoteFromRepo(String id, Subject subject) {
     Note note = null;
     try {
       note = notebookRepo.get(id, subject);
@@ -466,7 +468,7 @@ public class Notebook implements NoteEventListener {
    * Reload all notes from repository after clearing `notes`
    * to reflect the changes of added/deleted/modified notebooks on file system level.
    */
-  public void reloadAllNotes(AuthenticationInfo subject) throws IOException {
+  public void reloadAllNotes(Subject subject) throws IOException {
     synchronized (notes) {
       notes.clear();
     }
@@ -582,7 +584,7 @@ public class Notebook implements NoteEventListener {
   }
 
   public List<Map<String, Object>> getJobListforNotebook(boolean needsReload,
-                                                         long lastUpdateServerUnixTime, AuthenticationInfo subject) {
+                                                         long lastUpdateServerUnixTime, Subject subject) {
     final String CRON_TYPE_NOTEBOOK_KEYWORD = "cron";
 
     if (needsReload) {
@@ -759,7 +761,7 @@ public class Notebook implements NoteEventListener {
     return replFactory;
   }
 
-  public NotebookAuthorization getNotebookAuthorization() {
+  public NotebookAuthorizationAdaptor getNotebookAuthorization() {
     return notebookAuthorization;
   }
 

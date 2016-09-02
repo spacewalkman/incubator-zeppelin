@@ -58,13 +58,14 @@ public class LivyPySparkInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String line, InterpreterContext interpreterContext) {
     try {
-      if (userSessionMap.get(interpreterContext.getAuthenticationInfo().getUser()) == null) {
+      String principal = (String) (interpreterContext.getSubject().getPrincipal());
+      if (userSessionMap.get(principal) == null) {
         try {
           userSessionMap.put(
-              interpreterContext.getAuthenticationInfo().getUser(),
-              livyHelper.createSession(
-                  interpreterContext,
-                  "pyspark")
+                  principal,
+                  livyHelper.createSession(
+                          interpreterContext,
+                          "pyspark")
           );
         } catch (Exception e) {
           LOGGER.error("Exception in LivyPySparkInterpreter while interpret ", e);
@@ -80,7 +81,7 @@ public class LivyPySparkInterpreter extends Interpreter {
     } catch (Exception e) {
       LOGGER.error("Exception in LivyPySparkInterpreter while interpret ", e);
       return new InterpreterResult(InterpreterResult.Code.ERROR,
-          InterpreterUtils.getMostRelevantMessage(e));
+              InterpreterUtils.getMostRelevantMessage(e));
     }
   }
 
@@ -102,7 +103,7 @@ public class LivyPySparkInterpreter extends Interpreter {
   @Override
   public Scheduler getScheduler() {
     return SchedulerFactory.singleton().createOrGetFIFOScheduler(
-        LivyPySparkInterpreter.class.getName() + this.hashCode());
+            LivyPySparkInterpreter.class.getName() + this.hashCode());
   }
 
   @Override

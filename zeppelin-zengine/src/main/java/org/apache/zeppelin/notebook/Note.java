@@ -22,6 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
@@ -92,7 +95,8 @@ public class Note implements Serializable, ParagraphJobListener {
   private transient ZeppelinConfiguration conf = ZeppelinConfiguration.create();
 
   private String createdBy;// used for filter notes & permission check
-  private List<String> tags;
+  private String group; //team group
+  private List<String> tags;//bussiness tags
   private String topic;
   private Date lastUpdated;//max(lastUpdaed in paragraphs)
 
@@ -118,15 +122,16 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   private Map<String, Object> info = new HashMap<>();
 
-
   public Note() {
   }
 
-  /**
-   * @param createdBy note's creator, current principal
-   */
   public Note(NotebookRepo repo, InterpreterFactory factory,
-              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, String createdBy, NoteEventListener noteEventListener) {
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, Subject subject, NoteEventListener noteEventListener) {
+    this(repo, factory, jlFactory, noteIndex, credentials, subject, "default_team", noteEventListener);//TODO:qy,default teamname
+  }
+
+  public Note(NotebookRepo repo, InterpreterFactory factory,
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, Subject subject, String group, NoteEventListener noteEventListener) {
     this.repo = repo;
     this.factory = factory;
     this.jobListenerFactory = jlFactory;
@@ -134,7 +139,8 @@ public class Note implements Serializable, ParagraphJobListener {
     this.noteEventListener = noteEventListener;
     this.credentials = credentials;
     generateId();
-    this.createdBy = createdBy;
+    this.createdBy = (String) (subject.getPrincipal());
+    this.group = group;
   }
 
   private void generateId() {
@@ -523,18 +529,20 @@ public class Note implements Serializable, ParagraphJobListener {
    * Run all paragraphs sequentially.
    */
   public void runAll() {
-    String cronExecutingUser = (String) getConfig().get("cronExecutingUser");
+    String cronExecutingUser = (String) getConfig().get("cronExecutingUser");//TODO:这里A能impersonate B用户执行吗?
     synchronized (paragraphs) {
       if (!paragraphs.isEmpty()) {
         setLastReplName(paragraphs.get(paragraphs.size() - 1));
       }
+
       for (Paragraph p : paragraphs) {
         if (!p.isEnabled()) {
           continue;
         }
-        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
-        authenticationInfo.setUser(cronExecutingUser);
-        p.setAuthenticationInfo(authenticationInfo);
+
+        PrincipalCollection principals = new SimplePrincipalCollection(cronExecutingUser, ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
+        Subject subject = new Subject.Builder().principals(principals).buildSubject();
+        p.setSubject(subject);
         run(p.getId());
       }
     }
@@ -662,7 +670,7 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * persist note and paragraphs
    */
-  public void persist(AuthenticationInfo subject) throws IOException {
+  public void persist(Subject subject) throws IOException {
     stopDelayedPersistTimer();
     snapshotAngularObjectRegistry();
 
@@ -717,16 +725,16 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * Persist this note with maximum delay.
    */
-  public void persist(int maxDelaySec, AuthenticationInfo subject) {
+  public void persist(int maxDelaySec, Subject subject) {
     startDelayedPersistTimer(maxDelaySec, subject);
   }
 
-  void unpersist(AuthenticationInfo subject) throws IOException {
+  void unpersist(Subject subject) throws IOException {
     repo.remove(getId(), subject);
   }
 
 
-  private void startDelayedPersistTimer(int maxDelaySec, final AuthenticationInfo subject) {
+  private void startDelayedPersistTimer(int maxDelaySec, final Subject subject) {
     synchronized (this) {
       if (delayedPersist != null) {
         return;
@@ -879,4 +887,11 @@ public class Note implements Serializable, ParagraphJobListener {
     this.noteEventListener = noteEventListener;
   }
 
+  public String getGroup() {
+    return group;
+  }
+
+  public void setGroup(String group) {
+    this.group = group;
+  }
 }

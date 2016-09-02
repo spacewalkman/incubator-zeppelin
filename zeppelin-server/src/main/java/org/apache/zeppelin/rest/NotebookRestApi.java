@@ -22,12 +22,17 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.notebook.IShiroNotebookAuthorization;
+
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
+import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.message.CronRequest;
 import org.apache.zeppelin.rest.message.NewNotebookRequest;
@@ -39,7 +44,6 @@ import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
-import org.apache.zeppelin.utils.SecurityUtils;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +78,7 @@ public class NotebookRestApi {
   private Notebook notebook;
   private NotebookServer notebookServer;
   private SearchService notebookIndex;
-  private NotebookAuthorization notebookAuthorization;
+  private NotebookAuthorizationAdaptor notebookAuthorization;
   private ZeppelinConfiguration conf;
 
   public NotebookRestApi() {
@@ -110,6 +114,8 @@ public class NotebookRestApi {
             "User belongs to: " + current.toString();
   }
 
+  //TODO:只有owner可以修改note的权限
+
   /**
    * set note authorization information
    */
@@ -118,54 +124,53 @@ public class NotebookRestApi {
   @ZeppelinApi
   public Response putNotePermissions(@PathParam("noteId") String noteId, String req)
           throws IOException {
-    /**
-     * TODO(jl): Fixed the type of HashSet
-     * https://issues.apache.org/jira/browse/ZEPPELIN-1162
-     */
-    HashMap<String, HashSet<String>> permMap =
-        gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
-        }.getType());
-    Note note = notebook.getNote(noteId);
-    String principal = SecurityUtils.getPrincipal();
-    HashSet<String> roles = SecurityUtils.getRoles();
-    LOG.info("Set permissions {} {} {} {} {}", noteId, principal, permMap.get("owners"),
-            permMap.get("readers"), permMap.get("writers"));
-
-    HashSet<String> userAndRoles = new HashSet<>();
-    userAndRoles.add(principal);
-    userAndRoles.addAll(roles);
-    if (!notebookAuthorization.isOwner(noteId, userAndRoles)) {
-      return new JsonResponse<>(Status.FORBIDDEN,
-              ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId))).build();
-    }
-
-    HashSet<String> readers = permMap.get("readers");
-    HashSet<String> owners = permMap.get("owners");
-    HashSet<String> writers = permMap.get("writers");
-    // Set readers, if writers and owners is empty -> set to user requesting the change
-    if (readers != null && !readers.isEmpty()) {
-      if (writers.isEmpty()) {
-        writers = Sets.newHashSet(SecurityUtils.getPrincipal());
-      }
-      if (owners.isEmpty()) {
-        owners = Sets.newHashSet(SecurityUtils.getPrincipal());
-      }
-    }
-    // Set writers, if owners is empty -> set to user requesting the change
-    if (writers != null && !writers.isEmpty()) {
-      if (owners.isEmpty()) {
-        owners = Sets.newHashSet(SecurityUtils.getPrincipal());
-      }
-    }
-
-    notebookAuthorization.setReaders(noteId, readers);
-    notebookAuthorization.setWriters(noteId, writers);
-    notebookAuthorization.setOwners(noteId, owners);
-    LOG.debug("After set permissions {} {} {}", notebookAuthorization.getOwners(noteId),
-            notebookAuthorization.getReaders(noteId), notebookAuthorization.getWriters(noteId));
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    note.persist(subject);
-    notebookServer.broadcastNote(note);
+//    /**
+//     * TODO(jl): Fixed the type of HashSet
+//     * https://issues.apache.org/jira/browse/ZEPPELIN-1162
+//     */
+//    HashMap<String, HashSet<String>> permMap =
+//            gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
+//            }.getType());
+//    Note note = notebook.getNote(noteId);
+//    String principal = (String) (SecurityUtils.getSubject().getPrincipal());
+//    LOG.info("Set permissions {} {} {} {} {}", noteId, principal, permMap.get("owners"),
+//            permMap.get("readers"), permMap.get("writers"));
+//
+//    HashSet<String> userAndRoles = new HashSet<>();
+//    userAndRoles.add(principal);
+//    userAndRoles.addAll(roles);
+//    if (!notebookAuthorization.isOwner(noteId, userAndRoles)) {
+//      return new JsonResponse<>(Status.FORBIDDEN,
+//              ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId))).build();
+//    }
+//
+//    HashSet<String> readers = permMap.get("readers");
+//    HashSet<String> owners = permMap.get("owners");
+//    HashSet<String> writers = permMap.get("writers");
+//    // Set readers, if writers and owners is empty -> set to user requesting the change
+//    if (readers != null && !readers.isEmpty()) {
+//      if (writers.isEmpty()) {
+//        writers = Sets.newHashSet(SecurityUtils.getSubject().getPrincipal());
+//      }
+//      if (owners.isEmpty()) {
+//        owners = Sets.newHashSet(SecurityUtils.getSubject().getPrincipal());
+//      }
+//    }
+//    // Set writers, if owners is empty -> set to user requesting the change
+//    if (writers != null && !writers.isEmpty()) {
+//      if (owners.isEmpty()) {
+//        owners = Sets.newHashSet(SecurityUtils.getSubject().getPrincipal());
+//      }
+//    }
+//
+//    notebookAuthorization.setReaders(noteId, readers);
+//    notebookAuthorization.setWriters(noteId, writers);
+//    notebookAuthorization.setOwners(noteId, owners);
+//    LOG.debug("After set permissions {} {} {}", notebookAuthorization.getOwners(noteId),
+//            notebookAuthorization.getReaders(noteId), notebookAuthorization.getWriters(noteId));
+//    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+//    note.persist(subject);
+//    notebookServer.broadcastNote(note);
     return new JsonResponse<>(Status.OK).build();
   }
 
@@ -190,7 +195,7 @@ public class NotebookRestApi {
   @ZeppelinApi
   public Response bind(@PathParam("noteId") String noteId) {
     List<InterpreterSettingsList> settingList =
-        InterpreterBindingUtils.getInterpreterBindings(notebook, noteId);
+            InterpreterBindingUtils.getInterpreterBindings(notebook, noteId);
     notebookServer.broadcastInterpreterBindings(noteId, settingList);
     return new JsonResponse<>(Status.OK, "", settingList).build();
   }
@@ -199,8 +204,7 @@ public class NotebookRestApi {
   @Path("/")
   @ZeppelinApi
   public Response getNotebookList() throws IOException {
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    List<Map<String, String>> notesInfo = notebookServer.generateNotebooksInfo(false, subject);
+    List<Map<String, String>> notesInfo = notebookServer.generateNotebooksInfo(false, SecurityUtils.getSubject());
     return new JsonResponse<>(Status.OK, "", notesInfo).build();
   }
 
@@ -241,8 +245,7 @@ public class NotebookRestApi {
   @Path("import")
   @ZeppelinApi
   public Response importNotebook(String req) throws IOException {
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    Note newNote = notebook.importNote(req, null, subject);
+    Note newNote = notebook.importNote(req, null, SecurityUtils.getSubject());
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
   }
 
@@ -259,8 +262,7 @@ public class NotebookRestApi {
     LOG.info("Create new notebook by JSON {}", message);
 
     NewNotebookRequest request = gson.fromJson(message, NewNotebookRequest.class);
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    Note note = notebook.createNote(subject);
+    Note note = notebook.createNote(SecurityUtils.getSubject());
     List<NewParagraphRequest> initialParagraphs = request.getParagraphs();
     if (initialParagraphs != null) {
       for (NewParagraphRequest paragraphRequest : initialParagraphs) {
@@ -278,9 +280,9 @@ public class NotebookRestApi {
 
     addCreatorToNoteOwner(request, note);
 
-    note.persist(subject);
+    note.persist(SecurityUtils.getSubject());
     notebookServer.broadcastNote(note);
-    notebookServer.broadcastNoteList(subject);//TODO:(qy) when create note using REST, could cause note filter by current user failed
+    notebookServer.broadcastNoteList(SecurityUtils.getSubject());//TODO:(qy) when create note using REST, could cause note filter by current user failed
     return new JsonResponse<>(Status.CREATED, "", note.getId()).build();
   }
 
@@ -304,15 +306,14 @@ public class NotebookRestApi {
   @ZeppelinApi
   public Response deleteNote(@PathParam("notebookId") String notebookId) throws IOException {
     LOG.info("Delete notebook {} ", notebookId);
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
     if (!(notebookId.isEmpty())) {
       Note note = notebook.getNote(notebookId);
       if (note != null) {
-        notebook.removeNote(notebookId, subject);
+        notebook.removeNote(notebookId, SecurityUtils.getSubject());
       }
     }
 
-    notebookServer.broadcastNoteList(subject);
+    notebookServer.broadcastNoteList(SecurityUtils.getSubject());
     return new JsonResponse<>(Status.OK, "").build();
   }
 
@@ -334,10 +335,11 @@ public class NotebookRestApi {
     if (request != null) {
       newNoteName = request.getName();
     }
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    Note newNote = notebook.cloneNote(notebookId, newNoteName, subject);
+//    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+//    Note newNote = notebook.cloneNote(notebookId, newNoteName, subject);
+    Note newNote = notebook.cloneNote(notebookId, newNoteName, SecurityUtils.getSubject());
     notebookServer.broadcastNote(newNote);
-    notebookServer.broadcastNoteList(subject);
+    notebookServer.broadcastNoteList(SecurityUtils.getSubject());
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
   }
 
@@ -371,8 +373,7 @@ public class NotebookRestApi {
     p.setTitle(request.getTitle());
     p.setText(request.getText());
 
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    note.persist(subject);
+    note.persist(SecurityUtils.getSubject());
     notebookServer.broadcastNote(note);
     return new JsonResponse<>(Status.CREATED, "", p.getId()).build();
   }
@@ -430,8 +431,7 @@ public class NotebookRestApi {
     try {
       note.moveParagraph(paragraphId, Integer.parseInt(newIndex), true);
 
-      AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-      note.persist(subject);
+      note.persist(SecurityUtils.getSubject());
       notebookServer.broadcastNote(note);
       return new JsonResponse(Status.OK, "").build();
     } catch (IndexOutOfBoundsException e) {
@@ -463,9 +463,8 @@ public class NotebookRestApi {
       return new JsonResponse(Status.NOT_FOUND, "paragraph not found.").build();
     }
 
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
     note.removeParagraph(paragraphId);
-    note.persist(subject);
+    note.persist(org.apache.shiro.SecurityUtils.getSubject());
     notebookServer.broadcastNote(note);
 
     return new JsonResponse(Status.OK, "").build();
@@ -494,7 +493,7 @@ public class NotebookRestApi {
     } catch (Exception ex) {
       LOG.error("Exception from run", ex);
       return new JsonResponse<>(Status.PRECONDITION_FAILED,
-          ex.getMessage() + "- Not selected or Invalid Interpreter bind").build();
+              ex.getMessage() + "- Not selected or Invalid Interpreter bind").build();
     }
 
     return new JsonResponse<>(Status.OK).build();
@@ -550,7 +549,7 @@ public class NotebookRestApi {
   /**
    * Get notebook paragraph job status REST API
    *
-   * @param notebookId ID of Notebook
+   * @param notebookId  ID of Notebook
    * @param paragraphId ID of Paragraph
    * @return JSON with status.OK
    * @throws IOException, IllegalArgumentException
@@ -558,9 +557,9 @@ public class NotebookRestApi {
   @GET
   @Path("job/{notebookId}/{paragraphId}")
   @ZeppelinApi
-  public Response getNoteParagraphJobStatus(@PathParam("notebookId") String notebookId, 
-      @PathParam("paragraphId") String paragraphId)
-      throws IOException, IllegalArgumentException {
+  public Response getNoteParagraphJobStatus(@PathParam("notebookId") String notebookId,
+                                            @PathParam("paragraphId") String paragraphId)
+          throws IOException, IllegalArgumentException {
     LOG.info("get notebook paragraph job status.");
     Note note = notebook.getNote(notebookId);
     if (note == null) {
@@ -573,7 +572,7 @@ public class NotebookRestApi {
     }
 
     return new JsonResponse<>(Status.OK, null, note.generateSingleParagraphInfo(paragraphId)).
-      build();
+            build();
   }
 
   /**
@@ -788,8 +787,7 @@ public class NotebookRestApi {
           IOException, IllegalArgumentException {
     LOG.info("Get notebook jobs for job manager");
 
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    List<Map<String, Object>> notebookJobs = notebook.getJobListforNotebook(false, 0, subject);
+    List<Map<String, Object>> notebookJobs = notebook.getJobListforNotebook(false, 0, SecurityUtils.getSubject());
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
@@ -813,8 +811,7 @@ public class NotebookRestApi {
     LOG.info("Get updated notebook jobs lastUpdateTime {}", lastUpdateUnixTime);
 
     List<Map<String, Object>> notebookJobs;
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-    notebookJobs = notebook.getJobListforNotebook(false, lastUpdateUnixTime, subject);
+    notebookJobs = notebook.getJobListforNotebook(false, lastUpdateUnixTime, SecurityUtils.getSubject());
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
@@ -832,11 +829,7 @@ public class NotebookRestApi {
   public Response search(@QueryParam("q") String
                                  queryTerm, @QueryParam("size") String size, @QueryParam("from") String from) {
     LOG.info("Searching notebooks for: {}", queryTerm);
-    String principal = SecurityUtils.getPrincipal();
-    HashSet<String> roles = SecurityUtils.getRoles();
-    HashSet<String> userAndRoles = new HashSet<>();
-    userAndRoles.add(principal);
-    userAndRoles.addAll(roles);
+    Subject subject = SecurityUtils.getSubject();
 
     int sizeInt;
     try {
@@ -854,13 +847,19 @@ public class NotebookRestApi {
 
     List<Map<String, String>> notebooksFound = notebookIndex.query(queryTerm, sizeInt, fromInt);
     for (int i = 0; i < notebooksFound.size(); i++) {
-      String[] Id = notebooksFound.get(i).get("id").split("_", 3);//paragrah id scheme in ES: {noteId}_pargraph_{sequnceNumber}
-      String noteId = Id[0];
+      String[] Id = notebooksFound.get(i).get("id").split("_", 4);//paragrah id scheme in ES: {groupId}_{noteId}_pargraph_{sequnceNumber}
+      String groupId = Id[0];
+      String noteId = Id[1];
 
+      if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(noteId)) {
+        LOG.error("groupId and noteId both should not be null");
+        continue;
+      }
       //filtered by authentication
-      if (!notebookAuthorization.isOwner(noteId, userAndRoles) &&
-              !notebookAuthorization.isReader(noteId, userAndRoles) &&
-              !notebookAuthorization.isWriter(noteId, userAndRoles)) {
+//      if (!notebookAuthorization.isOwner(noteId, userAndRoles) &&
+//              !notebookAuthorization.isReader(noteId, userAndRoles) &&
+//              !notebookAuthorization.isWriter(noteId, userAndRoles)) {
+      if (!subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_READER_PERMISSION_FORMAT, groupId + "_" + noteId))) {
         notebooksFound.remove(i);
         i--;
       }

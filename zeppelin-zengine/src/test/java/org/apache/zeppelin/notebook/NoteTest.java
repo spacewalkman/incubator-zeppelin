@@ -68,7 +68,7 @@ public class NoteTest {
     when(interpreter.getScheduler()).thenReturn(scheduler);
 
     String pText = "%spark sc.version";
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     Paragraph p = note.addParagraph();
     p.setText(pText);
     note.run(p.getId());
@@ -84,7 +84,7 @@ public class NoteTest {
   public void putDefaultReplNameIfInterpreterSettingAbsent() {
     when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
             .thenReturn(null);
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     note.putDefaultReplName();
 
     assertEquals(StringUtils.EMPTY, note.getLastReplName());
@@ -98,7 +98,7 @@ public class NoteTest {
     when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
             .thenReturn(interpreterSetting);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     note.putDefaultReplName();
 
     assertEquals("spark", note.getLastReplName());
@@ -111,7 +111,7 @@ public class NoteTest {
     when(interpreterSetting.getName()).thenReturn("spark");
     when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
             .thenReturn(interpreterSetting);
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     note.putDefaultReplName(); //set lastReplName
     when(interpreterFactory.getInterpreter(note.getId(), "spark")).thenReturn(new MockInterpreter2(null));
 
@@ -127,7 +127,7 @@ public class NoteTest {
     when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
             .thenReturn(interpreterSetting);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener);
     note.putDefaultReplName(); //set lastReplName
     when(interpreterFactory.getInterpreter(note.getId(), "spark")).thenReturn(new MockInterpreter2(null));
 
@@ -139,7 +139,7 @@ public class NoteTest {
   @Test
   public void setLastReplName() {
     String paragraphId = "HelloWorld";
-    Note note = Mockito.spy(new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener));
+    Note note = Mockito.spy(new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, null, noteEventListener));
     Paragraph mockParagraph = Mockito.mock(Paragraph.class);
     when(note.getParagraph(paragraphId)).thenReturn(mockParagraph);
     when(mockParagraph.getRequiredReplName()).thenReturn("spark");

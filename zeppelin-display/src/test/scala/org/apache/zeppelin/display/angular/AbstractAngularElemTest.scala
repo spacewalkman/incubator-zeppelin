@@ -34,7 +34,7 @@ trait AbstractAngularElemTest
   override def beforeEach() {
     val intpGroup = new InterpreterGroup()
     val context = new InterpreterContext("note", "paragraph", "title", "text",
-      new AuthenticationInfo(), new util.HashMap[String, Object](), new GUI(),
+      null, new util.HashMap[String, Object](), new GUI(),
       new AngularObjectRegistry(intpGroup.getId(), null),
       null,
       new util.LinkedList[InterpreterContextRunner](),
@@ -53,6 +53,7 @@ trait AbstractAngularElemTest
   }
 
   def angularElem(elem: scala.xml.Elem): AbstractAngularElem;
+
   def angularModel(name: String): AbstractAngularModel;
 
 
@@ -63,7 +64,7 @@ trait AbstractAngularElemTest
     val elem = angularElem(<div></div>).onClick(() => {
       a = a + 1
     })
-    elem.angularObjects.get("ng-click") should not be(null)
+    elem.angularObjects.get("ng-click") should not be (null)
     registrySize should be(1)
 
     // click create thread for callback function to run. So it'll may not immediately invoked
@@ -128,7 +129,9 @@ trait AbstractAngularElemTest
 
     click(elem)
 
-    eventually { modelValue should be("value")}
+    eventually {
+      modelValue should be("value")
+    }
   }
 
 

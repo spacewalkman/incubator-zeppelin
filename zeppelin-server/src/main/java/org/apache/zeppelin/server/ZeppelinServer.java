@@ -26,6 +26,8 @@ import org.apache.zeppelin.helium.HeliumApplicationFactory;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
+import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
+import org.apache.zeppelin.notebook.ShiroNotebookAuthorization;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.rest.ConfigurationsRestApi;
@@ -85,7 +87,7 @@ public class ZeppelinServer extends Application {
   private InterpreterFactory replFactory;
   private NotebookRepo notebookRepo;
   private SearchService notebookIndex;
-  private NotebookAuthorization notebookAuthorization;
+  private NotebookAuthorizationAdaptor notebookAuthorization;//TODO:NotebookAuthorization
   private Credentials credentials;
   private DependencyResolver depResolver;
 
@@ -102,7 +104,7 @@ public class ZeppelinServer extends Application {
     this.notebookRepo = new NotebookRepoSync(conf);
     this.notebookIndex = new LuceneSearch();
 
-    this.notebookAuthorization = new NotebookAuthorization(conf);
+    this.notebookAuthorization = new ShiroNotebookAuthorization(conf); //NotebookAuthorization
     this.credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
     notebook = new Notebook(conf,
             notebookRepo, schedulerFactory, replFactory, notebookWsServer,

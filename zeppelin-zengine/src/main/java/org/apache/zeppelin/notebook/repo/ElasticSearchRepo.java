@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import org.apache.lucene.queryparser.xml.builders.FilteredQueryBuilder;
 import org.apache.lucene.queryparser.xml.builders.TermQueryBuilder;
 import org.apache.lucene.search.TermQuery;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
@@ -122,12 +123,12 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
    * @return notes from all shards within scroll time range
    */
   @Override
-  public List<NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public List<NoteInfo> list(Subject subject) throws IOException {
     SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(noteTypeName)
             .addSort(AGGREGATION_FILED_LAST_UPDATED, SortOrder.DESC)
             .setScroll(new TimeValue(60000))
             .setQuery(subject == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
-                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, subject.getUser())))
+                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, subject.getPrincipal())))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
@@ -188,7 +189,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public Note get(String noteId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, Subject subject) throws IOException {
     if (null == noteId || noteId.isEmpty()) {
       LOG.error("noteId can't be null");
       return null;
@@ -219,7 +220,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note, Subject subject) throws IOException {
     indexNoteAndParagraphs(note);
   }
 
@@ -306,7 +307,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   @Override
-  public void remove(String noteId, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, Subject subject) throws IOException {
     //query note's pargraphs and delete
     HasParentQueryBuilder qb = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
 
@@ -539,18 +540,18 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   //TODO:(qy) below are really interface pollution
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, AuthenticationInfo subject) throws IOException {
+  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String revId, Subject subject) throws IOException {
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, AuthenticationInfo subject) {
+  public List<Revision> revisionHistory(String noteId, Subject subject) {
     // Auto-generated method stub
     return null;
   }

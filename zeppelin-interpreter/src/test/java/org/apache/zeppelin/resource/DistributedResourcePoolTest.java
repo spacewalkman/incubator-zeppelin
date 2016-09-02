@@ -101,7 +101,7 @@ public class DistributedResourcePoolTest {
         "id",
         "title",
         "text",
-        new AuthenticationInfo(),
+            null,
         new HashMap<String, Object>(),
         new GUI(),
         null,

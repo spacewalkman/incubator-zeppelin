@@ -20,7 +20,7 @@ package org.apache.zeppelin.interpreter;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.display.GUI;
@@ -51,7 +51,7 @@ public class InterpreterContext {
   private final String paragraphTitle;
   private final String paragraphId;
   private final String paragraphText;
-  private AuthenticationInfo authenticationInfo;
+  private Subject subject;
   private final Map<String, Object> config;
   private GUI gui;
   private AngularObjectRegistry angularObjectRegistry;
@@ -62,7 +62,7 @@ public class InterpreterContext {
                             String paragraphId,
                             String paragraphTitle,
                             String paragraphText,
-                            AuthenticationInfo authenticationInfo,
+                            Subject subject,
                             Map<String, Object> config,
                             GUI gui,
                             AngularObjectRegistry angularObjectRegistry,
@@ -74,7 +74,7 @@ public class InterpreterContext {
     this.paragraphId = paragraphId;
     this.paragraphTitle = paragraphTitle;
     this.paragraphText = paragraphText;
-    this.authenticationInfo = authenticationInfo;
+    this.subject = subject;
     this.config = config;
     this.gui = gui;
     this.angularObjectRegistry = angularObjectRegistry;
@@ -100,8 +100,8 @@ public class InterpreterContext {
     return paragraphTitle;
   }
 
-  public AuthenticationInfo getAuthenticationInfo() {
-    return authenticationInfo;
+  public Subject getSubject() {
+    return subject;
   }
 
   public Map<String, Object> getConfig() {

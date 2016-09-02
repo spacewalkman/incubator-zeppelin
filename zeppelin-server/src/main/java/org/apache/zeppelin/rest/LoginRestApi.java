@@ -21,6 +21,7 @@ import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
+import org.apache.zeppelin.ticket.UserPasswordGroupToken;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -62,7 +64,8 @@ public class LoginRestApi {
   @POST
   @ZeppelinApi
   public Response postLogin(@FormParam("userName") String userName,
-                            @FormParam("password") String password) {
+                            @FormParam("password") String password,
+                            @FormParam("group") String group) {
     JsonResponse response = null;
     // ticket set to anonymous for anonymous user. Simplify testing.
     Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
@@ -71,8 +74,8 @@ public class LoginRestApi {
     }
     if (!currentUser.isAuthenticated()) {
       try {
-        UsernamePasswordToken token = new UsernamePasswordToken(userName, password);
-        //      token.setRememberMe(true);
+        UserPasswordGroupToken token = new UserPasswordGroupToken(userName, password, group);
+        //token.setRememberMe(true);
         currentUser.login(token);
         HashSet<String> roles = SecurityUtils.getRoles();
         String principal = SecurityUtils.getPrincipal();
@@ -80,7 +83,7 @@ public class LoginRestApi {
         if ("anonymous".equals(principal))
           ticket = "anonymous";
         else
-          ticket = TicketContainer.instance.getTicket(principal);
+          ticket = TicketContainer.instance.getTicket(currentUser);
 
         Map<String, String> data = new HashMap<>();
         data.put("principal", principal);
