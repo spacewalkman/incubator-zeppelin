@@ -229,7 +229,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   public void doIndexNoteOnly(Note note) {
-    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.id()).setOpType(IndexRequest.OpType.INDEX)
+    IndexResponse noteResponse = client.prepareIndex(this.indexName, this.noteTypeName, note.getId()).setOpType(IndexRequest.OpType.INDEX)
             .setSource(GsonUtil.toJson(note, true))
             .get();
     LOG.debug("note indexed success,id={}", noteResponse.getId());

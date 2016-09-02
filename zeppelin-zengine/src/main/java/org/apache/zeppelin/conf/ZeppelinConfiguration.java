@@ -424,10 +424,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getString(ConfVars.ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE);
   }
 
-  public boolean getUseJdbcAlias() {
-    return getBoolean(ConfVars.ZEPPELIN_USE_JDBC_ALIAS);
-  }
-
   public Map<String, String> dumpConfigurations(ZeppelinConfiguration conf,
                                                 ConfigurationKeyPredicate predicate) {
     Map<String, String> configurations = new HashMap<>();
@@ -554,8 +550,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_ALLOWED_ORIGINS("zeppelin.server.allowed.origins", "*"),
     ZEPPELIN_ANONYMOUS_ALLOWED("zeppelin.anonymous.allowed", true),
     ZEPPELIN_CREDENTIALS_PERSIST("zeppelin.credentials.persist", true),
-    ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000"),
-    ZEPPELIN_USE_JDBC_ALIAS("zeppelin.use.jdbc.alias", true),
 
     //default page size when searching note
     ZEPPELIN_NOTE_SEARCH_PAGE_SIZE("zeppelin.es.search.repo.page.size", 20),
@@ -564,7 +558,9 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_ES_INDEX_NAME("zeppelin.es.search.repo.index.name", "zeppelin"),
     ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME("zeppelin.es.search.repo.note.index.type", "note"),
     ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph"),
-    ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE("zeppelin.es.search.aggregation.size", 10);//max terms aggregation size
+    ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE("zeppelin.es.search.aggregation.size", 10),//max terms aggregation size
+
+    ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000");
 
     private String varName;
     @SuppressWarnings("rawtypes")

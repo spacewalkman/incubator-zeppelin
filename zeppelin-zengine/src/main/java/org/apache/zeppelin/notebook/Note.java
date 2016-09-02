@@ -17,7 +17,6 @@
 
 package org.apache.zeppelin.notebook;
 
-
 import com.google.gson.Gson;
 
 import org.apache.commons.lang.StringUtils;
@@ -59,6 +58,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.lang.String.format;
 
 /**
  * Binded interpreters for a note
@@ -144,10 +145,6 @@ public class Note implements Serializable, ParagraphJobListener {
     lastReplName.set(defaultInterpreterName);
   }
 
-  public String id() {
-    return id;
-  }
-
   public String getId() {
     return id;
   }
@@ -182,6 +179,28 @@ public class Note implements Serializable, ParagraphJobListener {
       for (Paragraph p : paragraphs) {
         p.setInterpreterFactory(factory);
       }
+    }
+  }
+
+  public void initializeJobListenerForParagraph(Paragraph paragraph) {
+    final Note paragraphNote = paragraph.getNote();
+    if (paragraphNote.getId().equals(this.getId())) {
+      throw new IllegalArgumentException(format("The paragraph %s from note %s " +
+              "does not belong to note %s", paragraph.getId(), paragraphNote.getId(),
+              this.getId()));
+    }
+
+    boolean foundParagraph = false;
+    for (Paragraph ownParagraph : paragraphs) {
+      if (paragraph.getId().equals(ownParagraph.getId())) {
+        paragraph.setListener(this.jobListenerFactory.getParagraphJobListener(this));
+        foundParagraph = true;
+      }
+    }
+
+    if (!foundParagraph) {
+      throw new IllegalArgumentException(format("Cannot find paragraph %s " +
+                      "from note %s", paragraph.getId(), paragraphNote.getId()));
     }
   }
 
@@ -315,7 +334,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public Paragraph removeParagraph(String paragraphId) {
     removeAllAngularObjectInParagraph(paragraphId);
-    ResourcePoolUtils.removeResourcesBelongsToParagraph(id(), paragraphId);
+    ResourcePoolUtils.removeResourcesBelongsToParagraph(getId(), paragraphId);
     synchronized (paragraphs) {
       Iterator<Paragraph> i = paragraphs.iterator();
       while (i.hasNext()) {
@@ -378,8 +397,8 @@ public class Note implements Serializable, ParagraphJobListener {
 
       if (index < 0 || index >= paragraphs.size()) {
         if (throwWhenIndexIsOutOfBound) {
-          throw new IndexOutOfBoundsException("paragraph size is " + paragraphs.size() +
-                  " , index is " + index);
+          throw new IndexOutOfBoundsException(
+              "paragraph size is " + paragraphs.size() + " , index is " + index);
         } else {
           return;
         }
@@ -472,7 +491,7 @@ public class Note implements Serializable, ParagraphJobListener {
       return new HashMap<>();
     }
   }
-  
+
   private Map<String, String> populatePragraphInfo(Paragraph p) {
     Map<String, String> info = new HashMap<>();
     info.put("id", p.getId());
@@ -520,27 +539,15 @@ public class Note implements Serializable, ParagraphJobListener {
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
     String requiredReplName = p.getRequiredReplName();
     Interpreter intp = factory.getInterpreter(getId(), requiredReplName);
-
     if (intp == null) {
-      // TODO(jongyoul): Make "%jdbc" configurable from JdbcInterpreter
-      if (conf.getUseJdbcAlias() && null != (intp = factory.getInterpreter(getId(), "jdbc"))) {
-        String pText = p.getText().replaceFirst(requiredReplName, "jdbc(" + requiredReplName + ")");
-        logger.debug("New paragraph: {}", pText);
-        p.setEffectiveText(pText);
-      } else {
-        String intpExceptionMsg = String.format("%s",
-          p.getJobName()
-          + "'s Interpreter "
-          + requiredReplName + " not found"
-        );
-        InterpreterException intpException = new InterpreterException(intpExceptionMsg);
-        InterpreterResult intpResult = new InterpreterResult(
-          InterpreterResult.Code.ERROR, intpException.getMessage()
-        );
-        p.setReturn(intpResult, intpException);
-        p.setStatus(Job.Status.ERROR);
-        throw intpException;
-      }
+      String intpExceptionMsg =
+          p.getJobName() + "'s Interpreter " + requiredReplName + " not found";
+      InterpreterException intpException = new InterpreterException(intpExceptionMsg);
+      InterpreterResult intpResult =
+          new InterpreterResult(InterpreterResult.Code.ERROR, intpException.getMessage());
+      p.setReturn(intpResult, intpException);
+      p.setStatus(Job.Status.ERROR);
+      throw intpException;
     }
     if (p.getConfig().get("enabled") == null || (Boolean) p.getConfig().get("enabled")) {
       intp.getScheduler().submit(p);
@@ -704,7 +711,7 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   void unpersist(AuthenticationInfo subject) throws IOException {
-    repo.remove(id(), subject);
+    repo.remove(getId(), subject);
   }
 
 
