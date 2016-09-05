@@ -181,11 +181,13 @@ public class JDBCInterpreter extends Interpreter {
     SqlCompleter completer = null;
     try {
       Set<String> keywordsCompletions = SqlCompleter.getSqlKeywordsCompletions(jdbcConnection);
-      Set<String> dataModelCompletions =
-              SqlCompleter.getDataModelMetadataCompletions(jdbcConnection);
-      SetView<String> allCompletions = Sets.union(keywordsCompletions, dataModelCompletions);
+      //TODO:qy,在使用hiveserver2时，查询column name，性能差,故注释掉
+//      Set<String> dataModelCompletions =
+//              SqlCompleter.getDataModelMetadataCompletions(jdbcConnection);
+//      SetView<String> allCompletions = Sets.union(keywordsCompletions, dataModelCompletions);
+      Set<String> dataModelCompletions = Collections.<String>emptySet();
+      SetView<String> allCompletions = Sets.union(keywordsCompletions, Collections.<String>emptySet());
       completer = new SqlCompleter(allCompletions, dataModelCompletions);
-
     } catch (IOException | SQLException e) {
       logger.error("Cannot create SQL completer", e);
     }
