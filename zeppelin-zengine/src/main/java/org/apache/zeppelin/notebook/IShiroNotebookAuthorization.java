@@ -127,5 +127,5 @@ public interface IShiroNotebookAuthorization {
    * @param interpreterId 解释器id
    * @return 是否有权限访问
    */
-  boolean isUseInterpreterAllowed(final String userName, final String interpreterId);
+  boolean canUseInterpreter(final String userName, final String interpreterId);
 }

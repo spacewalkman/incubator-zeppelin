@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * shiro-based authorization,use writableJdbcRealm
@@ -41,7 +42,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
 
   @Override
   public boolean isGroupMember(Subject subject, String groupId) {
-    if (subject.isAuthenticated()) {
+    if (!subject.isAuthenticated()) {
       return false;
     }
 
@@ -49,12 +50,12 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
-    return subject.isPermitted(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
+    return subject.hasRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
 
   @Override
   public boolean isGroupLeader(Subject subject, String groupId) {
-    if (subject.isAuthenticated()) {
+    if (!subject.isAuthenticated()) {
       return false;
     }
 
@@ -62,12 +63,12 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
-    return subject.isPermitted(String.format(GROUP_LEADER_ROLE_NAME_FORMAT, groupId));
+    return subject.hasRole(String.format(GROUP_LEADER_ROLE_NAME_FORMAT, groupId));
   }
 
   @Override
   public boolean isAdmin(Subject subject) {
-    if (subject.isAuthenticated()) {
+    if (!subject.isAuthenticated()) {
       return false;
     }
 
@@ -159,9 +160,8 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    * 判断某个用户是否有使用形如interpreter_user_%s这样的role name,该格式由常量INTERPRETER_ROLE_NAME_FORMAT定义
    */
   @Override
-  public boolean isUseInterpreterAllowed(final String userName, final String interpreterId) {
+  public boolean canUseInterpreter(final String userName, final String interpreterId) {
     //对jdbcRealm来讲,就是判断某人是否有指定的角色
     return writableJdbcRealm.isRoleExistForUser(userName, String.format(INTERPRETER_ROLE_NAME_FORMAT, interpreterId));
   }
-
 }

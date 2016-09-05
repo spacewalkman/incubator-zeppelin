@@ -97,6 +97,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
+    authenticationInfo = null;
     subject = null;
     user = null;
     dateUpdated = null;
@@ -110,6 +111,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
+    authenticationInfo = null;
     subject = null;
     dateUpdated = null;
     settings = new GUI();
@@ -130,9 +132,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.dateUpdated = new Date();
   }
 
-  public AuthenticationInfo getAuthenticationInfo() {
-    return authenticationInfo;
-  }
 
   public Subject getSubject() {
     return subject;
@@ -141,6 +140,15 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   public void setSubject(Subject subject) {
     this.subject = subject;
     this.user = (String) (subject.getPrincipal());
+  }
+
+  public AuthenticationInfo getAuthenticationInfo() {
+    return authenticationInfo;
+  }
+
+  public void setAuthenticationInfo(AuthenticationInfo authenticationInfo) {
+    this.authenticationInfo = authenticationInfo;
+    this.user = authenticationInfo.getUser();
   }
 
   public String getTitle() {
@@ -461,9 +469,9 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     }
 
     Credentials credentials = note.getCredentials();
-    if (subject != null) {
+    if (authenticationInfo != null) {
       UserCredentials userCredentials = credentials.getUserCredentials((String) (subject.getPrincipal()));
-      // subject.setUserCredentials(userCredentials); TODO:将授权信息传递到remote interpreter中
+      authenticationInfo.setUserCredentials(userCredentials); //TODO:将授权信息传递到remote interpreter中
     }
 
     InterpreterContext interpreterContext = new InterpreterContext(
@@ -471,7 +479,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
             getId(),
             this.getTitle(),
             this.getText(),
-            this.getSubject(),
+            this.authenticationInfo,
             this.getConfig(),
             this.settings,
             registry,

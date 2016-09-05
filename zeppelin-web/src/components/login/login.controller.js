@@ -28,8 +28,7 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
         data: $httpParamSerializer({
           'userName': $scope.loginParams.userName,
           'password': $scope.loginParams.password,
-          //'group':$scope.loginParams.group TODO:这里需要从应用系统通过rest传入
-          'group': 'teamA'
+          'group': $scope.loginParams.group
         })
       }).then(function successCallback(response) {
         $rootScope.ticket = response.data.body;
