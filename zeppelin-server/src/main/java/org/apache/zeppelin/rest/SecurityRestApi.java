@@ -21,6 +21,7 @@ package org.apache.zeppelin.rest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
+import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.JndiLdapRealm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.zeppelin.annotation.ZeppelinApi;
@@ -37,6 +38,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+
 import java.util.*;
 
 /**
@@ -74,8 +76,9 @@ public class SecurityRestApi {
     if ("anonymous".equals(principal))
       ticket = "anonymous";
     else
-      ticket = TicketContainer.instance.getTicket(org.apache.shiro.SecurityUtils.getSubject());
+      ticket = TicketContainer.instance.getTicket(principal);
 
+    TicketContainer.instance.putSubject(ticket, org.apache.shiro.SecurityUtils.getSubject());
     Map<String, String> data = new HashMap<>();
     data.put("principal", principal);
     data.put("roles", roles.toString());
@@ -109,10 +112,10 @@ public class SecurityRestApi {
             usersList.addAll(getUserListObj.getUserList((IniRealm) realm));
             rolesList.addAll(getUserListObj.getRolesList((IniRealm) realm));
           } else if (name.equals("ldapRealm")) {
-            usersList.addAll(getUserListObj.getUserList((JndiLdapRealm) realm, searchText));
+            usersList.addAll(getUserListObj.getUserList((DefaultLdapRealm) realm, searchText));
           } else if (name.equals("activeDirectoryRealm")) {
             usersList.addAll(getUserListObj.getUserList((ActiveDirectoryGroupRealm) realm,
-                searchText));
+                    searchText));
           } else if (name.equals("jdbcRealm")) {
             usersList.addAll(getUserListObj.getUserList((JdbcRealm) realm));
           }

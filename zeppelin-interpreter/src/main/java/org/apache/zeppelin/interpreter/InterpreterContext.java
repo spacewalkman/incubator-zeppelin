@@ -31,7 +31,7 @@ import org.apache.zeppelin.resource.ResourcePool;
  */
 public class InterpreterContext {
   private static final ThreadLocal<InterpreterContext> threadIC =
-      new ThreadLocal<InterpreterContext>();
+          new ThreadLocal<InterpreterContext>();
 
   public final InterpreterOutput out;
 
@@ -51,7 +51,9 @@ public class InterpreterContext {
   private final String paragraphTitle;
   private final String paragraphId;
   private final String paragraphText;
-  private Subject subject;
+  private transient Subject subject;//TODO:如何将subject的已经获得的Authentication向AuthenticationInfo进行转化
+
+  private AuthenticationInfo authenticationInfo;
   private final Map<String, Object> config;
   private GUI gui;
   private AngularObjectRegistry angularObjectRegistry;
@@ -62,19 +64,21 @@ public class InterpreterContext {
                             String paragraphId,
                             String paragraphTitle,
                             String paragraphText,
-                            Subject subject,
+                            //Subject subject,
+                            AuthenticationInfo authenticationInfo,
                             Map<String, Object> config,
                             GUI gui,
                             AngularObjectRegistry angularObjectRegistry,
                             ResourcePool resourcePool,
                             List<InterpreterContextRunner> runners,
                             InterpreterOutput out
-                            ) {
+  ) {
     this.noteId = noteId;
     this.paragraphId = paragraphId;
     this.paragraphTitle = paragraphTitle;
     this.paragraphText = paragraphText;
-    this.subject = subject;
+    //this.subject = subject;
+    this.authenticationInfo = authenticationInfo;
     this.config = config;
     this.gui = gui;
     this.angularObjectRegistry = angularObjectRegistry;
@@ -124,4 +128,7 @@ public class InterpreterContext {
     return runners;
   }
 
+  public AuthenticationInfo getAuthenticationInfo() {
+    return authenticationInfo;
+  }
 }

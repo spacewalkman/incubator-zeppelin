@@ -68,27 +68,29 @@ public class LoginRestApi {
                             @FormParam("group") String group) {
     JsonResponse response = null;
     // ticket set to anonymous for anonymous user. Simplify testing.
-    Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
-    if (currentUser.isAuthenticated()) {
-      currentUser.logout();
+    Subject subject = org.apache.shiro.SecurityUtils.getSubject();
+    if (subject.isAuthenticated()) {
+      subject.logout();
     }
-    if (!currentUser.isAuthenticated()) {
+    if (!subject.isAuthenticated()) {
       try {
         UserPasswordGroupToken token = new UserPasswordGroupToken(userName, password, group);
         //token.setRememberMe(true);
-        currentUser.login(token);
+        subject.login(token);
         HashSet<String> roles = SecurityUtils.getRoles();
         String principal = SecurityUtils.getPrincipal();
         String ticket;
         if ("anonymous".equals(principal))
           ticket = "anonymous";
         else
-          ticket = TicketContainer.instance.getTicket(currentUser);
+          ticket = TicketContainer.instance.getTicket(principal);
 
+        TicketContainer.instance.putSubject(ticket,subject);
         Map<String, String> data = new HashMap<>();
         data.put("principal", principal);
-        data.put("roles", roles.toString());
+        data.put("roles", roles.toString());//把role传递到前台起什么作用？
         data.put("ticket", ticket);
+        data.put("group", group);
 
         response = new JsonResponse(Response.Status.OK, "", data);
         //if no exception, that's it, we're done!
@@ -122,6 +124,7 @@ public class LoginRestApi {
     JsonResponse response;
     Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
     currentUser.logout();
+
     response = new JsonResponse(Response.Status.UNAUTHORIZED, "", "");
     LOG.warn(response.toString());
     return response.build();
