@@ -46,20 +46,20 @@ public class WritableJdbcRealmTest {
 
   @Test
   public void createUser() throws Exception {
-    writableJdbcRealm.createUser("qianyong", "123");
+    writableJdbcRealm.createUser("user1", "123");
 
-    boolean isUserExsit = writableJdbcRealm.isUserExist("qianyong");
+    boolean isUserExsit = writableJdbcRealm.isUserExist("user1");
     assertTrue(isUserExsit);
 
     //测试登录
-    Subject subject = buildNewSubject("qianyong", RealmName);
-    Subject subjectAfter = realmSecurityManager.login(subject, new UsernamePasswordToken("qianyong", "123"));//传递给login的password不能hash
+    Subject subject = buildNewSubject("user1", RealmName);
+    Subject subjectAfter = realmSecurityManager.login(subject, new UsernamePasswordToken("user1", "123"));//传递给login的password不能hash
     assertTrue(subjectAfter.isAuthenticated());
 
-    int affectedCount = writableJdbcRealm.deleteUser("qianyong");
+    int affectedCount = writableJdbcRealm.deleteUser("user1");
     assertTrue(affectedCount >= 1);
 
-    isUserExsit = writableJdbcRealm.isUserExist("qianyong");
+    isUserExsit = writableJdbcRealm.isUserExist("user1");
     assertFalse(isUserExsit);
 
     subjectAfter.logout();

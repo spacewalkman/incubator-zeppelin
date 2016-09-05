@@ -513,9 +513,12 @@ public class Note implements Serializable, ParagraphJobListener {
           continue;
         }
 
-        PrincipalCollection principals = new SimplePrincipalCollection(cronExecutingUser, ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
-        Subject subject = new Subject.Builder().principals(principals).buildSubject();
-        p.setSubject(subject);
+        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
+        authenticationInfo.setUser(cronExecutingUser);
+        p.setAuthenticationInfo(authenticationInfo);//这里由于要跨越thrift，所以要传递pojo，而不是Subject
+//        PrincipalCollection principals = new SimplePrincipalCollection(cronExecutingUser, ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
+//        Subject subject = new Subject.Builder().principals(principals).buildSubject();
+//        p.setSubject(subject);
         run(p.getId());
       }
     }

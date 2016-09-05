@@ -98,6 +98,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
+    authenticationInfo = null;
     subject = null;
     user = null;
     dateUpdated = null;
@@ -111,6 +112,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.factory = factory;
     title = null;
     text = null;
+    authenticationInfo = null;
     subject = null;
     dateUpdated = null;
     settings = new GUI();
@@ -131,9 +133,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.dateUpdated = new Date();
   }
 
-  public AuthenticationInfo getAuthenticationInfo() {
-    return authenticationInfo;
-  }
 
   public Subject getSubject() {
     return subject;
@@ -142,6 +141,15 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   public void setSubject(Subject subject) {
     this.subject = subject;
     this.user = (String) (subject.getPrincipal());
+  }
+
+  public AuthenticationInfo getAuthenticationInfo() {
+    return authenticationInfo;
+  }
+
+  public void setAuthenticationInfo(AuthenticationInfo authenticationInfo) {
+    this.authenticationInfo = authenticationInfo;
+    this.user = authenticationInfo.getUser();
   }
 
   public String getTitle() {
@@ -464,7 +472,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     Credentials credentials = note.getCredentials();
     if (authenticationInfo != null) {
       UserCredentials userCredentials = credentials.getUserCredentials(
-          authenticationInfo.getPrincipal());
+          authenticationInfo.getUser());
       authenticationInfo.setUserCredentials(userCredentials);
     }
 
@@ -473,7 +481,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
         getId(),
         this.getTitle(),
         this.getText(),
-        this.getSubject(),
+        this.authenticationInfo,
         this.getConfig(),
         this.settings,
         registry,

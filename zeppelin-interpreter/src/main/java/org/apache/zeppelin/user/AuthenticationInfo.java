@@ -18,37 +18,40 @@
 
 package org.apache.zeppelin.user;
 
-import org.apache.shiro.subject.Subject;
-
+/***
+ *
+ */
 public class AuthenticationInfo {
-  Subject subject;
+  String user;
   String ticket;
   UserCredentials userCredentials;
 
-  public AuthenticationInfo() {
+  public AuthenticationInfo() {}
+
+  public AuthenticationInfo(String user) {
+    this.user = user;
   }
 
-  public AuthenticationInfo(Subject subject) {
-    this.setSubject(subject);
-  }
-
-  /**
+  /***
    *
-   * @param subject
+   * @param user
    * @param ticket
    */
-  public AuthenticationInfo(Subject subject, String ticket) {
-    this.setSubject(subject);
+  public AuthenticationInfo(String user, String ticket) {
+    this.user = user;
     this.ticket = ticket;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
   }
 
   public String getTicket() {
     return ticket;
-  }
-
-  public String getPrincipal() {
-    if (subject == null) return null;
-    return (String) subject.getPrincipal();//TODO:principal always String?
   }
 
   public void setTicket(String ticket) {
@@ -63,11 +66,4 @@ public class AuthenticationInfo {
     this.userCredentials = userCredentials;
   }
 
-  public Subject getSubject() {
-    return subject;
-  }
-
-  public void setSubject(Subject subject) {
-    this.subject = subject;
-  }
 }

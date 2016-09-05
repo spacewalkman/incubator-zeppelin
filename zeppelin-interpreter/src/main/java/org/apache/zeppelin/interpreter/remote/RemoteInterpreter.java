@@ -33,6 +33,7 @@ import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterResult;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService.Client;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -481,7 +482,7 @@ public class RemoteInterpreter extends Interpreter {
         ic.getParagraphId(),
         ic.getParagraphTitle(),
         ic.getParagraphText(),
-        gson.toJson(ic.getSubject()),
+        gson.toJson(ic.getAuthenticationInfo()),
         gson.toJson(ic.getConfig()),
         gson.toJson(ic.getGui()),
         gson.toJson(ic.getRunners()));

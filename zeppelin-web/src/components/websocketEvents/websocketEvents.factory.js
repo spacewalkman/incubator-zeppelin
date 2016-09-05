@@ -33,12 +33,14 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       data.principal = $rootScope.ticket.principal;
       data.ticket = $rootScope.ticket.ticket;
       data.roles = $rootScope.ticket.roles;
+      data.group = $rootScope.ticket.group;
     } else {
       data.principal = '';
       data.ticket = '';
       data.roles = '';
+      data.group = '';
     }
-    console.log('Send >> %o, %o, %o, %o, %o', data.op, data.principal, data.ticket, data.roles, data);
+    console.log('Send >> %o, %o, %o, %o, %o', data.op, data.principal, data.ticket, data.roles, data.group, data);
     websocketCalls.ws.send(JSON.stringify(data));
   };
 

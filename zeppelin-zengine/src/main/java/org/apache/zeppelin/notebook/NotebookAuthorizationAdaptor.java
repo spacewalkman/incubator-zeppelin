@@ -1,7 +1,5 @@
 package org.apache.zeppelin.notebook;
 
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 
 import java.util.List;
@@ -116,12 +114,11 @@ public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebook
 
   @Override
   public void removeNote(String noteId) {
-
   }
 
   //TODO:默认不限制用户使用特定的interpreter是否合适
   @Override
-  public boolean isUseInterpreterAllowed(final String userName, final String interpreterId) {
+  public boolean canUseInterpreter(final String userName, final String interpreterId) {
     return true;
   }
 
