@@ -18,6 +18,7 @@ package org.apache.zeppelin.server;
 
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.JndiLdapRealm;
 import org.apache.shiro.realm.ldap.LdapContextFactory;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -39,7 +40,7 @@ import java.util.Set;
 /**
  * Created for org.apache.zeppelin.server on 09/06/16.
  */
-public class LdapGroupRealm extends JndiLdapRealm {
+public class LdapGroupRealm extends DefaultLdapRealm {
   private static final Logger LOG = LoggerFactory.getLogger(LdapGroupRealm.class);
 
   public AuthorizationInfo queryForAuthorizationInfo(
