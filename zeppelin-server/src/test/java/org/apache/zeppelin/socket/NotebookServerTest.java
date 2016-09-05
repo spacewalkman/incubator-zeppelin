@@ -18,6 +18,7 @@ package org.apache.zeppelin.socket;
 
 import com.google.gson.Gson;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectBuilder;
 import org.apache.zeppelin.display.AngularObjectRegistry;
@@ -94,7 +95,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     String origin = "http://" + InetAddress.getLocalHost().getHostName() + ":8080";
 
     assertTrue("Origin " + origin + " is not allowed. Please check your hostname.",
-          server.checkOrigin(mockRequest, origin));
+            server.checkOrigin(mockRequest, origin));
   }
 
   @Test
@@ -171,7 +172,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     HashSet<String> userAndRoles = new HashSet<String>();
     userAndRoles.add(null);
     try {
-      note = notebookServer.importNote(null, userAndRoles, notebook, messageReceived);
+      note = notebookServer.importNote(null, SecurityUtils.getSubject(), notebook, messageReceived);
     } catch (NullPointerException e) {
       //broadcastNoteList(); failed nothing to worry.
       LOG.error("Exception in NotebookServerTest while testImportNotebook, failed nothing to " +
@@ -226,7 +227,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     server.noteSocketMap.put("noteId", asList(conn, otherConn));
 
     // When
-    server.angularObjectClientBind(conn, new HashSet<String>(), notebook, messageReceived);
+    server.angularObjectClientBind(conn, SecurityUtils.getSubject(), notebook, messageReceived);
 
     // Then
     verify(mdRegistry, never()).addAndNotifyRemoteProcess(varName, value, "noteId", null);
@@ -275,7 +276,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     server.noteSocketMap.put("noteId", asList(conn, otherConn));
 
     // When
-    server.angularObjectClientBind(conn, new HashSet<String>(), notebook, messageReceived);
+    server.angularObjectClientBind(conn, SecurityUtils.getSubject(), notebook, messageReceived);
 
     // Then
     verify(otherConn).send(mdMsg1);
@@ -318,7 +319,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     server.noteSocketMap.put("noteId", asList(conn, otherConn));
 
     // When
-    server.angularObjectClientUnbind(conn, new HashSet<String>(), notebook, messageReceived);
+    server.angularObjectClientUnbind(conn, SecurityUtils.getSubject(), notebook, messageReceived);
 
     // Then
     verify(mdRegistry, never()).removeAndNotifyRemoteProcess(varName, "noteId", null);
@@ -364,7 +365,7 @@ public class NotebookServerTest extends AbstractTestRestApi {
     server.noteSocketMap.put("noteId", asList(conn, otherConn));
 
     // When
-    server.angularObjectClientUnbind(conn, new HashSet<String>(), notebook, messageReceived);
+    server.angularObjectClientUnbind(conn, SecurityUtils.getSubject(), notebook, messageReceived);
 
     // Then
     verify(otherConn).send(mdMsg1);
