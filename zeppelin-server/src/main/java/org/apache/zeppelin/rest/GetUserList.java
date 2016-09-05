@@ -20,6 +20,7 @@ package org.apache.zeppelin.rest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
+import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
 import org.apache.shiro.realm.ldap.JndiLdapRealm;
 import org.apache.shiro.realm.text.IniRealm;
@@ -89,7 +90,7 @@ public class GetUserList {
   /**
    * function to extract users from LDAP
    */
-  public List<String> getUserList(JndiLdapRealm r, String searchText) {
+  public List<String> getUserList(DefaultLdapRealm r, String searchText) {
     List<String> userList = new ArrayList<>();
     String userDnTemplate = r.getUserDnTemplate();
     String userDn[] = userDnTemplate.split(",", 2);
