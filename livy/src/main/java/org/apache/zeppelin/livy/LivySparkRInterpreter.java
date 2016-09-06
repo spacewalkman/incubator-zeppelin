@@ -58,7 +58,7 @@ public class LivySparkRInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String line, InterpreterContext interpreterContext) {
     try {
-      String principal = (String) (interpreterContext.getSubject().getPrincipal());
+      String principal = interpreterContext.getAuthenticationInfo().getUser();
       if (userSessionMap.get(principal) == null) {
         try {
           userSessionMap.put(

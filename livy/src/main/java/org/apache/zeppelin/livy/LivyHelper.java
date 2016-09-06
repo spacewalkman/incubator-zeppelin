@@ -68,7 +68,7 @@ public class LivyHelper {
       }
 
       String confData = gson.toJson(conf);
-      String user = (String) (context.getSubject().getPrincipal());
+      String user = context.getAuthenticationInfo().getUser();
 
       String json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions", "POST",
               "{" +
@@ -299,7 +299,7 @@ public class LivyHelper {
   private Map executeCommand(String lines, InterpreterContext context,
                              Map<String, Integer> userSessionMap) throws Exception {
     String json = executeHTTP(property.get("zeppelin.livy.url") + "/sessions/"
-                    + userSessionMap.get((String) (context.getSubject().getPrincipal()))
+                    + userSessionMap.get(context.getAuthenticationInfo().getUser())
                     + "/statements",
             "POST",
             "{\"code\": \"" + lines + "\" }",
@@ -322,7 +322,7 @@ public class LivyHelper {
   private Map getStatusById(InterpreterContext context,
                             Map<String, Integer> userSessionMap, Integer id) throws Exception {
     String json = executeHTTP(property.getProperty("zeppelin.livy.url") + "/sessions/"
-            + userSessionMap.get((String)(context.getSubject().getPrincipal()))
+            + userSessionMap.get(context.getAuthenticationInfo().getUser())
             + "/statements/" + id,
     "GET", null, context.getParagraphId());
     try {
