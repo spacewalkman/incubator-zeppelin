@@ -69,7 +69,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   private transient InterpreterFactory factory;
   private transient Note note;
   private transient AuthenticationInfo authenticationInfo;
-  private transient Subject subject;
 
   String title;
   String text;
@@ -98,7 +97,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     title = null;
     text = null;
     authenticationInfo = null;
-    subject = null;
     user = null;
     dateUpdated = null;
     settings = new GUI();
@@ -112,7 +110,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     title = null;
     text = null;
     authenticationInfo = null;
-    subject = null;
     dateUpdated = null;
     settings = new GUI();
     config = new HashMap<String, Object>();
@@ -130,16 +127,6 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   public void setText(String newText) {
     this.text = newText;
     this.dateUpdated = new Date();
-  }
-
-
-  public Subject getSubject() {
-    return subject;
-  }
-
-  public void setSubject(Subject subject) {
-    this.subject = subject;
-    this.user = (String) (subject.getPrincipal());
   }
 
   public AuthenticationInfo getAuthenticationInfo() {
@@ -295,6 +282,19 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return null;
   }
 
+  private boolean hasPermission(String user, List<String> intpUsers) {
+    if (1 > intpUsers.size()) {
+      return true;
+    }
+
+    for (String u: intpUsers) {
+      if (user.trim().equals(u.trim())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   protected Object jobRun() throws Throwable {
     String replName = getRequiredReplName();
@@ -310,8 +310,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       if (intp != null &&
               interpreterHasUser(intp) &&
               isUserAuthorizedToAccessInterpreter(intp.getOption()) == false) {
-        logger.error("{} has no permission for {} ", subject.getPrincipal(), repl);
-        return new InterpreterResult(Code.ERROR, subject.getPrincipal() +
+        logger.error("{} has no permission for {} ", authenticationInfo.getUser(), repl);
+        return new InterpreterResult(Code.ERROR, authenticationInfo.getUser() +
                 " has no permission for " + getRequiredReplName());
       }
     }
@@ -385,7 +385,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
    * use shiro wildcardPermission to authorize interpters' using
    */
   private boolean isUserAuthorizedToAccessInterpreter(InterpreterOption intpOpt) {
-    return intpOpt.permissionIsSet() && subject.isPermitted(String.format(getRequiredReplName()));
+    return intpOpt.permissionIsSet() &&
+            hasPermission(authenticationInfo.getUser(), intpOpt.getUsers());
   }
 
   private InterpreterSetting getInterpreterSettingById(String id) {
@@ -470,7 +471,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
 
     Credentials credentials = note.getCredentials();
     if (authenticationInfo != null) {
-      UserCredentials userCredentials = credentials.getUserCredentials((String) (subject.getPrincipal()));
+      UserCredentials userCredentials = credentials.getUserCredentials(authenticationInfo.getUser());
       authenticationInfo.setUserCredentials(userCredentials); //TODO:将授权信息传递到remote interpreter中
     }
 
