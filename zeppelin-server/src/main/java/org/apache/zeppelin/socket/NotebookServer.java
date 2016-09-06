@@ -562,6 +562,7 @@ public class NotebookServer extends WebSocketServlet implements
     unicast(new Message(OP.NOTES_INFO).put("notes", notesInfo), conn);
   }
 
+  //TODO:修改了权限控制机制，采用shiro Subject.hasRole来控制之后，此方法没有使用
   void permissionError(NotebookSocket conn, String op, Set<String> userAndRoles,
                        Set<String> allowed) throws IOException {
     LOG.info("Cannot {}. Connection readers {}. Allowed readers {}",
@@ -1241,7 +1242,13 @@ public class NotebookServer extends WebSocketServlet implements
     p.setText(text);
     p.setTitle((String) fromMessage.get("title"));
 
-    p.setSubject(subject);
+    if (!fromMessage.principal.equals("anonymous")) {
+      AuthenticationInfo authenticationInfo = new AuthenticationInfo(fromMessage.principal,
+              fromMessage.ticket);
+      p.setAuthenticationInfo(authenticationInfo);
+    } else {
+      p.setAuthenticationInfo(new AuthenticationInfo());
+    }
 
     Map<String, Object> params = (Map<String, Object>) fromMessage.get("params");
     p.settings.setParams(params);
