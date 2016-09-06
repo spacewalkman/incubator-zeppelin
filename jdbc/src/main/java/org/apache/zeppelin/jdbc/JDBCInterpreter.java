@@ -273,7 +273,7 @@ public class JDBCInterpreter extends Interpreter {
           throws SQLException, ClassNotFoundException, InterpreterException {
     Connection connection;
 
-    String principal = (String) (interpreterContext.getSubject().getPrincipal());
+    String principal = interpreterContext.getAuthenticationInfo().getUser();
     if (paragraphIdConnectionMap.containsKey(paragraphId + principal
     )) {
       connection = paragraphIdConnectionMap.get(paragraphId +
@@ -465,7 +465,7 @@ public class JDBCInterpreter extends Interpreter {
     logger.info("Cancel current query statement.");
 
     String paragraphId = context.getParagraphId();
-    String principal = (String) (context.getSubject().getPrincipal());
+    String principal = context.getAuthenticationInfo().getUser();
     try {
       paragraphIdStatementMap.get(paragraphId + principal).cancel();
     } catch (SQLException e) {
