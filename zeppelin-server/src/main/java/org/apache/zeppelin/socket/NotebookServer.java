@@ -189,10 +189,10 @@ public class NotebookServer extends WebSocketServlet implements
       /** Lets be elegant here */
       switch (messagereceived.op) {
         case LIST_NOTES:
-          unicastNoteList(conn, subject);
+          unicastNoteList(conn, subject, true);
           break;
         case RELOAD_NOTES_FROM_REPO:
-          unicastNoteList(conn, subject);
+          unicastNoteList(conn, subject, true);
           //broadcastReloadedNoteList(subject);
           break;
         case GET_HOME_NOTE:
@@ -557,8 +557,8 @@ public class NotebookServer extends WebSocketServlet implements
     broadcastAll(new Message(OP.NOTES_INFO).put("notes", notesInfo));
   }
 
-  public void unicastNoteList(NotebookSocket conn, Subject subject) {
-    List<Map<String, String>> notesInfo = generateNotebooksInfo(true, subject);
+  public void unicastNoteList(NotebookSocket conn, Subject subject, boolean isReload) {
+    List<Map<String, String>> notesInfo = generateNotebooksInfo(isReload, subject);
     unicast(new Message(OP.NOTES_INFO).put("notes", notesInfo), conn);
   }
 
@@ -661,7 +661,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       note.persist(subject);
       broadcastNote(note);
-      unicastNoteList(conn, subject);
+      unicastNoteList(conn, subject, false);
     }
   }
 
@@ -697,8 +697,16 @@ public class NotebookServer extends WebSocketServlet implements
 
     note.persist(subject);
     addConnectionToNote(note.getId(), conn);
-    conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", note)));
-    unicastNoteList(conn, subject);
+
+    Message messageToWeb = new Message(OP.NEW_NOTE);
+    messageToWeb.put("note", note);
+    messageToWeb.group = message.group;
+    messageToWeb.principal = message.principal;
+    messageToWeb.roles = message.roles;
+    messageToWeb.ticket = message.ticket;
+
+    conn.send(serializeMessage(messageToWeb));
+    unicastNoteList(conn, subject, true);
   }
 
   /**
@@ -803,7 +811,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     notebook.removeNote(noteId, subject);
     removeNote(noteId);
-    unicastNoteList(conn, subject);
+    unicastNoteList(conn, subject, false);
   }
 
   private void updateParagraph(NotebookSocket conn, Subject subject,
