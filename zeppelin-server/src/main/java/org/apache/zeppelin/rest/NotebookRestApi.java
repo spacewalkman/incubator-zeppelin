@@ -782,7 +782,7 @@ public class NotebookRestApi {
           IOException, IllegalArgumentException {
     LOG.info("Get notebook jobs for job manager");
 
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getSubject());
+    AuthenticationInfo subject = new AuthenticationInfo((String)(SecurityUtils.getSubject().getPrincipal()));
     List<Map<String, Object>> notebookJobs = notebook
             .getJobListByUnixTime(false, 0, subject);
     Map<String, Object> response = new HashMap<>();
@@ -878,7 +878,6 @@ public class NotebookRestApi {
       Map<String, Object> paramsForUpdating = request.getParams();
       if (paramsForUpdating != null) {
         paragraph.settings.getParams().putAll(paramsForUpdating);
-        AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getSubject());
         note.persist(SecurityUtils.getSubject());
       }
     }
