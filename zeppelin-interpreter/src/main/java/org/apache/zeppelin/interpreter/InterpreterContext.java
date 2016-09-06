@@ -51,7 +51,6 @@ public class InterpreterContext {
   private final String paragraphTitle;
   private final String paragraphId;
   private final String paragraphText;
-  private transient Subject subject;//TODO:如何将subject的已经获得的Authentication向AuthenticationInfo进行转化
 
   private AuthenticationInfo authenticationInfo;
   private final Map<String, Object> config;
@@ -77,7 +76,6 @@ public class InterpreterContext {
     this.paragraphId = paragraphId;
     this.paragraphTitle = paragraphTitle;
     this.paragraphText = paragraphText;
-    //this.subject = subject;
     this.authenticationInfo = authenticationInfo;
     this.config = config;
     this.gui = gui;
@@ -102,10 +100,6 @@ public class InterpreterContext {
 
   public String getParagraphTitle() {
     return paragraphTitle;
-  }
-
-  public Subject getSubject() {
-    return subject;
   }
 
   public Map<String, Object> getConfig() {
