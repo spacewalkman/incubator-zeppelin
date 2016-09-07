@@ -35,6 +35,12 @@
     <version>0.7.0-SNAPSHOT</version>
     <name>Zeppelin: Zengine</name>
     <description>Zeppelin Zengine</description>
+    <url>http://zeppelin.apache.org</url>
+
+    <properties>
+        <es.version>2.3.3</es.version>
+        <lucene.version>5.5.0</lucene.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -47,6 +53,24 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>1.10.62</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${es.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-spatial</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
