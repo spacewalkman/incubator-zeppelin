@@ -135,9 +135,9 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
             .setScroll(new TimeValue(defaultScrollTimeOut))
             .setQuery(subject == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
                     .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, (String) (subject.getPrincipal()))))
-            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
-            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
-            .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
+//            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
+//            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
+//            .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
             .setSize(defatlScrollMaxPerShard).execute().actionGet();
 
     List<NoteInfo> results = new LinkedList<NoteInfo>();
@@ -150,10 +150,10 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
         //aggregation parse
         //TODO: search with aggs,fields tags/topic?(qy)
-        Aggregations aggregations = scrollResp.getAggregations();
-        termsAggregationParse(aggregations, AGGREGATION_NAME_TAGS);
-        termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
-        dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
+//        Aggregations aggregations = scrollResp.getAggregations();
+//        termsAggregationParse(aggregations, AGGREGATION_NAME_TAGS);
+//        termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
+//        dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
       }
       scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(defaultScrollTimeOut)).execute().actionGet();
       //Break condition: No hits are returned
