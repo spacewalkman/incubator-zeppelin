@@ -208,6 +208,9 @@
           "type": "string",
           "index": "not_analyzed"
         },
+        "paraIndex": {
+          "type": "integer"
+        },
         "jobName": {
           "type": "string",
           "index": "no"
