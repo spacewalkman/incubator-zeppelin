@@ -274,9 +274,9 @@ public class ZeppelinConfiguration extends XMLConfiguration {
       return path;
     } else {
       return getRelativeDir(
-          String.format("%s/%s",
-              getConfDir(),
-              getString(path)));
+              String.format("%s/%s",
+                      getConfDir(),
+                      getString(path)));
     }
   }
 
@@ -303,9 +303,9 @@ public class ZeppelinConfiguration extends XMLConfiguration {
       return path;
     } else {
       return getRelativeDir(
-          String.format("%s/%s",
-              getConfDir(),
-              getString(path)));
+              String.format("%s/%s",
+                      getConfDir(),
+                      getString(path)));
     }
   }
 
@@ -491,44 +491,44 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_WAR("zeppelin.war", "../zeppelin-web/dist"),
     ZEPPELIN_WAR_TEMPDIR("zeppelin.war.tempdir", "webapps"),
     ZEPPELIN_INTERPRETERS("zeppelin.interpreters", "org.apache.zeppelin.spark.SparkInterpreter,"
-        + "org.apache.zeppelin.spark.PySparkInterpreter,"
-        + "org.apache.zeppelin.rinterpreter.RRepl,"
-        + "org.apache.zeppelin.rinterpreter.KnitR,"
-        + "org.apache.zeppelin.spark.SparkRInterpreter,"
-        + "org.apache.zeppelin.spark.SparkSqlInterpreter,"
-        + "org.apache.zeppelin.spark.DepInterpreter,"
-        + "org.apache.zeppelin.markdown.Markdown,"
-        + "org.apache.zeppelin.angular.AngularInterpreter,"
-        + "org.apache.zeppelin.shell.ShellInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkSQLInterpreter,"
-        + "org.apache.zeppelin.livy.LivyPySparkInterpreter,"
-        + "org.apache.zeppelin.livy.LivySparkRInterpreter,"
-        + "org.apache.zeppelin.alluxio.AlluxioInterpreter,"
-        + "org.apache.zeppelin.file.HDFSFileInterpreter,"
-        + "org.apache.zeppelin.postgresql.PostgreSqlInterpreter,"
-        + "org.apache.zeppelin.flink.FlinkInterpreter,"
-        + "org.apache.zeppelin.python.PythonInterpreter,"
-        + "org.apache.zeppelin.python.PythonInterpreterPandasSql,"
-        + "org.apache.zeppelin.ignite.IgniteInterpreter,"
-        + "org.apache.zeppelin.ignite.IgniteSqlInterpreter,"
-        + "org.apache.zeppelin.lens.LensInterpreter,"
-        + "org.apache.zeppelin.cassandra.CassandraInterpreter,"
-        + "org.apache.zeppelin.geode.GeodeOqlInterpreter,"
-        + "org.apache.zeppelin.kylin.KylinInterpreter,"
-        + "org.apache.zeppelin.elasticsearch.ElasticsearchInterpreter,"
-        + "org.apache.zeppelin.scalding.ScaldingInterpreter,"
-        + "org.apache.zeppelin.jdbc.JDBCInterpreter,"
-        + "org.apache.zeppelin.hbase.HbaseInterpreter,"
-        + "org.apache.zeppelin.bigquery.BigQueryInterpreter"),
+            + "org.apache.zeppelin.spark.PySparkInterpreter,"
+            + "org.apache.zeppelin.rinterpreter.RRepl,"
+            + "org.apache.zeppelin.rinterpreter.KnitR,"
+            + "org.apache.zeppelin.spark.SparkRInterpreter,"
+            + "org.apache.zeppelin.spark.SparkSqlInterpreter,"
+            + "org.apache.zeppelin.spark.DepInterpreter,"
+            + "org.apache.zeppelin.markdown.Markdown,"
+            + "org.apache.zeppelin.angular.AngularInterpreter,"
+            + "org.apache.zeppelin.shell.ShellInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkSQLInterpreter,"
+            + "org.apache.zeppelin.livy.LivyPySparkInterpreter,"
+            + "org.apache.zeppelin.livy.LivySparkRInterpreter,"
+            + "org.apache.zeppelin.alluxio.AlluxioInterpreter,"
+            + "org.apache.zeppelin.file.HDFSFileInterpreter,"
+            + "org.apache.zeppelin.postgresql.PostgreSqlInterpreter,"
+            + "org.apache.zeppelin.flink.FlinkInterpreter,"
+            + "org.apache.zeppelin.python.PythonInterpreter,"
+            + "org.apache.zeppelin.python.PythonInterpreterPandasSql,"
+            + "org.apache.zeppelin.ignite.IgniteInterpreter,"
+            + "org.apache.zeppelin.ignite.IgniteSqlInterpreter,"
+            + "org.apache.zeppelin.lens.LensInterpreter,"
+            + "org.apache.zeppelin.cassandra.CassandraInterpreter,"
+            + "org.apache.zeppelin.geode.GeodeOqlInterpreter,"
+            + "org.apache.zeppelin.kylin.KylinInterpreter,"
+            + "org.apache.zeppelin.elasticsearch.ElasticsearchInterpreter,"
+            + "org.apache.zeppelin.scalding.ScaldingInterpreter,"
+            + "org.apache.zeppelin.jdbc.JDBCInterpreter,"
+            + "org.apache.zeppelin.hbase.HbaseInterpreter,"
+            + "org.apache.zeppelin.bigquery.BigQueryInterpreter"),
     ZEPPELIN_INTERPRETER_JSON("zeppelin.interpreter.setting", "interpreter-setting.json"),
     ZEPPELIN_INTERPRETER_DIR("zeppelin.interpreter.dir", "interpreter"),
     ZEPPELIN_INTERPRETER_LOCALREPO("zeppelin.interpreter.localRepo", "local-repo"),
     ZEPPELIN_INTERPRETER_CONNECT_TIMEOUT("zeppelin.interpreter.connect.timeout", 30000),
     ZEPPELIN_INTERPRETER_MAX_POOL_SIZE("zeppelin.interpreter.max.poolsize", 10),
     ZEPPELIN_INTERPRETER_GROUP_ORDER("zeppelin.interpreter.group.order", "spark,md,angular,sh,"
-        + "livy,alluxio,file,psql,flink,python,ignite,lens,cassandra,geode,kylin,elasticsearch,"
-        + "scalding,jdbc,hbase,bigquery"),
+            + "livy,alluxio,file,psql,flink,python,ignite,lens,cassandra,geode,kylin,elasticsearch,"
+            + "scalding,jdbc,hbase,bigquery"),
     ZEPPELIN_ENCODING("zeppelin.encoding", "UTF-8"),
     ZEPPELIN_NOTEBOOK_DIR("zeppelin.notebook.dir", "notebook"),
     // use specified notebook (id) as homescreen
@@ -561,6 +561,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
 
     //default page size when searching note
     ZEPPELIN_NOTE_SEARCH_PAGE_SIZE("zeppelin.es.search.repo.page.size", 20),
+    ZEPPELIN_NOTE_SEARCH_SCROLL_MAX_RESULT_PER_SHARD("zeppelin.es.search.scroll.max.result.per.shard", 10000),//ES search为了避免deep pagination而使用scroll返回结果集，每个shard最多返回个数
+    ZEPPELIN_NOTE_SEARCH_SCROLL_TIME_OUT("zeppelin.es.search.scroll.time.out", 60000),//millisecond, 默认60秒
     ZEPPELIN_NOTE_REPO_ES_HOST("zeppelin.es.search.repo.host", "localhost"),
     ZEPPELIN_NOTE_REPO_ES_PORT("zeppelin.es.search.repo.port", 9300),
     ZEPPELIN_NOTE_REPO_ES_INDEX_NAME("zeppelin.es.search.repo.index.name", "zeppelin"),

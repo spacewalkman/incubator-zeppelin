@@ -5,16 +5,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import org.apache.lucene.queryparser.xml.builders.FilteredQueryBuilder;
-import org.apache.lucene.queryparser.xml.builders.TermQueryBuilder;
-import org.apache.lucene.search.TermQuery;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.search.SearchService;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.util.GsonUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -25,7 +21,6 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
@@ -45,14 +40,12 @@ import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.search.sort.SortParseElement;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -91,6 +84,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   private String paragraphTypeName;
   private int defaultPageSize;
   private int defaultTermsAggSize;
+  private int defaultScrollTimeOut;//es croll时的timeout
+  private int defatlScrollMaxPerShard;//es scroll时的每个shard返回的最大结果集 TODO:可能存在bug，Deep pagination时可能造成paragraph被shard忽略掉，造成note的paragraphs不全
 
 
   public ElasticSearchRepo(ZeppelinConfiguration conf) throws IOException {
@@ -102,12 +97,21 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     this.paragraphTypeName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME);
     this.defaultPageSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_PAGE_SIZE);
     this.defaultTermsAggSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE);
+    this.defaultScrollTimeOut = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_SCROLL_TIME_OUT);
+    this.defatlScrollMaxPerShard = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_SEARCH_SCROLL_MAX_RESULT_PER_SHARD);
 
 //    Settings settings = Settings.settingsBuilder()
 //            .put("cluster.name", "zeppelin").build();
 
-    TransportClient transportClient = TransportClient.builder().build()
-            .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
+
+    TransportClient transportClient = null;
+    try {
+      transportClient = TransportClient.builder().build()
+              .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(esHost), esPort));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     client = transportClient;
 
     if (transportClient.connectedNodes() == null || transportClient.connectedNodes().size() == 0) {
@@ -126,13 +130,13 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   public List<NoteInfo> list(Subject subject) throws IOException {
     SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(noteTypeName)
             .addSort(AGGREGATION_FILED_LAST_UPDATED, SortOrder.DESC)
-            .setScroll(new TimeValue(60000))
+            .setScroll(new TimeValue(defaultScrollTimeOut))
             .setQuery(subject == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
-                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, subject.getPrincipal())))
+                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, (String) (subject.getPrincipal()))))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
             .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
-            .setSize(100).execute().actionGet(); //100 hits per shard will be returned for each scroll
+            .setSize(defatlScrollMaxPerShard).execute().actionGet();
 
     List<NoteInfo> results = new LinkedList<NoteInfo>();
     //Scroll until no hits are returned
@@ -149,7 +153,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
         termsAggregationParse(aggregations, AGGREGATION_NAME_AUTHOR);
         dateHistogramAggregationParse(aggregations, AGGREGATION_NAME_LAST_UPDATED);
       }
-      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(defaultScrollTimeOut)).execute().actionGet();
       //Break condition: No hits are returned
       if (scrollResp.getHits().getHits().length == 0) {
         break;
@@ -205,14 +209,20 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     //find children(paragraphs) by parent(note) ,maintain paragraphs order
     HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(ID_FIELD, SortOrder.ASC).execute().actionGet();
+    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(ID_FIELD, SortOrder.ASC)
+            .setScroll(new TimeValue(defaultScrollTimeOut)).setSize(defatlScrollMaxPerShard).execute().actionGet();
 
-    SearchHits hits = paragraphsResponse.getHits();
-    long count = hits.getTotalHits();
-    if (count > 0) {
-      for (SearchHit hit : hits.getHits()) {
+    //Scroll until no hits are returned
+    while (true) {
+      for (SearchHit hit : scrollResp.getHits().getHits()) {
+        //handle hitted note
         Paragraph paragraph = GsonUtil.fromJson(hit.getSourceAsString(), Paragraph.class);
         note.addParagraph(paragraph);
+      }
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(defaultScrollTimeOut)).execute().actionGet();
+      //Break condition: No hits are returned
+      if (scrollResp.getHits().getHits().length == 0) {
+        break;
       }
     }
 
@@ -407,14 +417,14 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
       if (titleHighLightField != null) {
         titleFragments = titleHighLightField.getFragments();
       }
-      LOG.debug("title highlight fragments found={}", titleFragments);
+      LOG.debug("title highlight fragments found={}", (Object[]) titleFragments);
 
       HighlightField textHighLightField = highlightFieldMap.get(SEARCH_FIELD_TEXT);
       Text[] textFragments = null;
       if (textHighLightField != null) {
         textFragments = textHighLightField.getFragments();
       }
-      LOG.debug("text highlight fragments found={}", textFragments);
+      LOG.debug("text highlight fragments found={}", (Object[]) textFragments);
 
       String showFrament = "";//highlight fragment showing in UI
       if (titleFragments != null) {
