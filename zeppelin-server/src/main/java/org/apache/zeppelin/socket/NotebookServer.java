@@ -704,9 +704,10 @@ public class NotebookServer extends WebSocketServlet implements
     messageToWeb.principal = message.principal;
     messageToWeb.roles = message.roles;
     messageToWeb.ticket = message.ticket;
+    messageToWeb.projectId = message.projectId;
 
     conn.send(serializeMessage(messageToWeb));
-    unicastNoteList(conn, subject, true);
+    unicastNoteList(conn, subject, false);
   }
 
   /**
@@ -866,6 +867,10 @@ public class NotebookServer extends WebSocketServlet implements
       String noteJson = gson.toJson(fromMessage.get("notebook"));
 
       note = notebook.importNote(noteJson, noteName, subject);
+      note.setCreatedBy(fromMessage.principal);
+      note.setGroup(fromMessage.group);
+      note.setProjectId(fromMessage.projectId);
+
       note.persist(subject);
       broadcastNote(note);
       broadcastNoteList(subject);
