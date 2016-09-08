@@ -154,6 +154,7 @@ public class Message {
   public String principal = "anonymous";
   public String group="default_team";//TODO:qy,default team name
   public String roles = "";
+  public String projectId="";//算法大赛的题目或者众包项目的的id
 
   public Message(OP op) {
     this.op = op;
