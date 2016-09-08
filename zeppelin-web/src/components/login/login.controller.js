@@ -28,7 +28,8 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
         data: $httpParamSerializer({
           'userName': $scope.loginParams.userName,
           'password': $scope.loginParams.password,
-          'group': $scope.loginParams.group
+          'group': $scope.loginParams.group,
+          'projectId': $scope.loginParams.projectId
         })
       }).then(function successCallback(response) {
         $rootScope.ticket = response.data.body;
@@ -45,7 +46,8 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
       $scope.loginParams = {
         userName: '',
         password: '',
-        group: ''
+        group: '',
+        projectId: ''
       };
     };
 
