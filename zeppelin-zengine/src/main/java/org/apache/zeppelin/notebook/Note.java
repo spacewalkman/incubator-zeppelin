@@ -86,6 +86,7 @@ public class Note implements Serializable, ParagraphJobListener {
   private String createdBy;// used for filter notes & permission check
   private String group; //team group
   private List<String> tags;//bussiness tags
+  private String projectId;//算法大赛题目或者众包项目的id
   private String topic;
   private Date lastUpdated;//max(lastUpdaed in paragraphs)
 
@@ -232,6 +233,7 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, paragraphs.size());
     synchronized (paragraphs) {
+      p.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(p);
     }
     if (noteEventListener != null) {
@@ -288,6 +290,7 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, index);
     synchronized (paragraphs) {
+      p.setParaIndex(index);//记录paragraph的index
       paragraphs.add(index, p);
     }
     if (noteEventListener != null) {
@@ -301,6 +304,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public Paragraph addParagraph(Paragraph paragraph) {
     synchronized (paragraphs) {
+      paragraph.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(paragraph);
     }
     return paragraph;
@@ -630,19 +634,6 @@ public class Note implements Serializable, ParagraphJobListener {
     }
   }
 
-
-  /**
-   * TODO:not used(qy) partial update paragraph only, when changed only happened to individual
-   * paragraph only
-   */
-  public void persistParagraph(Paragraph paragraph) throws IOException {
-    stopDelayedPersistTimer();
-    snapshotAngularObjectRegistry();
-
-    this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
-    index.updateIndexParagraph(this, paragraph);
-  }
-
   /**
    * persist note and paragraphs
    */
@@ -851,5 +842,13 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public void setGroup(String group) {
     this.group = group;
+  }
+
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
   }
 }

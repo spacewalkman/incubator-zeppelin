@@ -74,6 +74,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   String title;
   String text;
   String user;
+  private Integer paraIndex;//此paragraph的下标，用来ES排序
   Date dateUpdated;
   private Map<String, Object> config; // paragraph configs like isOpen, colWidth, etc
   public final GUI settings;          // form and parameter settings
@@ -490,6 +491,14 @@ public class Paragraph extends Job implements Serializable, Cloneable {
         runners,
         output);
     return interpreterContext;
+  }
+
+  public Integer getParaIndex() {
+    return paraIndex;
+  }
+
+  public void setParaIndex(Integer paraIndex) {
+    this.paraIndex = paraIndex;
   }
 
   static class ParagraphRunner extends InterpreterContextRunner {

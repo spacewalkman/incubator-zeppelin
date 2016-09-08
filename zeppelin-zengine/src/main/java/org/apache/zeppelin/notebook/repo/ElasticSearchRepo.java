@@ -15,6 +15,7 @@ import org.apache.zeppelin.util.GsonUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -63,6 +64,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   private static final String PARAGRAPH = "paragraph";
   private static final String ID_FIELD = "_id";
+  private static final String PARAGRAPH_INDEX_FIELD = "paraIndex";
 
   private static final String AGGREGATION_FILED_TAGS = "tags";
   private static final String AGGREGATION_NAME_TAGS = "tags_aggs";
@@ -85,7 +87,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   private int defaultPageSize;
   private int defaultTermsAggSize;
   private int defaultScrollTimeOut;//es croll时的timeout
-  private int defatlScrollMaxPerShard;//es scroll时的每个shard返回的最大结果集 TODO:可能存在bug，Deep pagination时可能造成paragraph被shard忽略掉，造成note的paragraphs不全
+  private int defatlScrollMaxPerShard;//es scroll时的每个shard返回的最大结果集 TODO:可能存在bug，Deep pagination时可能造成paragraph被shard忽略掉，list时造成note列表显示不全（超级管理员能看所有，会有问题），get时造成note的paragraphs不全
 
 
   public ElasticSearchRepo(ZeppelinConfiguration conf) throws IOException {
@@ -209,7 +211,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     //find children(paragraphs) by parent(note) ,maintain paragraphs order
     HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
-    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(ID_FIELD, SortOrder.ASC)
+    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(PARAGRAPH_INDEX_FIELD, SortOrder.ASC)
             .setScroll(new TimeValue(defaultScrollTimeOut)).setSize(defatlScrollMaxPerShard).execute().actionGet();
 
     //Scroll until no hits are returned
@@ -258,16 +260,15 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
       int size = paras.size();
       BulkRequestBuilder bulkIndex = client.prepareBulk();
 
-      //padding to mantain paragraphs order to each other when retrieved back
-      int padLeft = getPadding(size);
-      String padding = padLeft > 0 ? "%0" + (padLeft + 1) + "d" : "%d";
+      //由于没有记录之前的paragraph的个数，而原来是按照paragraph id排序的，更新的时候可能para的个数可能从2位数变成1位数，对ES来说会增加新的paragraph。故需要先删除原来的note
+      this.deleteChildren(note.getId());
 
       for (int i = 0; i < size; i++) {
         Paragraph para = paras.get(i);
         String paraJson = GsonUtil.toJson(para);
+        String esParagraphId = formatId(note.getId(), i + "");
 
-        String savedParagraphId = formatId(note.getId(), String.format(padding, i));
-        IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, savedParagraphId)
+        IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, esParagraphId)
                 .setOpType(IndexRequest.OpType.INDEX)
                 .setParent(note.getId()).setSource(paraJson);
         bulkIndex.add(paragraphIndexRequest);
@@ -318,10 +319,27 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
   @Override
   public void remove(String noteId, Subject subject) throws IOException {
+    this.deleteChildren(noteId);
+
+    //then, delete note
+    DeleteResponse response = client.prepareDelete(this.indexName, this.noteTypeName, noteId).get();
+    if (response.isFound()) {
+      LOG.debug("note id={},delete successfully", noteId);
+    } else {
+      LOG.warn("note id={}, not found", noteId);
+    }
+  }
+
+  /**
+   * 删除所有的note的children paragraphs
+   *
+   * @param noteId note的id
+   */
+  private void deleteChildren(String noteId) {
     //query note's pargraphs and delete
     HasParentQueryBuilder qb = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
 
-    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(qb).setNoFields().setSize(10000).execute().actionGet();//TODO:(qy) paragraphs per note,max=10000?
+    SearchResponse paragraphsResponse = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(qb).setNoFields().setSize(defatlScrollMaxPerShard).execute().actionGet();
     SearchHits hits = paragraphsResponse.getHits();
 
     if (hits.getTotalHits() > 0) {
@@ -334,14 +352,6 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
       BulkItemResponse[] bulkItemResponses = paraDeleteBuldResponse.getItems();
       int successCount = getSuccessCount(bulkItemResponses);
       LOG.debug("paragraphs delete success={},failed={}", successCount, (bulkItemResponses.length - successCount));
-    }
-
-    //then, delete note
-    DeleteResponse response = client.prepareDelete(this.indexName, this.noteTypeName, noteId).get();
-    if (response.isFound()) {
-      LOG.debug("note id={},delete successfully", noteId);
-    } else {
-      LOG.warn("note id={}, not found", noteId);
     }
   }
 
@@ -379,7 +389,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(queryStr, SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT);
     SearchResponse paragraphsResponse = client.prepareSearch(indexName)
-            .setTypes(paragraphTypeName)
+            .setTypes(paragraphTypeName) //TODO:add sorted,同一个note的在一起，lastUpdatedTime降序
             .setQuery(multiMatchQueryBuilder)
             .addFields(SEARCH_FIELD_TITLE, SEARCH_FIELD_TEXT)
             .addHighlightedField(SEARCH_FIELD_TITLE)
@@ -451,17 +461,16 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     this.indexNoteAndParagraphs(note); //just replace as a whole
   }
 
+  /**
+   * 只单独更新note的一个paragraph
+   */
   @Override
   public void updateIndexParagraph(Note note, Paragraph para) throws IOException {
     this.doIndexNoteOnly(note);//update lastUpdated field
 
-    //partial update,update a single paragraph, no touch on other paragraphs
-    int padLeft = getPadding(note.getParagraphs().size());
-    String padding = padLeft > 0 ? "%0" + (padLeft + 1) + "d" : "%d";
     String paraJson = GsonUtil.toJson(para);
-
     String noteId = note.getId();
-    String savedParagraphId = formatId(noteId, String.format(padding, note.getParagraphIndex(para)));
+    String savedParagraphId = formatId(noteId, note.getParagraphIndex(para) + "");
     IndexRequestBuilder paragraphIndexRequest = client.prepareIndex(this.indexName, this.paragraphTypeName, savedParagraphId)
             .setOpType(IndexRequest.OpType.INDEX)
             .setParent(noteId).setSource(paraJson).setParent(noteId);
