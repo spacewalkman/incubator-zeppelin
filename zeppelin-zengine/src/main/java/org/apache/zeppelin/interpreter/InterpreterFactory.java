@@ -1014,11 +1014,12 @@ public class InterpreterFactory implements InterpreterGroupFactory {
     List<String> interpreterSettingIds = getNoteInterpreterSettingBinding(noteId);
     LinkedList<InterpreterSetting> settings = new LinkedList<>();
     synchronized (interpreterSettingIds) {
-      for (String id : interpreterSettingIds) {
-        InterpreterSetting setting = get(id);
+      Iterator<String> iter = interpreterSettingIds.iterator();
+      while (iter.hasNext()) {
+        InterpreterSetting setting = get(iter.next());
         if (setting == null) {
           // interpreter setting is removed from factory. remove id from here, too
-          interpreterSettingIds.remove(id);
+          iter.remove();
         } else {
           settings.add(setting);
         }
