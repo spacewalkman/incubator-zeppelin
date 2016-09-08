@@ -65,10 +65,6 @@ public class GsonUtil {
     return getGson().fromJson(json, clazz);
   }
 
-  public static <T> T fromZeppelinJson(String json, Class<T> clazz) {
-    return getZeppelinGson().fromJson(json, clazz);
-  }
-
   /**
    * skip note's paragraphs ExclusionStrategy
    */
