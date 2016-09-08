@@ -129,7 +129,7 @@ public class Notebook implements NoteEventListener {
     CronJob.notebook = this;
 
     loadAllNotes();
-    if (this.notebookIndex != null) {
+    if (this.notebookIndex != null && this.notebookIndex != notebookRepo) {//不是同一个，例如用ElasticSearch同时实现了NotebookRepo和SearchService接口
       long start = System.nanoTime();
       logger.info("Notebook indexing started...");
       notebookIndex.addIndexDocs(notes.values());
