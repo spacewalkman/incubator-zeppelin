@@ -157,7 +157,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     String json = IOUtils.toString(ins, conf.getString(ConfVars.ZEPPELIN_ENCODING));
     ins.close();
 
-    Note note = GsonUtil.fromZeppelinJson(json, Note.class);
+    Note note = GsonUtil.fromJson(json, Note.class);
 //    note.setReplLoader(replLoader);
 //    note.jobListenerFactory = jobListenerFactory;
 
