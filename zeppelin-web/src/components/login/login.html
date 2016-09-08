@@ -46,7 +46,13 @@ limitations under the License.
                  ng-keypress="loginParams.errorText = ''"
                  ng-model="loginParams.group"/>
         </div>
-
+        <div class="form-group">
+          <label for="projectId">projectId</label>
+          <input placeholder="projectId" type="text" class="form-control" id="projectId"
+                 ng-enter="login()"
+                 ng-keypress="loginParams.errorText = ''"
+                 ng-model="loginParams.projectId"/>
+        </div>
       </div>
       <div class="modal-footer">
         <div>
