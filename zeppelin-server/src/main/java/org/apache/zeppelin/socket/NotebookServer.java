@@ -104,15 +104,14 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   public boolean checkOrigin(HttpServletRequest request, String origin) {
-    return true;
-//    try {
-//      return SecurityUtils.isValidOrigin(origin, ZeppelinConfiguration.create());
-//    } catch (UnknownHostException e) {
-//      LOG.error(e.toString(), e);
-//    } catch (URISyntaxException e) {
-//      LOG.error(e.toString(), e);
-//    }
-//    return false;
+    try {
+      return org.apache.zeppelin.utils.SecurityUtils.isValidOrigin(origin, ZeppelinConfiguration.create());
+    } catch (UnknownHostException e) {
+      LOG.error(e.toString(), e);
+    } catch (URISyntaxException e) {
+      LOG.error(e.toString(), e);
+    }
+    return false;
   }
 
   public NotebookSocket doWebSocketConnect(HttpServletRequest req, String protocol) {
@@ -124,19 +123,6 @@ public class NotebookServer extends WebSocketServlet implements
     LOG.info("New connection from {} : {}", conn.getRequest().getRemoteAddr(),
             conn.getRequest().getRemotePort());
     connectedSockets.add(conn);
-  }
-
-  /**
-   * build new shiro subject
-   *
-   * @param principal current ws principal
-   * @param realmName realName used to authentication & authorization
-   * @return subject builded
-   */
-  //TODO:放在这里合适不?
-  public static Subject buildNewSubject(String principal, String realmName) {
-    PrincipalCollection principals = new SimplePrincipalCollection(principal, realmName);
-    return new Subject.Builder().principals(principals).buildSubject();
   }
 
   @Override
@@ -423,9 +409,10 @@ public class NotebookServer extends WebSocketServlet implements
 
   public void unicastNotebookJobInfo(NotebookSocket conn, Message fromMessage) throws IOException {
     addConnectionToNote(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(), conn);
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getSubject());
+    AuthenticationInfo subject = new AuthenticationInfo(fromMessage.principal);
     List<Map<String, Object>> notebookJobs = notebook()
       .getJobListByUnixTime(false, 0, subject);
+
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
