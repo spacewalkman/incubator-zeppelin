@@ -18,8 +18,6 @@
 package org.apache.zeppelin.notebook;
 
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -59,14 +57,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.lang.String.format;
-
-import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
  * Binded interpreters for a note
@@ -88,7 +78,6 @@ public class Note implements Serializable, ParagraphJobListener {
   private String name = "";
   private String id;
 
-  private AtomicReference<String> lastReplName = new AtomicReference<>(EMPTY);
   private transient ZeppelinConfiguration conf = ZeppelinConfiguration.create();
 
   private String createdBy;// used for filter notes & permission check
@@ -143,13 +132,7 @@ public class Note implements Serializable, ParagraphJobListener {
 
   private String getDefaultInterpreterName() {
     InterpreterSetting setting = factory.getDefaultInterpreterSetting(getId());
-    return null != setting ? setting.getName() : EMPTY;
-  }
-
-  void putDefaultReplName() {
-    String defaultInterpreterName = getDefaultInterpreterName();
-    logger.info("defaultInterpreterName is '{}'", defaultInterpreterName);
-    lastReplName.set(defaultInterpreterName);
+    return null != setting ? setting.getName() : StringUtils.EMPTY;
   }
 
   public String getId() {
@@ -192,7 +175,7 @@ public class Note implements Serializable, ParagraphJobListener {
   public void initializeJobListenerForParagraph(Paragraph paragraph) {
     final Note paragraphNote = paragraph.getNote();
     if (paragraphNote.getId().equals(this.getId())) {
-      throw new IllegalArgumentException(format("The paragraph %s from note %s " +
+      throw new IllegalArgumentException(String.format("The paragraph %s from note %s " +
               "does not belong to note %s", paragraph.getId(), paragraphNote.getId(),
               this.getId()));
     }
@@ -206,7 +189,7 @@ public class Note implements Serializable, ParagraphJobListener {
     }
 
     if (!foundParagraph) {
-      throw new IllegalArgumentException(format("Cannot find paragraph %s " +
+      throw new IllegalArgumentException(String.format("Cannot find paragraph %s " +
                       "from note %s", paragraph.getId(), paragraphNote.getId()));
     }
   }
@@ -241,7 +224,7 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public Paragraph addParagraph() {
     Paragraph p = new Paragraph(this, this, factory);
-    addLastReplNameIfEmptyText(p);
+    setParagraphMagic(p, paragraphs.size());
     synchronized (paragraphs) {
       paragraphs.add(p);
     }
@@ -297,7 +280,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public Paragraph insertParagraph(int index) {
     Paragraph p = new Paragraph(this, this, factory);
-    addLastReplNameIfEmptyText(p);
+    setParagraphMagic(p, index);
     synchronized (paragraphs) {
       paragraphs.add(index, p);
     }
@@ -308,33 +291,13 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   /**
-   * TODO: id() format
+   * used by ElasticSearchRepo when deserialized from index
    */
   public Paragraph addParagraph(Paragraph paragraph) {
     synchronized (paragraphs) {
       paragraphs.add(paragraph);
     }
     return paragraph;
-  }
-
-  /**
-   * Add Last Repl name If Paragraph has empty text
-   *
-   * @param p Paragraph
-   */
-  private void addLastReplNameIfEmptyText(Paragraph p) {
-    String replName = lastReplName.get();
-    if (isEmpty(p.getText()) && isNotEmpty(replName) && isBinding(replName)) {
-      p.setText(getInterpreterName(replName) + " ");
-    }
-  }
-
-  public boolean isBinding(String replName) {
-    return factory.getInterpreter(this.getId(), replName) != null;
-  }
-
-  private String getInterpreterName(String replName) {
-    return isBlank(replName) ? EMPTY : "%" + replName;
   }
 
   /**
@@ -485,7 +448,7 @@ public class Note implements Serializable, ParagraphJobListener {
     List<Map<String, String>> paragraphsInfo = new LinkedList<>();
     synchronized (paragraphs) {
       for (Paragraph p : paragraphs) {
-        Map<String, String> info = populatePragraphInfo(p);
+        Map<String, String> info = populateParagraphInfo(p);
         paragraphsInfo.add(info);
       }
     }
@@ -496,14 +459,14 @@ public class Note implements Serializable, ParagraphJobListener {
     synchronized (paragraphs) {
       for (Paragraph p : paragraphs) {
         if (p.getId().equals(paragraphId)) {
-          return populatePragraphInfo(p);
+          return populateParagraphInfo(p);
         }
       }
       return new HashMap<>();
     }
   }
 
-  private Map<String, String> populatePragraphInfo(Paragraph p) {
+  private Map<String, String> populateParagraphInfo(Paragraph p) {
     Map<String, String> info = new HashMap<>();
     info.put("id", p.getId());
     info.put("status", p.getStatus().toString());
@@ -519,15 +482,26 @@ public class Note implements Serializable, ParagraphJobListener {
     return info;
   }
 
+  private void setParagraphMagic(Paragraph p, int index) {
+    if (paragraphs.size() > 0) {
+      String magic;
+      if (index == 0) {
+        magic = paragraphs.get(0).getMagic();
+      } else {
+        magic = paragraphs.get(index - 1).getMagic();
+      }
+      if (StringUtils.isNotEmpty(magic)) {
+        p.setText(magic + "\n");
+      }
+    }
+  }
+
   /**
    * Run all paragraphs sequentially.
    */
   public void runAll() {
     String cronExecutingUser = (String) getConfig().get("cronExecutingUser");
     synchronized (paragraphs) {
-      if (!paragraphs.isEmpty()) {
-        setLastReplName(paragraphs.get(paragraphs.size() - 1));
-      }
       for (Paragraph p : paragraphs) {
         if (!p.isEnabled()) {
           continue;
@@ -704,16 +678,6 @@ public class Note implements Serializable, ParagraphJobListener {
     return maxUpdated;
   }
 
-  private void setLastReplName(Paragraph lastParagraphStarted) {
-    if (isNotEmpty(lastParagraphStarted.getRequiredReplName())) {
-      lastReplName.set(lastParagraphStarted.getRequiredReplName());
-    }
-  }
-
-  public void setLastReplName(String paragraphId) {
-    setLastReplName(getParagraph(paragraphId));
-  }
-
   /**
    * Persist this note with maximum delay.
    */
@@ -776,14 +740,6 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public void setInfo(Map<String, Object> info) {
     this.info = info;
-  }
-
-  String getLastReplName() {
-    return lastReplName.get();
-  }
-
-  public String getLastInterpreterName() {
-    return getInterpreterName(getLastReplName());
   }
 
   @Override

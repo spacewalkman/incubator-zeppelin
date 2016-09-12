@@ -17,11 +17,9 @@
 
 package org.apache.zeppelin.notebook;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.mock.MockInterpreter2;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.search.SearchService;
@@ -81,87 +79,45 @@ public class NoteTest {
   }
 
   @Test
-  public void putDefaultReplNameIfInterpreterSettingAbsent() {
-    when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
-            .thenReturn(null);
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
-    note.putDefaultReplName();
-
-    assertEquals(StringUtils.EMPTY, note.getLastReplName());
-    assertEquals(StringUtils.EMPTY, note.getLastInterpreterName());
-  }
-
-  @Test
-  public void putDefaultReplNameIfInterpreterSettingPresent() {
-    InterpreterSetting interpreterSetting = Mockito.mock(InterpreterSetting.class);
-    when(interpreterSetting.getName()).thenReturn("spark");
-    when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
-            .thenReturn(interpreterSetting);
-
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
-    note.putDefaultReplName();
-
-    assertEquals("spark", note.getLastReplName());
-    assertEquals("%spark", note.getLastInterpreterName());
-  }
-
-  @Test
-  public void addParagraphWithLastReplName() {
-    InterpreterSetting interpreterSetting = Mockito.mock(InterpreterSetting.class);
-    when(interpreterSetting.getName()).thenReturn("spark");
-    when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
-            .thenReturn(interpreterSetting);
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
-    note.putDefaultReplName(); //set lastReplName
-    when(interpreterFactory.getInterpreter(note.getId(), "spark")).thenReturn(new MockInterpreter2(null));
-
+  public void addParagraphWithEmptyReplNameTest() {
+      Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
     Paragraph p = note.addParagraph();
-
-    assertEquals("%spark ", p.getText());
+    assertNull(p.getText());
   }
 
   @Test
-  public void insertParagraphWithLastReplName() {
-    InterpreterSetting interpreterSetting = Mockito.mock(InterpreterSetting.class);
-    when(interpreterSetting.getName()).thenReturn("spark");
-    when(interpreterFactory.getDefaultInterpreterSetting(anyString()))
-            .thenReturn(interpreterSetting);
+  public void addParagraphWithLastReplNameTest() {
+    when(interpreterFactory.getInterpreter(anyString(), eq("spark"))).thenReturn(interpreter);
 
-    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener);
-    note.putDefaultReplName(); //set lastReplName
-    when(interpreterFactory.getInterpreter(note.getId(), "spark")).thenReturn(new MockInterpreter2(null));
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials,"anonymous", noteEventListener);
+    Paragraph p1 = note.addParagraph();
+    p1.setText("%spark ");
+    Paragraph p2 = note.addParagraph();
 
-    Paragraph p = note.insertParagraph(note.getParagraphs().size());
-
-    assertEquals("%spark ", p.getText());
+    assertEquals("%spark\n", p2.getText());
   }
 
   @Test
-  public void setLastReplName() {
-    String paragraphId = "HelloWorld";
-    Note note = Mockito.spy(new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous", noteEventListener));
-    Paragraph mockParagraph = Mockito.mock(Paragraph.class);
-    when(note.getParagraph(paragraphId)).thenReturn(mockParagraph);
-    when(mockParagraph.getRequiredReplName()).thenReturn("spark");
+  public void insertParagraphWithLastReplNameTest() {
+    when(interpreterFactory.getInterpreter(anyString(), eq("spark"))).thenReturn(interpreter);
 
-    note.setLastReplName(paragraphId);
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials,"anonymous", noteEventListener);
+    Paragraph p1 = note.addParagraph();
+    p1.setText("%spark ");
+    Paragraph p2 = note.insertParagraph(note.getParagraphs().size());
 
-    assertEquals("spark", note.getLastReplName());
+    assertEquals("%spark\n", p2.getText());
   }
 
   @Test
-  public void isBindingTest() {
-    Note note = spy(new Note());
-    when(note.getId()).thenReturn("test1");
-    InterpreterFactory mockInterpreterFactory = mock(InterpreterFactory.class);
-    note.setInterpreterFactory(mockInterpreterFactory);
+  public void insertParagraphWithInvalidReplNameTest() {
+    when(interpreterFactory.getInterpreter(anyString(), eq("invalid"))).thenReturn(null);
 
-    //when is not binding
-    assertFalse(note.isBinding("spark"));
+    Note note = new Note(repo, interpreterFactory, jobListenerFactory, index, credentials, "anonymous",noteEventListener);
+    Paragraph p1 = note.addParagraph();
+    p1.setText("%invalid ");
+    Paragraph p2 = note.insertParagraph(note.getParagraphs().size());
 
-    //when is binding
-    when(mockInterpreterFactory.getInterpreter("test1", "spark")).
-        thenReturn(new MockInterpreter2(null));
-    assertTrue(note.isBinding("spark"));
+    assertNull(p2.getText());
   }
 }
