@@ -20,8 +20,6 @@ package org.apache.zeppelin.notebook;
 import com.google.gson.Gson;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
