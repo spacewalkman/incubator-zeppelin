@@ -810,7 +810,7 @@ public class NotebookRestApi {
     LOG.info("Get updated notebook jobs lastUpdateTime {}", lastUpdateUnixTime);
 
     List<Map<String, Object>> notebookJobs;
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getSubject());
+    AuthenticationInfo subject = new AuthenticationInfo((String)(SecurityUtils.getSubject().getPrincipal()));
     notebookJobs = notebook.getJobListByUnixTime(false, lastUpdateUnixTime, subject);
     Map<String, Object> response = new HashMap<>();
 
