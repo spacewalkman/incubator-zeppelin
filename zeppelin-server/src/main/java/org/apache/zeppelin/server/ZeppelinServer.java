@@ -28,6 +28,7 @@ import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
 import org.apache.zeppelin.notebook.ShiroNotebookAuthorization;
+import org.apache.zeppelin.notebook.repo.ElasticSearchRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.rest.ConfigurationsRestApi;
@@ -101,8 +102,20 @@ public class ZeppelinServer extends Application {
     this.schedulerFactory = new SchedulerFactory();
     this.replFactory = new InterpreterFactory(conf, notebookWsServer,
             notebookWsServer, heliumApplicationFactory, depResolver);
+    //NotebookRepo noteRepo = new ElasticSearchRepo(conf);
+    //this.notebookRepo = noteRepo;
+    //this.notebookIndex = (SearchService) noteRepo;//new LuceneSearch();
     this.notebookRepo = new NotebookRepoSync(conf);
-    this.notebookIndex = new LuceneSearch();
+    if (notebookRepo instanceof NotebookRepoSync) {
+      NotebookRepo primaryRepo = ((NotebookRepoSync) notebookRepo).getPrimaryRepo();
+      if (primaryRepo instanceof SearchService) {
+        this.notebookIndex = (SearchService) primaryRepo;
+      }
+    }
+
+    if (this.notebookIndex == null) {
+      this.notebookIndex = new LuceneSearch();
+    }
 
     this.notebookAuthorization = new ShiroNotebookAuthorization(conf); //NotebookAuthorization
     this.credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
