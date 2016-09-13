@@ -127,7 +127,7 @@ public class Note implements Serializable, ParagraphJobListener {
     this.noteEventListener = noteEventListener;
     this.credentials = credentials;
     generateId();
-    this.createdBy = (String) (subject.getPrincipal());
+    this.createdBy = (subject == null ? null : (String) (subject.getPrincipal()));
     this.group = group;
   }
 
@@ -181,7 +181,7 @@ public class Note implements Serializable, ParagraphJobListener {
     final Note paragraphNote = paragraph.getNote();
     if (paragraphNote.getId().equals(this.getId())) {
       throw new IllegalArgumentException(String.format("The paragraph %s from note %s " +
-              "does not belong to note %s", paragraph.getId(), paragraphNote.getId(),
+                      "does not belong to note %s", paragraph.getId(), paragraphNote.getId(),
               this.getId()));
     }
 
@@ -195,7 +195,7 @@ public class Note implements Serializable, ParagraphJobListener {
 
     if (!foundParagraph) {
       throw new IllegalArgumentException(String.format("Cannot find paragraph %s " +
-                      "from note %s", paragraph.getId(), paragraphNote.getId()));
+              "from note %s", paragraph.getId(), paragraphNote.getId()));
     }
   }
 
@@ -231,7 +231,6 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, paragraphs.size());
     synchronized (paragraphs) {
-      p.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(p);
     }
     if (noteEventListener != null) {
@@ -288,7 +287,6 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, index);
     synchronized (paragraphs) {
-      p.setParaIndex(index);//记录paragraph的index
       paragraphs.add(index, p);
     }
     if (noteEventListener != null) {
@@ -302,7 +300,6 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public Paragraph addParagraph(Paragraph paragraph) {
     synchronized (paragraphs) {
-      paragraph.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(paragraph);
     }
     return paragraph;
@@ -322,7 +319,7 @@ public class Note implements Serializable, ParagraphJobListener {
       while (i.hasNext()) {
         Paragraph p = i.next();
         if (p.getId().equals(paragraphId)) {
-          index.deleteIndexDoc(this, p);
+          //index.deleteIndexDoc(this, p); 所有removeParagraph的调用者调用该方法之后均调用了note.persist(Subject）,故这里不再重复调用
           i.remove();
 
           if (noteEventListener != null) {
@@ -380,7 +377,7 @@ public class Note implements Serializable, ParagraphJobListener {
       if (index < 0 || index >= paragraphs.size()) {
         if (throwWhenIndexIsOutOfBound) {
           throw new IndexOutOfBoundsException(
-              "paragraph size is " + paragraphs.size() + " , index is " + index);
+                  "paragraph size is " + paragraphs.size() + " , index is " + index);
         } else {
           return;
         }
@@ -538,10 +535,10 @@ public class Note implements Serializable, ParagraphJobListener {
     Interpreter intp = factory.getInterpreter(getId(), requiredReplName);
     if (intp == null) {
       String intpExceptionMsg =
-          p.getJobName() + "'s Interpreter " + requiredReplName + " not found";
+              p.getJobName() + "'s Interpreter " + requiredReplName + " not found";
       InterpreterException intpException = new InterpreterException(intpExceptionMsg);
       InterpreterResult intpResult =
-          new InterpreterResult(InterpreterResult.Code.ERROR, intpException.getMessage());
+              new InterpreterResult(InterpreterResult.Code.ERROR, intpException.getMessage());
       p.setReturn(intpResult, intpException);
       p.setStatus(Job.Status.ERROR);
       throw intpException;
@@ -808,7 +805,6 @@ public class Note implements Serializable, ParagraphJobListener {
   public void setLastUpdated(Date lastUpdated) {
     this.lastUpdated = lastUpdated;
   }
-
 
   @Override
   public void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output) {
