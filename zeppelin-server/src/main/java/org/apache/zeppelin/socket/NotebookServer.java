@@ -518,7 +518,10 @@ public class NotebookServer extends WebSocketServlet implements
 
     if (needsReload) {
       try {
+        long startTime = System.currentTimeMillis();
         notebook.reloadAllNotes(subject);
+        long endTime = System.currentTimeMillis();
+        LOG.error("查询所有的note列表时间:{} 秒", (endTime - startTime) / 1000.0);
       } catch (IOException e) {
         LOG.error("Fail to reload notes from repository", e);
       }
