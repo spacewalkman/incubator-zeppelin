@@ -211,7 +211,8 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
     //find children(paragraphs) by parent(note) ,maintain paragraphs order
     HasParentQueryBuilder hasParentQueryBuilder = QueryBuilders.hasParentQuery(noteTypeName, QueryBuilders.prefixQuery(ID_FIELD, noteId));
-    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder).addSort(PARAGRAPH_INDEX_FIELD, SortOrder.ASC)
+    SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(paragraphTypeName).setQuery(hasParentQueryBuilder)
+            .addSort(PARAGRAPH_INDEX_FIELD, SortOrder.ASC).addSort(ID_FIELD, SortOrder.ASC)  //第一排序是paraIndex，第二排序是paragraph的id
             .setScroll(new TimeValue(defaultScrollTimeOut)).setSize(defatlScrollMaxPerShard).execute().actionGet();
 
     //Scroll until no hits are returned
@@ -265,6 +266,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
       for (int i = 0; i < size; i++) {
         Paragraph para = paras.get(i);
+        para.setParaIndex(i);//保持paragraph之间的相对顺序
         String paraJson = GsonUtil.toJson(para);
         String esParagraphId = formatId(note.getId(), i + "");
 

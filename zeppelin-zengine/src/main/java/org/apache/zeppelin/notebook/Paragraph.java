@@ -74,8 +74,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   String title;
   String text;
   String user;
-  private Integer paraIndex;//此paragraph的下标，用来ES排序
   Date dateUpdated;
+  private int paraIndex;//paragraph下标位置，用来在ES中获取note的paragraphs列表时保持顺序
   private Map<String, Object> config; // paragraph configs like isOpen, colWidth, etc
   public final GUI settings;          // form and parameter settings
 
@@ -493,11 +493,11 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return interpreterContext;
   }
 
-  public Integer getParaIndex() {
+  public int getParaIndex() {
     return paraIndex;
   }
 
-  public void setParaIndex(Integer paraIndex) {
+  public void setParaIndex(int paraIndex) {
     this.paraIndex = paraIndex;
   }
 
