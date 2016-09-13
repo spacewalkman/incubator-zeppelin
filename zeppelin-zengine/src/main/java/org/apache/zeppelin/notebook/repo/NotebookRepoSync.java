@@ -173,6 +173,7 @@ public class NotebookRepoSync implements NotebookRepo {
     LOG.info("Sync started");
     NotebookRepo srcRepo = getRepo(sourceRepoIndex);
     NotebookRepo dstRepo = getRepo(destRepoIndex);
+
     List<NoteInfo> srcNotes = srcRepo.list(null);
     List<NoteInfo> dstNotes = dstRepo.list(null);
 
@@ -257,6 +258,10 @@ public class NotebookRepoSync implements NotebookRepo {
     NoteInfo dnote;
     Date sdate, ddate;
     for (NoteInfo snote : sourceNotes) {
+      if (snote.getId() == null) {
+        continue;
+      }
+
       dnote = containsID(destNotes, snote.getId());
       if (dnote != null) {
         /* note exists in source and destination storage systems */
@@ -308,6 +313,10 @@ public class NotebookRepoSync implements NotebookRepo {
 
   private NoteInfo containsID(List<NoteInfo> notes, String id) {
     for (NoteInfo note : notes) {
+      if (note.getId() == null) {
+        continue;
+      }
+
       if (note.getId().equals(id)) {
         return note;
       }
