@@ -231,6 +231,7 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, paragraphs.size());
     synchronized (paragraphs) {
+      p.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(p);
     }
     if (noteEventListener != null) {
@@ -287,6 +288,7 @@ public class Note implements Serializable, ParagraphJobListener {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, index);
     synchronized (paragraphs) {
+      p.setParaIndex(index);//记录paragraph的index
       paragraphs.add(index, p);
     }
     if (noteEventListener != null) {
@@ -300,6 +302,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public Paragraph addParagraph(Paragraph paragraph) {
     synchronized (paragraphs) {
+      paragraph.setParaIndex(paragraphs.size());//记录paragraph的index
       paragraphs.add(paragraph);
     }
     return paragraph;
