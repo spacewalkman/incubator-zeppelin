@@ -20,9 +20,6 @@ package org.apache.zeppelin.notebook;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- */
 public class NoteInfo {
   String id;
   String name;
@@ -63,6 +60,15 @@ public class NoteInfo {
 
   public void setConfig(Map<String, Object> config) {
     this.config = config;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("NoteInfo:[");
+    sb.append("id=" + id == null ? "null" : id+",");
+    sb.append("name=" + name == null ? "null" : name+",");
+    return sb.toString();
   }
 
 }

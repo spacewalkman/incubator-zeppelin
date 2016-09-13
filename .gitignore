@@ -5,6 +5,8 @@
 *.war
 *.ear
 
+**/*.log
+
 # interpreter
 /interpreter/
 
