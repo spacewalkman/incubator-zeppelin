@@ -158,6 +158,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   // checkpoint/commit notebook
   $scope.checkpointNotebook = function(commitMessage) {
+    $scope.saveNote();//checkpoint之前先save一遍，使得ES和Git repo同步
     BootstrapDialog.confirm({
       closable: true,
       title: '',
@@ -171,6 +172,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.getElementById('note.checkpoint.message').value = '';
   };
 
+  //这里显示revision历史
   $scope.$on('listRevisionHistory', function(event, data) {
     console.log('We got the revisions %o', data);
     $scope.noteRevisions = data.revisionList;
