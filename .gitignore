@@ -6,6 +6,7 @@
 *.ear
 
 **/*.log
+**/*.log.*
 
 # interpreter
 /interpreter/
