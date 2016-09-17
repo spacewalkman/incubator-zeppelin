@@ -471,14 +471,22 @@ public class NotebookServer extends WebSocketServlet implements
    * refresh notes from repo,and apply filtered by userAndRoles
    */
   private List<Map<String, String>> refreshNotesAndFilter(boolean needsReload, AuthenticationInfo subject) {
-    Notebook notebook = refreshNotes(needsReload, subject);
-    List<Note> notes = notebook.getAllNotes();
+
+    Notebook notebook = notebook();
     ZeppelinConfiguration conf = notebook.getConf();
     String homescreenNotebookId = conf.getString(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
     boolean hideHomeScreenNotebookFromList = conf
             .getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN_HIDE);
     NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
 
+    if (needsReload) {
+      try {
+        notebook.reloadAllNotes(subject);
+      } catch (IOException e) {
+        LOG.error("Fail to reload notes from repository", e);
+      }
+    }
+    List<Note> notes = notebook.getAllNotes(subject);
     List<Map<String, String>> notesInfo = new LinkedList<>();
     for (Note note : notes) {
       addCreatorToOwners(notebookAuthorization, note);
@@ -837,7 +845,10 @@ public class NotebookServer extends WebSocketServlet implements
     if (fromMessage != null) {
       String noteName = (String) ((Map) fromMessage.get("notebook")).get("name");
       String noteJson = gson.toJson(fromMessage.get("notebook"));
-      AuthenticationInfo subject = new AuthenticationInfo(fromMessage.principal);
+      AuthenticationInfo subject = null;
+      if (fromMessage.principal != null) {
+        subject = new AuthenticationInfo(fromMessage.principal);
+      }
       note = notebook.importNote(noteJson, noteName, subject);
       note.persist(subject);
       broadcastNote(note);

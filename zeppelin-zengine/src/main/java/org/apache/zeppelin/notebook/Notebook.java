@@ -17,22 +17,12 @@
 
 package org.apache.zeppelin.notebook;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
-import org.apache.commons.codec.binary.StringUtils;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.CronTrigger;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
-import org.quartz.SchedulerException;
-import org.quartz.TriggerBuilder;
-import org.quartz.impl.StdSchedulerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -71,10 +61,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -171,10 +163,15 @@ public class Notebook implements NoteEventListener {
       bindInterpretersToNote(note.getId(), interpreterIds);
     }
 
-    note.setLastUpdated(new Date());
-    //notebookIndex.addIndexDoc(note);
-    //note.persist();
+    if (subject != null && !"anonymous".equals(subject.getUser())) {
+      Set<String> owners = new HashSet<String>();
+      owners.add(subject.getUser());
+      notebookAuthorization.setOwners(note.getId(), owners);
+    }
 
+    note.setLastUpdated(new Date());
+//    notebookIndex.addIndexDoc(note);
+//    note.persist(subject);
     fireNoteCreateEvent(note);
     return note;
   }
@@ -486,7 +483,7 @@ public class Notebook implements NoteEventListener {
     if (notebookRepo instanceof NotebookRepoSync) {
       NotebookRepoSync mainRepo = (NotebookRepoSync) notebookRepo;
       if (mainRepo.getRepoCount() > 1) {
-        mainRepo.sync();
+        mainRepo.sync(subject);
       }
     }
 
@@ -541,6 +538,35 @@ public class Notebook implements NoteEventListener {
         }
       });
       return noteList;
+    }
+  }
+
+  public List<Note> getAllNotes(AuthenticationInfo subject) {
+    final Set<String> entities = Sets.newHashSet();
+    if (subject != null) {
+      entities.add(subject.getUser());
+    }
+
+    synchronized (notes) {
+      return FluentIterable.from(notes.values()).filter(new Predicate<Note>() {
+        @Override
+        public boolean apply(Note input) {
+          return input != null && notebookAuthorization.isReader(input.getId(), entities);
+        }
+      }).toSortedList(new Comparator<Note>() {
+        @Override
+        public int compare(Note note1, Note note2) {
+          String name1 = note1.getId();
+          if (note1.getName() != null) {
+            name1 = note1.getName();
+          }
+          String name2 = note2.getId();
+          if (note2.getName() != null) {
+            name2 = note2.getName();
+          }
+          return name1.compareTo(name2);
+        }
+      });
     }
   }
 
