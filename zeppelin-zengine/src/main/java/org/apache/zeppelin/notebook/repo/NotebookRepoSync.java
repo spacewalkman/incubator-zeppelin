@@ -68,11 +68,21 @@ public class NotebookRepoSync implements NotebookRepo {
               "first {} will be used", storageClassNames.length, allStorageClassNames, getMaxRepoNum());
     }
 
+    Class<?> lastNotebookStorageClass = null;
     for (int i = 0; i < Math.min(storageClassNames.length, getMaxRepoNum()); i++) {
       @SuppressWarnings("static-access")
       Class<?> notebookStorageClass;
       try {
         notebookStorageClass = getClass().forName(storageClassNames[i].trim());
+        //避免2个repo相同，或者是父子关系，避免save方法调用2次
+        if (lastNotebookStorageClass != null) {
+          if (lastNotebookStorageClass.isAssignableFrom(notebookStorageClass) || notebookStorageClass.isAssignableFrom(lastNotebookStorageClass)) {//如果class相同，或者一个是另一个的subclass
+            continue;
+          }
+        } else {
+          lastNotebookStorageClass = notebookStorageClass;
+        }
+
         Constructor<?> constructor = notebookStorageClass.getConstructor(
                 ZeppelinConfiguration.class);
         repos.add((NotebookRepo) constructor.newInstance(conf));
@@ -182,12 +192,16 @@ public class NotebookRepoSync implements NotebookRepo {
     List<String> pullNoteIDs = noteIDs.get(pullKey);
     List<String> delDstNoteIDs = noteIDs.get(delDstKey);
 
+    String[] pushNoteIDsArr = new String[pushNoteIDs.size()];
+    String[] pullNoteIDsArr = new String[pullNoteIDs.size()];
+    String[] delDstNoteIDsArr = new String[delDstNoteIDs.size()];
+
     if (!pushNoteIDs.isEmpty()) {
       LOG.info("Notes with the following IDs will be pushed");
       for (String id : pushNoteIDs) {
         LOG.info("ID : " + id);
       }
-      pushNotes(pushNoteIDs, srcRepo, dstRepo);
+      pushNotes(srcRepo, dstRepo, pushNoteIDs.toArray(pushNoteIDsArr));
     } else {
       LOG.info("Nothing to push");
     }
@@ -197,7 +211,7 @@ public class NotebookRepoSync implements NotebookRepo {
       for (String id : pullNoteIDs) {
         LOG.info("ID : " + id);
       }
-      pushNotes(pullNoteIDs, dstRepo, srcRepo);
+      pushNotes(dstRepo, srcRepo, pullNoteIDs.toArray(pullNoteIDsArr));
     } else {
       LOG.info("Nothing to pull");
     }
@@ -207,7 +221,7 @@ public class NotebookRepoSync implements NotebookRepo {
       for (String id : delDstNoteIDs) {
         LOG.info("ID : " + id);
       }
-      deleteNotes(delDstNoteIDs, dstRepo);
+      deleteNotes(dstRepo, delDstNoteIDs.toArray(delDstNoteIDsArr));
     } else {
       LOG.info("Nothing to delete from dest");
     }
@@ -219,14 +233,25 @@ public class NotebookRepoSync implements NotebookRepo {
     sync(0, 1);
   }
 
-  private void pushNotes(List<String> ids, NotebookRepo localRepo,
-                         NotebookRepo remoteRepo) throws IOException {
+  /**
+   * 同步指定的note到backup repo，用在将ES指定为primary repo，vfs为secondary repo，并且想利用git
+   * revision功能时需要在note更新时触发从ES同步到VFS，这样基于文件系统的git diff才能起作用
+   */
+  public void sync(String... ids) throws IOException {
+    if (getRepoCount() > 1) {
+      pushNotes(this.getRepo(0), this.getRepo(1), ids);
+    }
+  }
+
+  //采用varargs来在ES到VFS同步修改过的note时复用该方法
+  private void pushNotes(NotebookRepo localRepo,
+                         NotebookRepo remoteRepo, String... ids) throws IOException {
     for (String id : ids) {
       remoteRepo.save(localRepo.get(id, null), null);
     }
   }
 
-  private void deleteNotes(List<String> ids, NotebookRepo repo) throws IOException {
+  private void deleteNotes(NotebookRepo repo, String... ids) throws IOException {
     for (String id : ids) {
       repo.remove(id, null);
     }
@@ -240,7 +265,7 @@ public class NotebookRepoSync implements NotebookRepo {
     return maxRepoNum;
   }
 
-  NotebookRepo getRepo(int repoIndex) throws IOException {
+  public NotebookRepo getRepo(int repoIndex) throws IOException {
     if (repoIndex < 0 || repoIndex >= getRepoCount()) {
       throw new IOException("Requested storage index " + repoIndex
               + " isn't initialized," + " repository count is " + getRepoCount());
@@ -366,11 +391,13 @@ public class NotebookRepoSync implements NotebookRepo {
     int repoBound = Math.min(repoCount, getMaxRepoNum());
     int errorCount = 0;
     String errorMessage = "";
-    List<Revision> allRepoCheckpoints = new ArrayList<Revision>();
-    Revision rev = null;
+    List<Revision> allRepoCheckpoints = new ArrayList<Revision>(repoBound);
     for (int i = 0; i < repoBound; i++) {
       try {
-        allRepoCheckpoints.add(getRepo(i).checkpoint(noteId, checkpointMsg, subject));
+        Revision rev = getRepo(i).checkpoint(noteId, checkpointMsg, subject);
+        if (rev != null) {
+          allRepoCheckpoints.add(rev);
+        }
       } catch (IOException e) {
         LOG.warn("Couldn't checkpoint in {} storage with index {} for note {}",
                 getRepo(i).getClass().toString(), i, noteId);
@@ -384,35 +411,55 @@ public class NotebookRepoSync implements NotebookRepo {
       throw new IOException(errorMessage);
     }
     if (allRepoCheckpoints.size() > 0) {
-      rev = allRepoCheckpoints.get(0);
+      Revision returnRev = allRepoCheckpoints.get(0);
       // if failed to checkpoint on first storage, then return result on second
-      if (allRepoCheckpoints.size() > 1 && rev == null) {
-        rev = allRepoCheckpoints.get(1);
+      if (allRepoCheckpoints.size() > 1 && returnRev == null) {
+        return allRepoCheckpoints.get(1);
       }
+      return returnRev;
     }
-    return rev;
+    return null;
   }
 
+  /**
+   * 遍历primary和backup repo返回第一个找到的repo中的note
+   *
+   * @param noteId Id of the Notebook
+   * @param revId  revision of the Notebook
+   */
   @Override
   public Note get(String noteId, String revId, Subject subject) {
-    Note revisionNote = null;
     try {
-      revisionNote = getRepo(0).get(noteId, revId, subject);
+      for (int i = 0; i < getRepoCount(); i++) {
+        Note revisionNote = getRepo(i).get(noteId, revId, subject);
+        if (revisionNote != null) {
+          return revisionNote;
+        }
+      }
     } catch (IOException e) {
       LOG.error("Failed to get revision {} of note {}", revId, noteId, e);
     }
-    return revisionNote;
+    return null;
   }
 
+  /**
+   * 遍历所有的repo，返回2者的合集
+   *
+   * @param noteId id of the Notebook
+   */
   @Override
   public List<Revision> revisionHistory(String noteId, Subject subject) {
-    List<Revision> revisions = Collections.emptyList();
     try {
-      revisions = getRepo(0).revisionHistory(noteId, subject);
+      for (int i = 0; i < getRepoCount(); i++) {
+        List<Revision> returnRevisions = getRepo(i).revisionHistory(noteId, subject);
+        if (returnRevisions != null) {
+          return returnRevisions;
+        }
+      }
     } catch (IOException e) {
       LOG.error("Failed to list revision history", e);
     }
-    return revisions;
+    return Collections.emptyList();
   }
 
   /**
