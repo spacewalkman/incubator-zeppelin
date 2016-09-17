@@ -641,21 +641,22 @@ public class Note implements Serializable, ParagraphJobListener {
 
     this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
 
-    index.updateIndexDoc(this);
-
+    repo.save(this, subject);
     if (repo instanceof NotebookRepoSync) {
       NotebookRepoSync repoSync = (NotebookRepoSync) repo;
-      NotebookRepo noteRepo = repoSync.getPrimaryRepo();
-
-      if (index != noteRepo) {//when use ElasticSearch both as repo and SearchService,don't save twice
-        repo.save(this, subject);
+      boolean indexUpdateAlready = false;
+      for (int i = 0; i < repoSync.getRepoCount(); i++) {
+        if (index == repoSync.getRepo(i)) {//when use ElasticSearch both as repo and SearchService, don't save twice
+          indexUpdateAlready = true;
+          break;
+        }
       }
-    } else {
-      if (repo != index) {
-        repo.save(this, subject);
+
+      //只有当2个repo都不是ES时，才更新index，避免ES重复save
+      if (!indexUpdateAlready) {
+        index.updateIndexDoc(this);
       }
     }
-
   }
 
   /**
