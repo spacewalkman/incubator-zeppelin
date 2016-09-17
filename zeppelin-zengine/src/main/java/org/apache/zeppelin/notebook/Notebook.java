@@ -20,21 +20,8 @@ package org.apache.zeppelin.notebook;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
-import org.apache.commons.codec.binary.StringUtils;
-import org.apache.shiro.SecurityUtils;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.CronTrigger;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
-import org.quartz.SchedulerException;
-import org.quartz.TriggerBuilder;
-import org.quartz.impl.StdSchedulerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -374,20 +361,19 @@ public class Notebook implements NoteEventListener {
     }
   }
 
-
   public Revision checkpointNote(String noteId, String checkpointMessage,
                                  Subject subject) throws IOException {
-    return notebookRepo.checkpoint(noteId, checkpointMessage, subject);
+    return this.notebookRepo.checkpoint(noteId, checkpointMessage, subject);
   }
 
   public List<Revision> listRevisionHistory(String noteId,
                                             Subject subject) {
-    return notebookRepo.revisionHistory(noteId, subject);
+    return this.notebookRepo.revisionHistory(noteId, subject);
   }
 
   public Note getNoteByRevision(String noteId, String revisionId, Subject subject)
           throws IOException {
-    return notebookRepo.get(noteId, revisionId, subject);
+    return this.notebookRepo.get(noteId, revisionId, subject);
   }
 
   @SuppressWarnings("rawtypes")
@@ -665,10 +651,12 @@ public class Notebook implements NoteEventListener {
     notesInfo.add(info);
 
     return notesInfo;
-  };
+  }
+
+  ;
 
   public List<Map<String, Object>> getJobListByUnixTime(boolean needsReload,
-      long lastUpdateServerUnixTime, AuthenticationInfo subject) {
+                                                        long lastUpdateServerUnixTime, AuthenticationInfo subject) {
     final String CRON_TYPE_NOTEBOOK_KEYWORD = "cron";
 
     if (needsReload) {
@@ -757,7 +745,7 @@ public class Notebook implements NoteEventListener {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
+      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");//TODO:这里noteid为null，报错
       Note note = notebook.getNote(noteId);
       note.runAll();
 
