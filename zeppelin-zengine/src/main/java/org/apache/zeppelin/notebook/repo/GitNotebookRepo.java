@@ -20,6 +20,8 @@ package org.apache.zeppelin.notebook.repo;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.NameScope;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -54,6 +57,7 @@ import java.util.List;
  */
 public class GitNotebookRepo extends VFSNotebookRepo {
   private static final Logger LOG = LoggerFactory.getLogger(GitNotebookRepo.class);
+  private static final String GIT_IGNORE = ".gitignore";//默认的.gitignore文件
 
   private String localPath;
   private Git git;
@@ -68,6 +72,27 @@ public class GitNotebookRepo extends VFSNotebookRepo {
       localRepo.create();
     }
     git = new Git(localRepo);
+
+    this.commitDefaultIgnore();
+  }
+
+  /**
+   * 创建默认的.gitignore文件，作为第一次commit，默认ignore *.swp和*.note.json文件
+   */
+  private void commitDefaultIgnore() throws IOException {
+    FileObject gitIgnore = getRootDir().resolveFile(GIT_IGNORE, NameScope.CHILD);
+    if (!gitIgnore.exists()) {
+      gitIgnore.createFile();
+    }
+
+    OutputStream defaultIgnoreOutput = gitIgnore.getContent().getOutputStream();
+
+    String line = System.getProperty("line.separator");
+    defaultIgnoreOutput.write(("*.swp" + line).getBytes("UTF-8"));//其他的ignore项
+    defaultIgnoreOutput.write(("*.note.json" + line).getBytes("UTF-8"));//默认note保存时的临时文件
+
+    defaultIgnoreOutput.close();
+    checkpoint(GIT_IGNORE, "ignore *.swp and *.note.json by default", null);//如果不commit，则每次jgit diff的时候都会显示这次.gitignore在diff中
   }
 
   @Override
@@ -75,28 +100,29 @@ public class GitNotebookRepo extends VFSNotebookRepo {
     super.save(note, subject);
   }
 
-  /* implemented as git add+commit
-   * @param pattern is the noteId
-   * @param commitMessage is a commit message (checkpoint message)
-   * (non-Javadoc)
-   * @see org.apache.zeppelin.notebook.repo.VFSNotebookRepo#checkpoint(String, String)
+  /**
+   * implemented as git add+commit
+   *
+   * @param pattern       is the noteId
+   * @param commitMessage is a commit message (checkpoint message) (non-Javadoc)
+   * @see org.apache.zeppelin.notebook.repo.RevisionService#checkpoint(String, String, Subject)
    */
   @Override
   public Revision checkpoint(String pattern, String commitMessage, Subject subject) {
     Revision revision = null;
     try {
-      List<DiffEntry> gitDiff = git.diff().call();
+      List<DiffEntry> gitDiff = git.diff().setPathFilter(PathFilter.create(pattern)).call();//仅仅显示当前note的diff,避免diff整个notebook目录，gitDiff总不会为空，造成commit没有note内容，仅仅有message
       if (!gitDiff.isEmpty()) {
         LOG.debug("Changes found for pattern '{}': {}", pattern, gitDiff);
         DirCache added = git.add().addFilepattern(pattern).call();
-        LOG.debug("{} changes are about to be commited", added.getEntryCount());
-        RevCommit commit = git.commit().setMessage(commitMessage).call();
+        LOG.debug("{} changes are about to be committed", added.getEntryCount());
+        RevCommit commit = git.commit().setMessage(commitMessage).setAuthor(subject == null ? "" : (String) (subject.getPrincipal()), "").call();//TODO:email要如何获取？
         revision = new Revision(commit.getName(), commit.getShortMessage(), commit.getCommitTime());
       } else {
         LOG.debug("No changes found {}", pattern);
       }
     } catch (GitAPIException e) {
-      LOG.error("Failed to add+comit {} to Git", pattern, e);
+      LOG.error("Failed to add+commit {} to Git", pattern, e);
     }
     return revision;
   }
