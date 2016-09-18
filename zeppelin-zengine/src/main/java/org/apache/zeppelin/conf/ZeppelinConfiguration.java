@@ -557,7 +557,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     // Allows a way to specify a ',' separated list of allowed origins for rest and websockets
     // i.e. http://localhost:8080
     ZEPPELIN_ALLOWED_ORIGINS("zeppelin.server.allowed.origins", "*"),
-    ZEPPELIN_ANONYMOUS_ALLOWED("zeppelin.anonymous.allowed", true),
+    ZEPPELIN_ANONYMOUS_ALLOWED("zeppelin.anonymous.allowed", false),
     ZEPPELIN_CREDENTIALS_PERSIST("zeppelin.credentials.persist", true),
 
     //default page size when searching note
@@ -570,6 +570,14 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_ES_NOTE_TYPE_NAME("zeppelin.es.search.repo.note.index.type", "note"),
     ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph"),
     ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE("zeppelin.es.search.aggregation.size", 10),//max terms aggregation size
+
+
+    ZEPPELIN_NOTE_REPO_JDBC_DRIVER("zeppelin.es.search.repo.jdbc.driver", "com.mysql.jdbc.Driver"),//jdbc notebook repo driver class
+    ZEPPELIN_NOTE_REPO_JDBC_HOST("zeppelin.es.search.repo.jdbc.host", "localhost"),
+    ZEPPELIN_NOTE_REPO_JDBC_PORT("zeppelin.es.search.repo.jdbc.port", 3306),
+    ZEPPELIN_NOTE_REPO_JDBC_DATABASE("zeppelin.es.search.repo.jdbc.database", "zeppelin"),
+    ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.es.search.repo.jdbc.username", "root"),
+    ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.es.search.repo.jdbc.password", "mysql"),
 
     ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000");
 
