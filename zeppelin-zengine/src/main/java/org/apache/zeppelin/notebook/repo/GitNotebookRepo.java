@@ -90,6 +90,8 @@ public class GitNotebookRepo extends VFSNotebookRepo {
     String line = System.getProperty("line.separator");
     defaultIgnoreOutput.write(("*.swp" + line).getBytes("UTF-8"));//其他的ignore项
     defaultIgnoreOutput.write(("*.note.json" + line).getBytes("UTF-8"));//默认note保存时的临时文件
+    defaultIgnoreOutput.write(("#*" + line).getBytes("UTF-8"));//如下是其他2各临时文件
+    defaultIgnoreOutput.write(("~*" + line).getBytes("UTF-8"));
 
     defaultIgnoreOutput.close();
     checkpoint(GIT_IGNORE, "ignore *.swp and *.note.json by default", null);//如果不commit，则每次jgit diff的时候都会显示这次.gitignore在diff中
