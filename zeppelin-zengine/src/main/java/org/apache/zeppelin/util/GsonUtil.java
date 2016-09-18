@@ -5,6 +5,8 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.lang.reflect.Type;
+
 /**
  * gson serialization utils, used by NoteRepo
  */
@@ -13,7 +15,7 @@ public class GsonUtil {
   /**
    * note's Date fields serialization format
    */
-  public static final String DATE_FORMAT = "yyy-MM-dd HH:mm:ss";
+  public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   /**
    * configure gson
@@ -63,6 +65,10 @@ public class GsonUtil {
 
   public static <T> T fromJson(String json, Class<T> clazz) {
     return getGson().fromJson(json, clazz);
+  }
+
+  public static <T> T fromJson(String json, Type type) {
+    return getGson().fromJson(json, type);
   }
 
   /**
