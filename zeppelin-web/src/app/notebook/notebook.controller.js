@@ -158,7 +158,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   // checkpoint/commit notebook
   $scope.checkpointNotebook = function(commitMessage) {
-    $scope.saveNote();//checkpoint之前先save一遍，使得ES和Git repo同步
+    $scope.saveNote();//checkpoint之前先save一遍，使得mysql和Git repo同步
     BootstrapDialog.confirm({
       closable: true,
       title: '',
