@@ -34,7 +34,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       data.ticket = $rootScope.ticket.ticket;
       data.roles = $rootScope.ticket.roles;
       data.group = $rootScope.ticket.group;
-      data.group = $rootScope.ticket.projectId;
+      data.projectId = $rootScope.ticket.projectId;
     } else {
       data.principal = '';
       data.ticket = '';
@@ -42,7 +42,8 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       data.group = '';
       data.projectId = '';
     }
-    console.log('Send >> %o, %o, %o, %o, %o', data.op, data.principal, data.ticket, data.roles, data.group, data.projectId, data);
+    console.log('Send >> %o, %o, %o, %o, %o', data.op, data.principal, data.ticket, data.roles, data.group,
+                data.projectId, data);
     websocketCalls.ws.send(JSON.stringify(data));
   };
 
