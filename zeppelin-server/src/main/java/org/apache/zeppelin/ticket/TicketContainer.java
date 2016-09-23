@@ -70,7 +70,7 @@ public class TicketContainer {
   }
 
   /**
-   * 缓存已经登录的ticket
+   * 缓存已经登录的ticket,记录ticket（uuid）与Shiro Subject之间的映射关系
    */
   public synchronized Subject putSubject(String ticket, Subject subject) {
     if (!subject.isAuthenticated()) {
@@ -78,7 +78,6 @@ public class TicketContainer {
     }
     return subjectCache.put(ticket, subject);
   }
-
 
   /**
    * 获取已经登录的Subject
