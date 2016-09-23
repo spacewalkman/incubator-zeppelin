@@ -35,14 +35,14 @@ public interface IShiroNotebookAuthorization {
   String NOTE_OWNER_PERMISSION_FORMAT = "note:owners:%s";
 
   /**
-   * 某个note可以提交版本历史,占位符为具体的noteId，noteId的schema对应为groupId_noteId
+   * 某个note可以提交版本历史,占位符为具体的noteId，后面2个占位符分别为groupId和noteId
    */
-  String NOTE_COMMITTER_PERMISSION_FORMAT = "note:committer:%s";
+  String NOTE_COMMITTER_PERMISSION_FORMAT = "note:committer:%s:%s";
 
   /**
-   * 向组委会提交notes的权利,该权利由队长独有,队员不具备,占位符是note的id,如果要单独控制per-note的submit权限，可以使用。目前暂时未使用
+   * 向组委会提交notes的权利,该权利由队长独有,队员不具备,后面2个占位符分别为groupId和noteId
    */
-  String NOTE_SUBMIT_PERMISSION_FORMAT = "note:submitters:%s";
+  String NOTE_SUBMIT_PERMISSION_FORMAT = "note:submitters:%s:%s";
 
   /**
    * 队员的权限列表,可以:读写提交版本控制,占位符为形如groupX_*,noteId的schema对应为groupId_noteId
@@ -72,8 +72,9 @@ public interface IShiroNotebookAuthorization {
    */
   boolean isGroupMember(Subject subject, String groupId);
 
+
   /**
-   * 是否是参赛队的队长
+   * 是否是参赛队的队长,队长具有向组委会提交的权限
    *
    * @param groupId 队id
    */
@@ -83,6 +84,16 @@ public interface IShiroNotebookAuthorization {
    * 是否是管理员
    */
   boolean isAdmin(Subject subject);
+
+  /**
+   * 是否能提交note的revision到组委会，只提供note粒度的控制，不提供note's revision级别的控制
+   */
+  boolean isSubmitter(Subject subject, String groupId, String noteId);
+
+  /**
+   * 是否能够提交版本控制
+   */
+  boolean isCommitter(Subject subject, String groupId, String noteId);
 
   /**
    * 添加队员

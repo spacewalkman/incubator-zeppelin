@@ -66,6 +66,32 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
     return subject.hasRole(String.format(GROUP_LEADER_ROLE_NAME_FORMAT, groupId));
   }
 
+  /**
+   * 判断是否能提交一个note的revision到组委会
+   */
+  public boolean isSubmitter(Subject subject, String groupId,
+                             String noteId) {
+    if (!subject.isAuthenticated()) {
+      return false;
+    }
+
+    return subject.isPermitted(String.format(NOTE_SUBMIT_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+
+  /**
+   * 判断是否能为一个note提交版本
+   */
+  @Override
+  public boolean isCommitter(Subject subject, String groupId,
+                             String noteId) { //注意：这里的noteid是无业务含义的，以groupId为前缀，是为了给group_member_XXX这样的role授权的时候（其中XXX为groupId)，采用wildcard note:*:XXX:*来表示，避免逐一列举
+    if (!subject.isAuthenticated()) {
+      return false;
+    }
+
+    return subject.isPermitted(String.format(NOTE_COMMITTER_PERMISSION_FORMAT, groupId, noteId));
+  }
+
   @Override
   public boolean isAdmin(Subject subject) {
     if (!subject.isAuthenticated()) {

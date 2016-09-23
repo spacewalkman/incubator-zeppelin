@@ -8,7 +8,8 @@ import java.util.Set;
 /**
  * Adaptor设计模式解决2种不同的Notebook授权方式的问题接口的兼容性问题
  */
-public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebookAuthorization, IShiroNotebookAuthorization {
+public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebookAuthorization,
+        IShiroNotebookAuthorization {
 
   @Override
   public boolean isGroupMember(Subject subject, String groupId) {
@@ -25,6 +26,15 @@ public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebook
     return false;
   }
 
+  @Override
+  public boolean isSubmitter(Subject subject, String groupId, String noteId) {
+    return false;
+  }
+
+  @Override
+  public boolean isCommitter(Subject subject, String groupId, String noteId) {
+    return false;
+  }
 
   @Override
   public void addGroupMember(String groupId, String userName) {
