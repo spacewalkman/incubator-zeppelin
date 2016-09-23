@@ -17,14 +17,9 @@
 package org.apache.zeppelin.socket;
 
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -40,9 +35,15 @@ import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-
-import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.notebook.JobListenerFactory;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
+import org.apache.zeppelin.notebook.NotebookEventListener;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.notebook.repo.NotebookRepo.Revision;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.notebook.socket.Message;
 import org.apache.zeppelin.notebook.socket.Message.OP;
 import org.apache.zeppelin.scheduler.Job;
@@ -51,21 +52,30 @@ import org.apache.zeppelin.server.ZeppelinServer;
 import org.apache.zeppelin.ticket.TicketContainer;
 import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.util.GsonUtil;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
-
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Zeppelin websocket service.
@@ -90,7 +100,6 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(NotebookServer.class);
-  Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
   final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
 
@@ -134,6 +143,7 @@ public class NotebookServer extends WebSocketServlet implements
       LOG.debug("RECEIVE PRINCIPAL << " + messagereceived.principal);
       LOG.debug("RECEIVE TICKET << " + messagereceived.ticket);
       LOG.debug("RECEIVE GROUP << " + messagereceived.group);
+      LOG.debug("RECEIVE ProjectId << " + messagereceived.projectId);
 
       if (LOG.isTraceEnabled()) {
         LOG.trace("RECEIVE MSG = " + messagereceived);
@@ -159,10 +169,13 @@ public class NotebookServer extends WebSocketServlet implements
         throw new Exception("Anonymous access not allowed ");
       }
 
-      HashSet<String> userAndRoles = new HashSet<String>();
+      Subject subject = TicketContainer.instance.getCachedSubject(messagereceived.ticket);
+      NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
+
+      HashSet<String> userAndRoles = new HashSet<String>();//从前端缓存并传递过来的roles集合？
       userAndRoles.add(messagereceived.principal);
       if (!messagereceived.roles.equals("")) {
-        HashSet<String> roles = gson.fromJson(messagereceived.roles,
+        HashSet<String> roles = GsonUtil.fromJson(messagereceived.roles,
                 new TypeToken<HashSet<String>>() {
                 }.getType());
         if (roles != null) {
@@ -170,7 +183,6 @@ public class NotebookServer extends WebSocketServlet implements
         }
       }
 
-      Subject subject = TicketContainer.instance.getCachedSubject(messagereceived.ticket);
 
       /** Lets be elegant here */
       switch (messagereceived.op) {
@@ -249,6 +261,9 @@ public class NotebookServer extends WebSocketServlet implements
         case NOTE_REVISION:
           getNoteByRevision(conn, notebook, messagereceived);
           break;
+        case NOTE_REVISION_SUBMIT://提交到组委会
+          submittNotebook(conn, notebook, messagereceived);
+          break;
         case LIST_NOTEBOOK_JOBS:
           unicastNotebookJobInfo(conn, messagereceived);
           break;
@@ -278,11 +293,11 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   protected Message deserializeMessage(String msg) {
-    return gson.fromJson(msg, Message.class);
+    return GsonUtil.fromJson(msg, Message.class);
   }
 
   protected String serializeMessage(Message m) {
-    return gson.toJson(m);
+    return GsonUtil.toJson(m);
   }
 
   private void addConnectionToNote(String noteId, NotebookSocket socket) {
@@ -310,7 +325,7 @@ public class NotebookServer extends WebSocketServlet implements
 
   private void removeNote(String noteId) {
     synchronized (noteSocketMap) {
-      List<NotebookSocket> socketList = noteSocketMap.remove(noteId);
+      noteSocketMap.remove(noteId);
     }
   }
 
@@ -409,9 +424,8 @@ public class NotebookServer extends WebSocketServlet implements
 
   public void unicastNotebookJobInfo(NotebookSocket conn, Message fromMessage) throws IOException {
     addConnectionToNote(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(), conn);
-    AuthenticationInfo subject = new AuthenticationInfo(fromMessage.principal);
     List<Map<String, Object>> notebookJobs = notebook()
-      .getJobListByUnixTime(false, 0, subject);
+            .getJobListByUnixTime(false, 0, fromMessage.principal);
 
     Map<String, Object> response = new HashMap<>();
 
@@ -436,7 +450,7 @@ public class NotebookServer extends WebSocketServlet implements
     response.put("jobs", notebookJobs != null ? notebookJobs : new LinkedList<>());
 
     broadcast(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(),
-      new Message(OP.LIST_UPDATE_NOTEBOOK_JOBS).put("notebookRunningJobs", response));
+            new Message(OP.LIST_UPDATE_NOTEBOOK_JOBS).put("notebookRunningJobs", response));
   }
 
   public void unsubscribeNotebookJobInfo(NotebookSocket conn) {
@@ -446,7 +460,7 @@ public class NotebookServer extends WebSocketServlet implements
   public void saveInterpreterBindings(NotebookSocket conn, Message fromMessage) {
     String noteId = (String) fromMessage.data.get("noteID");
     try {
-      List<String> settingIdList = gson.fromJson(String.valueOf(
+      List<String> settingIdList = GsonUtil.fromJson(String.valueOf(
               fromMessage.data.get("selectedSettingIds")), new TypeToken<ArrayList<String>>() {
       }.getType());
       notebook().bindInterpretersToNote(noteId, settingIdList);
@@ -519,9 +533,9 @@ public class NotebookServer extends WebSocketServlet implements
     if (needsReload) {
       try {
         long startTime = System.currentTimeMillis();
-        notebook.reloadAllNotes(subject);
+        notebook.reloadAllNotes((String) (subject.getPrincipal()));
         long endTime = System.currentTimeMillis();
-        LOG.error("查询所有的note列表时间:{} 秒", (endTime - startTime) / 1000.0);
+        LOG.debug("查询所有的note列表时间:{} 秒", (endTime - startTime) / 1000.0);
       } catch (IOException e) {
         LOG.error("Fail to reload notes from repository", e);
       }
@@ -649,7 +663,7 @@ public class NotebookServer extends WebSocketServlet implements
         notebook.refreshCron(note.getId());
       }
 
-      note.persist(subject);
+      note.persist((String) (subject.getPrincipal()));
       broadcastNote(note);
       unicastNoteList(conn, subject, false);
     }
@@ -672,8 +686,9 @@ public class NotebookServer extends WebSocketServlet implements
 
   private void createNote(NotebookSocket conn, Subject subject, Notebook notebook, Message message)
           throws IOException {
-    Note note = notebook.createNote(subject);
+    Note note = notebook.createNote((String) (subject.getPrincipal()));
     note.setGroup(message.group);//设置note所属的参赛队
+    note.setProjectId(message.projectId);//设置note所属的题目
     note.addParagraph(); // it's an empty note. so add one paragraph
     if (message != null) {
       String noteName = (String) message.get("name");
@@ -683,9 +698,11 @@ public class NotebookServer extends WebSocketServlet implements
       note.setName(noteName);
     }
 
-    addCreatorToNoteOwner(notebook, message.principal, note);//TODO：如果note的creator有区别于其他组内成员的其他permission，则需要在ShiroNotebookAuthorization进行override控制
+    //TODO：遗留代码，在使用note-authorization.json作为authentication持久化机制的时候，会使用；
+    //TODO： shiro jdbcRealm没有override该方法，如果note的creator有区别于其他组内成员的其他permission，则需要在ShiroNotebookAuthorization进行override控制
+    addCreatorToNoteOwner(notebook, message.principal, note);
 
-    note.persist(subject);
+    note.persist((String) (subject.getPrincipal()));
     addConnectionToNote(note.getId(), conn);
 
     Message messageToWeb = new Message(OP.NEW_NOTE);
@@ -732,7 +749,7 @@ public class NotebookServer extends WebSocketServlet implements
 
 //    Subject shiroSubject = buildNewSubject(message.principal, ZeppelinConfiguration.create().getString(ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
 //    AuthenticationInfo subject = new AuthenticationInfo(message.principal);
-    note.persist(subject);
+    note.persist((String) (subject.getPrincipal()));
     broadcast(note.getId(), new Message(OP.NOTE_TOPIC).put("topic", topic)); //TODO: qy client update topic(when multiple clients)
   }
 
@@ -770,7 +787,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     note.setTags(Arrays.asList(tags));
 
-    note.persist(subject);
+    note.persist((String) (subject.getPrincipal()));
     broadcast(note.getId(), new Message(OP.NOTE_TAGS).put("tags", tags)); //TODO: qy client update tags(when multiple clients)
   }
 
@@ -800,7 +817,7 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    notebook.removeNote(noteId, subject);
+    notebook.removeNote(noteId, (String) (subject.getPrincipal()));
     removeNote(noteId);
     unicastNoteList(conn, subject, false);
   }
@@ -829,7 +846,7 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
     p.setText((String) fromMessage.get("paragraph"));
-    note.persist(org.apache.shiro.SecurityUtils.getSubject());
+    note.persist((String) (subject.getPrincipal()));
     broadcast(note.getId(), new Message(OP.PARAGRAPH).put("paragraph", p));
   }
 
@@ -838,7 +855,7 @@ public class NotebookServer extends WebSocketServlet implements
           throws IOException, CloneNotSupportedException {
     String noteId = getOpenNoteId(conn);
     String name = (String) fromMessage.get("name");
-    Note newNote = notebook.cloneNote(noteId, name, subject);
+    Note newNote = notebook.cloneNote(noteId, name, (String) (subject.getPrincipal()));
 
     addConnectionToNote(newNote.getId(), conn);
     conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", newNote)));
@@ -854,14 +871,14 @@ public class NotebookServer extends WebSocketServlet implements
     Note note = null;
     if (fromMessage != null) {
       String noteName = (String) ((Map) fromMessage.get("notebook")).get("name");
-      String noteJson = gson.toJson(fromMessage.get("notebook"));
+      String noteJson = GsonUtil.toJson(fromMessage.get("notebook"));
 
-      note = notebook.importNote(noteJson, noteName, subject);
+      note = notebook.importNote(noteJson, noteName, (String) (subject.getPrincipal()));
       note.setCreatedBy(fromMessage.principal);
       note.setGroup(fromMessage.group);
       note.setProjectId(fromMessage.projectId);
 
-      note.persist(subject);
+      note.persist((String) (subject.getPrincipal()));
       broadcastNote(note);
       broadcastNoteList(subject);
     }
@@ -887,7 +904,7 @@ public class NotebookServer extends WebSocketServlet implements
     /** We dont want to remove the last paragraph */
     if (!note.isLastParagraph(paragraphId)) {
       note.removeParagraph(paragraphId);
-      note.persist(SecurityUtils.getSubject());
+      note.persist((String) (subject.getPrincipal()));
       broadcastNote(note);
     }
   }
@@ -1100,7 +1117,8 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private void pushAngularObjectToRemoteRegistry(String noteId, String paragraphId,
-                                                 String varName, Object varValue, RemoteAngularObjectRegistry remoteRegistry,
+                                                 String varName, Object varValue,
+                                                 RemoteAngularObjectRegistry remoteRegistry,
                                                  String interpreterGroupId, NotebookSocket conn) {
 
     final AngularObject ao = remoteRegistry.addAndNotifyRemoteProcess(varName, varValue,
@@ -1116,7 +1134,8 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private void removeAngularFromRemoteRegistry(String noteId, String paragraphId,
-                                               String varName, RemoteAngularObjectRegistry remoteRegistry,
+                                               String varName,
+                                               RemoteAngularObjectRegistry remoteRegistry,
                                                String interpreterGroupId, NotebookSocket conn) {
     final AngularObject ao = remoteRegistry.removeAndNotifyRemoteProcess(varName, noteId,
             paragraphId);
@@ -1149,7 +1168,8 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private void removeAngularObjectFromLocalRepo(String noteId, String paragraphId, String varName,
-                                                AngularObjectRegistry registry, String interpreterGroupId, NotebookSocket conn) {
+                                                AngularObjectRegistry registry,
+                                                String interpreterGroupId, NotebookSocket conn) {
     final AngularObject removed = registry.remove(varName, noteId, paragraphId);
     if (removed != null) {
       this.broadcastExcept(
@@ -1182,7 +1202,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     note.moveParagraph(paragraphId, newIndex);
 
-    note.persist(subject);
+    note.persist((String) (subject.getPrincipal()));
     broadcastNote(note);
   }
 
@@ -1200,7 +1220,7 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     note.insertParagraph(index);
-    note.persist(org.apache.shiro.SecurityUtils.getSubject());
+    note.persist((String) (subject.getPrincipal()));
     broadcastNote(note);
   }
 
@@ -1235,8 +1255,6 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
     }
 
@@ -1260,11 +1278,11 @@ public class NotebookServer extends WebSocketServlet implements
     // if it's the last paragraph, let's add a new one
     boolean isTheLastParagraph = note.isLastParagraph(p.getId());
     if (!(text.trim().equals(p.getMagic()) || Strings.isNullOrEmpty(text)) &&
-        isTheLastParagraph) {
+            isTheLastParagraph) {
       note.addParagraph();
     }
 
-    note.persist(subject); //p.setText(text) will update lastUpdated time,so note must updated too,not only paragraph
+    note.persist((String) (subject.getPrincipal())); //p.setText(text) will update lastUpdated time,so note must updated too,not only paragraph
     try {
       note.run(paragraphId);
     } catch (Exception ex) {
@@ -1303,20 +1321,60 @@ public class NotebookServer extends WebSocketServlet implements
                                   Message fromMessage) throws IOException {
     String noteId = (String) fromMessage.get("noteId");
     String commitMessage = (String) fromMessage.get("commitMessage");
+    String group = fromMessage.group;
+
+    if (group == null || group.isEmpty()) {
+      throw new IllegalArgumentException("group is null");
+    }
+
     Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
-    Revision revision = notebook.checkpointNote(noteId, commitMessage, subject);
-    if (revision != null) {
-      List<Revision> revisions = notebook.listRevisionHistory(noteId, subject);
+
+    //是否有commit权限
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
+    if (!notebookAuthorization.isCommitter(subject, group, noteId)) {
+      LOG.warn("{} is not committer of group:{}, note:{}", subject.getPrincipal(), group, noteId);
+      return;
+    }
+
+    Revision revision = notebook.checkpointNote(noteId, commitMessage, (String) (subject.getPrincipal()));
+    if (revision != null) {//TODO:如果没有更新，前台目前没有获得任何通知
+      List<Revision> revisions = notebook.listRevisionHistory(noteId, (String) (subject.getPrincipal()));
       conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY)
               .put("revisionList", revisions)));
     }
+  }
+
+  /**
+   * 提交note的revision到组委会
+   */
+  private void submittNotebook(NotebookSocket conn, Notebook notebook,
+                               Message fromMessage) throws IOException {
+    String noteId = (String) fromMessage.get("noteId");
+    String revisionId = (String) fromMessage.get("revisionId");
+    String group = fromMessage.group;
+
+    if (group == null || group.isEmpty()) {
+      throw new IllegalArgumentException("group is null");
+    }
+
+    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
+
+    //是否有submit权限
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
+    if (!notebookAuthorization.isSubmitter(subject, group, noteId)) {
+      LOG.warn("{} is not submitter of group:{}, note:{}", subject.getPrincipal(), group, noteId);
+      return;
+    }
+
+    SubmitLeftOver submitLeftOver = notebook.submit(revisionId, (String) (subject.getPrincipal()));
+    conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver)));//TODO：前端需要处理这个OP，并且binding submitLeftOver，显示指定时间内还剩余提交次数
   }
 
   private void listRevisionHistory(NotebookSocket conn, Notebook notebook,
                                    Message fromMessage) throws IOException {
     String noteId = (String) fromMessage.get("noteId");
     Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
-    List<Revision> revisions = notebook.listRevisionHistory(noteId, subject);
+    List<Revision> revisions = notebook.listRevisionHistory(noteId, (String) (subject.getPrincipal()));
 
     conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY)
             .put("revisionList", revisions)));
@@ -1326,9 +1384,21 @@ public class NotebookServer extends WebSocketServlet implements
           throws IOException {
     String noteId = (String) fromMessage.get("noteId");
     String revisionId = (String) fromMessage.get("revisionId");
+    String group = (String) fromMessage.get("group");
+
+    if (group == null || group.isEmpty()) {
+      throw new IllegalArgumentException("group is null");
+    }
+
     Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
 
-    Note revisionNote = notebook.getNoteByRevision(noteId, revisionId, subject);
+    //是否有commit权限
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
+    if (!notebookAuthorization.isCommitter(subject, group, noteId)) {
+      return;
+    }
+
+    Note revisionNote = notebook.getNoteByRevision(noteId, revisionId, (String) (subject.getPrincipal()));
     conn.send(serializeMessage(new Message(OP.NOTE_REVISION)
             .put("noteId", noteId)
             .put("revisionId", revisionId)
@@ -1454,7 +1524,7 @@ public class NotebookServer extends WebSocketServlet implements
       response.put("jobs", notesInfo);
 
       notebookServer.broadcast(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(),
-        new Message(OP.LIST_UPDATE_NOTEBOOK_JOBS).put("notebookRunningJobs", response));
+              new Message(OP.LIST_UPDATE_NOTEBOOK_JOBS).put("notebookRunningJobs", response));
 
     }
 
@@ -1490,7 +1560,7 @@ public class NotebookServer extends WebSocketServlet implements
     public void onParagraphStatusChange(Paragraph p, Status status) {
       Notebook notebook = notebookServer.notebook();
       List<Map<String, Object>> notebookJobs = notebook.getJobListByParagraphId(
-        p.getId()
+              p.getId()
       );
 
       Map<String, Object> response = new HashMap<>();

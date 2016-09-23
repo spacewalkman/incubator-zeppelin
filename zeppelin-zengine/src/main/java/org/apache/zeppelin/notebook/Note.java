@@ -20,7 +20,6 @@ package org.apache.zeppelin.notebook;
 import com.google.gson.Gson;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
@@ -114,12 +113,14 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   public Note(NotebookRepo repo, InterpreterFactory factory,
-              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, Subject subject, NoteEventListener noteEventListener) {
-    this(repo, factory, jlFactory, noteIndex, credentials, subject, "default_team", noteEventListener);//TODO:qy,default teamname
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials,
+              String principal, NoteEventListener noteEventListener) {
+    this(repo, factory, jlFactory, noteIndex, credentials, principal, "default_team", noteEventListener);//TODO:qy,default teamname
   }
 
   public Note(NotebookRepo repo, InterpreterFactory factory,
-              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials, Subject subject, String group, NoteEventListener noteEventListener) {
+              JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials,
+              String principal, String group, NoteEventListener noteEventListener) {
     this.repo = repo;
     this.factory = factory;
     this.jobListenerFactory = jlFactory;
@@ -127,8 +128,9 @@ public class Note implements Serializable, ParagraphJobListener {
     this.noteEventListener = noteEventListener;
     this.credentials = credentials;
     generateId();
-    this.createdBy = (subject == null ? null : (String) (subject.getPrincipal()));
+    this.createdBy = principal;
     this.group = group;
+    this.lastUpdated = new Date();
   }
 
   private void generateId() {
@@ -635,13 +637,13 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * persist note and paragraphs
    */
-  public void persist(Subject subject) throws IOException {
+  public void persist(String principal) throws IOException {
     stopDelayedPersistTimer();
     snapshotAngularObjectRegistry();
 
-    this.setLastUpdated(this.getMaxLastUpdateInParagraphs());
+    this.getLastUpdated();
 
-    repo.save(this, subject);
+    repo.save(this, principal);
     if (repo instanceof NotebookRepoSync) {
       NotebookRepoSync repoSync = (NotebookRepoSync) repo;
       boolean indexUpdateAlready = false;
@@ -660,37 +662,18 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   /**
-   * max dateUpdated from all paragraphs
-   */
-  private Date getMaxLastUpdateInParagraphs() {
-    Date maxUpdated = null;
-    for (Paragraph para : this.getParagraphs()) {
-      if (para.dateUpdated != null) {
-        if (maxUpdated == null) {
-          maxUpdated = para.dateUpdated;
-        } else {
-          if (maxUpdated.before(para.dateUpdated)) {
-            maxUpdated = para.dateUpdated;
-          }
-        }
-      }
-    }
-    return maxUpdated;
-  }
-
-  /**
    * Persist this note with maximum delay.
    */
-  public void persist(int maxDelaySec, Subject subject) {
-    startDelayedPersistTimer(maxDelaySec, subject);
+  public void persist(int maxDelaySec, String principal) {
+    startDelayedPersistTimer(maxDelaySec, principal);
   }
 
-  void unpersist(Subject subject) throws IOException {
-    repo.remove(getId(), subject);
+  void unpersist(String principal) throws IOException {
+    repo.remove(getId(), principal);
   }
 
 
-  private void startDelayedPersistTimer(int maxDelaySec, final Subject subject) {
+  private void startDelayedPersistTimer(int maxDelaySec, final String principal) {
     synchronized (this) {
       if (delayedPersist != null) {
         return;
@@ -701,7 +684,7 @@ public class Note implements Serializable, ParagraphJobListener {
         @Override
         public void run() {
           try {
-            persist(subject);
+            persist(principal);
           } catch (IOException e) {
             logger.error(e.getMessage(), e);
           }
@@ -803,7 +786,36 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   public Date getLastUpdated() {
-    return lastUpdated;
+    if (this.lastUpdated == null)
+      this.lastUpdated = this.lastModificationDate();
+    return this.lastUpdated;
+  }
+
+  /**
+   * checks latest modification date based on Paragraph fields
+   *
+   * @return -Date
+   */
+  private Date lastModificationDate() {
+    Date latest = new Date(0L);
+    Date tempCreated, tempStarted, tempFinished;
+
+    for (Paragraph paragraph : this.getParagraphs()) {
+      tempCreated = paragraph.getDateCreated();
+      tempStarted = paragraph.getDateStarted();
+      tempFinished = paragraph.getDateFinished();
+
+      if (tempCreated != null && tempCreated.after(latest)) {
+        latest = tempCreated;
+      }
+      if (tempStarted != null && tempStarted.after(latest)) {
+        latest = tempStarted;
+      }
+      if (tempFinished != null && tempFinished.after(latest)) {
+        latest = tempFinished;
+      }
+    }
+    return latest;
   }
 
   public void setLastUpdated(Date lastUpdated) {
