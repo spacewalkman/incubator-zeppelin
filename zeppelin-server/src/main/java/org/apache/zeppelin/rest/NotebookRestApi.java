@@ -241,7 +241,7 @@ public class NotebookRestApi {
   @Path("import")
   @ZeppelinApi
   public Response importNotebook(String req) throws IOException {
-    Note newNote = notebook.importNote(req, null, SecurityUtils.getSubject());
+    Note newNote = notebook.importNote(req, null, ""); //TODO:imported note的时候没有当前用户身份吗？
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
   }
 
@@ -258,7 +258,7 @@ public class NotebookRestApi {
     LOG.info("Create new notebook by JSON {}", message);
 
     NewNotebookRequest request = gson.fromJson(message, NewNotebookRequest.class);
-    Note note = notebook.createNote(SecurityUtils.getSubject());
+    Note note = notebook.createNote(request.getPrincipal());
     List<NewParagraphRequest> initialParagraphs = request.getParagraphs();
     if (initialParagraphs != null) {
       for (NewParagraphRequest paragraphRequest : initialParagraphs) {
@@ -276,7 +276,7 @@ public class NotebookRestApi {
 
     addCreatorToNoteOwner(request, note);
 
-    note.persist(SecurityUtils.getSubject());
+    note.persist(request.getPrincipal());
     notebookServer.broadcastNote(note);
     notebookServer.broadcastNoteList(SecurityUtils.getSubject());//TODO:(qy) when create note using REST, could cause note filter by current user failed
     return new JsonResponse<>(Status.CREATED, "", note.getId()).build();
@@ -305,7 +305,7 @@ public class NotebookRestApi {
     if (!(notebookId.isEmpty())) {
       Note note = notebook.getNote(notebookId);
       if (note != null) {
-        notebook.removeNote(notebookId, SecurityUtils.getSubject());
+        notebook.removeNote(notebookId, ""); //TODO: rest 删除note的时候不传入用户身份吗？
       }
     }
 
@@ -333,7 +333,7 @@ public class NotebookRestApi {
     }
 //    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
 //    Note newNote = notebook.cloneNote(notebookId, newNoteName, subject);
-    Note newNote = notebook.cloneNote(notebookId, newNoteName, SecurityUtils.getSubject());
+    Note newNote = notebook.cloneNote(notebookId, newNoteName, "");//TODO:rest 安全
     notebookServer.broadcastNote(newNote);
     notebookServer.broadcastNoteList(SecurityUtils.getSubject());
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
@@ -369,7 +369,7 @@ public class NotebookRestApi {
     p.setTitle(request.getTitle());
     p.setText(request.getText());
 
-    note.persist(SecurityUtils.getSubject());
+    note.persist(request.getPrincipal());
     notebookServer.broadcastNote(note);
     return new JsonResponse<>(Status.CREATED, "", p.getId()).build();
   }
@@ -410,7 +410,8 @@ public class NotebookRestApi {
   @Path("{notebookId}/paragraph/{paragraphId}/move/{newIndex}")
   @ZeppelinApi
   public Response moveParagraph(@PathParam("notebookId") String notebookId,
-                                @PathParam("paragraphId") String paragraphId, @PathParam("newIndex") String newIndex)
+                                @PathParam("paragraphId") String paragraphId,
+                                @PathParam("newIndex") String newIndex)
           throws IOException {
     LOG.info("move paragraph {} {} {}", notebookId, paragraphId, newIndex);
 
@@ -427,7 +428,7 @@ public class NotebookRestApi {
     try {
       note.moveParagraph(paragraphId, Integer.parseInt(newIndex), true);
 
-      note.persist(SecurityUtils.getSubject());
+      note.persist("");//TODO:rest move note的时候也需要传入用户身份
       notebookServer.broadcastNote(note);
       return new JsonResponse(Status.OK, "").build();
     } catch (IndexOutOfBoundsException e) {
@@ -460,7 +461,7 @@ public class NotebookRestApi {
     }
 
     note.removeParagraph(paragraphId);
-    note.persist(org.apache.shiro.SecurityUtils.getSubject());
+    note.persist(""); //TODO:删除如何传入，控制token？
     notebookServer.broadcastNote(note);
 
     return new JsonResponse(Status.OK, "").build();
@@ -620,7 +621,7 @@ public class NotebookRestApi {
   public Response runParagraphSynchronously(@PathParam("notebookId") String noteId,
                                             @PathParam("paragraphId") String paragraphId,
                                             String message) throws
-          IOException, IllegalArgumentException {
+                                                            IOException, IllegalArgumentException {
     LOG.info("run paragraph synchronously {} {} {}", noteId, paragraphId, message);
 
     Note note = notebook.getNote(noteId);
@@ -664,7 +665,7 @@ public class NotebookRestApi {
   @ZeppelinApi
   public Response stopParagraph(@PathParam("notebookId") String notebookId,
                                 @PathParam("paragraphId") String paragraphId) throws
-          IOException, IllegalArgumentException {
+                                                                              IOException, IllegalArgumentException {
     /**
      * TODO(jl): Fixed notebookId to noteId
      * https://issues.apache.org/jira/browse/ZEPPELIN-1163
@@ -779,12 +780,11 @@ public class NotebookRestApi {
   @Path("jobmanager/")
   @ZeppelinApi
   public Response getJobListforNotebook() throws
-          IOException, IllegalArgumentException {
+                                          IOException, IllegalArgumentException {
     LOG.info("Get notebook jobs for job manager");
 
-    AuthenticationInfo subject = new AuthenticationInfo((String)(SecurityUtils.getSubject().getPrincipal()));
     List<Map<String, Object>> notebookJobs = notebook
-            .getJobListByUnixTime(false, 0, subject);
+            .getJobListByUnixTime(false, 0, "");//TODO:rest job安全
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
@@ -810,8 +810,7 @@ public class NotebookRestApi {
     LOG.info("Get updated notebook jobs lastUpdateTime {}", lastUpdateUnixTime);
 
     List<Map<String, Object>> notebookJobs;
-    AuthenticationInfo subject = new AuthenticationInfo((String)(SecurityUtils.getSubject().getPrincipal()));
-    notebookJobs = notebook.getJobListByUnixTime(false, lastUpdateUnixTime, subject);
+    notebookJobs = notebook.getJobListByUnixTime(false, lastUpdateUnixTime, "");
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
@@ -827,7 +826,8 @@ public class NotebookRestApi {
   @Path("search")
   @ZeppelinApi
   public Response search(@QueryParam("q") String
-                                 queryTerm, @QueryParam("size") String size, @QueryParam("from") String from) {
+                                 queryTerm, @QueryParam("size") String size,
+                         @QueryParam("from") String from) {
     LOG.info("Searching notebooks for: {}", queryTerm);
     Subject subject = SecurityUtils.getSubject();
 
@@ -878,7 +878,7 @@ public class NotebookRestApi {
       Map<String, Object> paramsForUpdating = request.getParams();
       if (paramsForUpdating != null) {
         paragraph.settings.getParams().putAll(paramsForUpdating);
-        note.persist(SecurityUtils.getSubject());
+        note.persist("");//TODO:REST 删除的安全控制
       }
     }
   }
