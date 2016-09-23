@@ -86,13 +86,13 @@ public class LoginRestApi {
         else
           ticket = TicketContainer.instance.getTicket(principal);
 
-        TicketContainer.instance.putSubject(ticket,subject);
+        TicketContainer.instance.putSubject(ticket, subject);
         Map<String, String> data = new HashMap<>();
         data.put("principal", principal);
         data.put("roles", roles.toString());//TODO:把role传递到前台起什么作用？
         data.put("ticket", ticket);
-        data.put("group", group);
-        data.put("projectId", projectId);
+        data.put("group", group.trim());
+        data.put("projectId", projectId.trim());
 
         response = new JsonResponse(Response.Status.OK, "", data);
         //if no exception, that's it, we're done!
