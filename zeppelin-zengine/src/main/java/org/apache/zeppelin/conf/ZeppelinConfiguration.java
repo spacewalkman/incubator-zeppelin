@@ -20,9 +20,9 @@ package org.apache.zeppelin.conf;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.ConfigurationNode;
-import org.apache.zeppelin.notebook.repo.ElasticSearchRepo;
 import org.apache.zeppelin.notebook.repo.GitNotebookRepo;
-import org.apache.zeppelin.notebook.repo.VFSNotebookRepo;
+import org.apache.zeppelin.notebook.repo.JdbcNotebookRepo;
+import org.apache.zeppelin.notebook.repo.commit.DailySubmitStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -544,7 +544,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTEBOOK_AZURE_CONNECTION_STRING("zeppelin.notebook.azure.connectionString", null),
     ZEPPELIN_NOTEBOOK_AZURE_SHARE("zeppelin.notebook.azure.share", "zeppelin"),
     ZEPPELIN_NOTEBOOK_AZURE_USER("zeppelin.notebook.azure.user", "user"),
-    ZEPPELIN_NOTEBOOK_STORAGE("zeppelin.notebook.storage", ElasticSearchRepo.class.getName() + "," + GitNotebookRepo.class.getName()),
+    ZEPPELIN_NOTEBOOK_STORAGE("zeppelin.notebook.storage", JdbcNotebookRepo.class.getName() + "," + GitNotebookRepo.class.getName()),
     ZEPPELIN_NOTEBOOK_ONE_WAY_SYNC("zeppelin.notebook.one.way.sync", false),
     ZEPPELIN_INTERPRETER_REMOTE_RUNNER("zeppelin.interpreter.remoterunner",
             System.getProperty("os.name")
@@ -571,13 +571,19 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_ES_PARAGRAPH_TYPE_NAME("zeppelin.es.search.repo.paragraph.index.type", "paragraph"),
     ZEPPELIN_NOTE_REPO_ES_TERMS_AGGREGATION_SIZE("zeppelin.es.search.aggregation.size", 10),//max terms aggregation size
 
+    //以下是采用mysql作为NotebookRepo实现所需要的配置参数
+    ZEPPELIN_NOTE_REPO_JDBC_DB_TYPE("zeppelin.note.repo.jdbc.db.type", "mysql"),
+    ZEPPELIN_NOTE_REPO_JDBC_DRIVER("zeppelin.note.repo.jdbc.driver", "com.mysql.jdbc.Driver"),//jdbc notebook repo driver class
+    ZEPPELIN_NOTE_REPO_JDBC_HOST("zeppelin.note.repo.jdbc.host", "localhost"),
+    ZEPPELIN_NOTE_REPO_JDBC_PORT("zeppelin.note.repo.jdbc.port", 3306),
+    ZEPPELIN_NOTE_REPO_JDBC_DATABASE("zeppelin.note.repo.jdbc.database", "zeppelin"),
+    ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.note.repo.jdbc.username", "root"),
+    ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.note.repo.jdbc.password", "mysql"),
+    ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE("zeppelin.note.repo.jdbc.max.pool.size", 2),
 
-    ZEPPELIN_NOTE_REPO_JDBC_DRIVER("zeppelin.es.search.repo.jdbc.driver", "com.mysql.jdbc.Driver"),//jdbc notebook repo driver class
-    ZEPPELIN_NOTE_REPO_JDBC_HOST("zeppelin.es.search.repo.jdbc.host", "localhost"),
-    ZEPPELIN_NOTE_REPO_JDBC_PORT("zeppelin.es.search.repo.jdbc.port", 3306),
-    ZEPPELIN_NOTE_REPO_JDBC_DATABASE("zeppelin.es.search.repo.jdbc.database", "zeppelin"),
-    ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.es.search.repo.jdbc.username", "root"),
-    ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.es.search.repo.jdbc.password", "mysql"),
+    //提交策略，每天提交3次
+    ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS("zeppelin.note.commit.strategy.class", DailySubmitStrategy.class.getName()),
+    ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES("zeppelin.note.commit.strategy.max.commit.times", 3),
 
     ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000");
 
