@@ -1,16 +1,15 @@
 package org.apache.zeppelin.notebook.repo.commit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * 限制参赛队在一定时间内提交次数的strategy模式
  */
-public abstract class SumbmitStrategy {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SumbmitStrategy.class);
-
+public abstract class SubmitStrategy {
   private int maxTime = 1;
+
+  /**
+   * 如"小时，日、周、月"等
+   */
+  protected String typeName;
 
   /**
    * 获取开始时间和结束时间的查询范围，milliseconds
@@ -18,6 +17,13 @@ public abstract class SumbmitStrategy {
    * @return 长度为2的数组，index=0为开始时间，index=1为结束时间
    */
   public abstract long[] getTimeRange();
+
+  /**
+   * 返回时间区间的字面值，用来在前段显示
+   */
+  public String getTypeName() {
+    return this.typeName;
+  }
 
   /**
    * 获取最大时间

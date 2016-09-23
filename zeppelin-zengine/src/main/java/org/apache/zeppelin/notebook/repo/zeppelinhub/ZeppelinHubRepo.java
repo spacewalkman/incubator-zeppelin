@@ -22,14 +22,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.rest.ZeppelinhubRestApiHandler;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.Client;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,9 +144,10 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
+  public List<NoteInfo> list(String principal) throws IOException {
     String response = restApiClient.asyncGet("");
-    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {}.getType());
+    List<NoteInfo> notes = GSON.fromJson(response, new TypeToken<List<NoteInfo>>() {
+    }.getType());
     if (notes == null) {
       return Collections.emptyList();
     }
@@ -156,7 +156,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
+  public Note get(String noteId, String principal) throws IOException {
     if (StringUtils.isBlank(noteId)) {
       return EMPTY_NOTE;
     }
@@ -171,7 +171,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note, Subject subject) throws IOException {
+  public void save(Note note, String principal) throws IOException {
     if (note == null) {
       throw new IOException("Zeppelinhub failed to save empty note");
     }
@@ -181,7 +181,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     restApiClient.asyncDel(noteId);
     LOG.info("ZeppelinHub REST API removing note {} ", noteId);
   }
@@ -192,20 +192,24 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject)
-      throws IOException {
-    if (StringUtils.isBlank(noteId)) {
+  public Revision checkpoint(Note note, String checkpointMsg, String principal)
+          throws IOException {
+    if (note == null) {
       return null;
     }
-    String endpoint = Joiner.on("/").join(noteId, "checkpoint");
+
+    if (StringUtils.isBlank(note.getId())) {
+      return null;
+    }
+    String endpoint = Joiner.on("/").join(note.getId(), "checkpoint");
     String content = GSON.toJson(ImmutableMap.of("message", checkpointMsg));
     String response = restApiClient.asyncPutWithResponseBody(endpoint, content);
-    
+
     return GSON.fromJson(response, Revision.class);
   }
 
   @Override
-  public Note get(String noteId, String revId, Subject subject) throws IOException {
+  public Note get(String noteId, String revId, String principal) throws IOException {
     if (StringUtils.isBlank(noteId) || StringUtils.isBlank(revId)) {
       return EMPTY_NOTE;
     }
@@ -220,7 +224,7 @@ public class ZeppelinHubRepo implements NotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
+  public List<Revision> revisionHistory(String noteId, String principal) {
     if (StringUtils.isBlank(noteId)) {
       return Collections.emptyList();
     }
@@ -228,11 +232,18 @@ public class ZeppelinHubRepo implements NotebookRepo {
     List<Revision> history = Collections.emptyList();
     try {
       String response = restApiClient.asyncGet(endpoint);
-      history = GSON.fromJson(response, new TypeToken<List<Revision>>(){}.getType());
+      history = GSON.fromJson(response, new TypeToken<List<Revision>>() {
+      }.getType());
     } catch (IOException e) {
       LOG.error("Cannot get note history", e);
     }
     return history;
+  }
+
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
+    return null;
   }
 
 }

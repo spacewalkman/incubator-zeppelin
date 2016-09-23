@@ -8,10 +8,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * CommitStrategy的简单工厂+Singleton，通过reflection创建具体策略实例
+ * SubmitStrategy+Singleton，通过reflection创建具体策略实例
  */
-public class CommitStrategyFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(CommitStrategyFactory.class);
+public class SubmitStrategyFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(SubmitStrategyFactory.class);
 
   /**
    * 具体CommitStrategy实现类
@@ -23,17 +23,16 @@ public class CommitStrategyFactory {
    */
   private int maxCommitTimes;
 
-  private static CommitStrategyFactory instance;
+  private static SubmitStrategyFactory instance;
 
-  private CommitStrategyFactory(ZeppelinConfiguration conf) {
+  private SubmitStrategyFactory(ZeppelinConfiguration conf) {
     clazz = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS);
     maxCommitTimes = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES);
   }
 
-  public static CommitStrategyFactory getInstance() {
-    ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+  public static SubmitStrategyFactory getInstance(ZeppelinConfiguration conf) {
     if (instance == null) {
-      instance = new CommitStrategyFactory(conf);
+      instance = new SubmitStrategyFactory(conf);
       return instance;
     } else {
       return instance;
@@ -45,20 +44,20 @@ public class CommitStrategyFactory {
    *
    * @return 该参赛队和题目的提交策略
    */
-  public SumbmitStrategy create() {
-    SumbmitStrategy sumbmitStrategy = null;
+  public SubmitStrategy create() {
+    SubmitStrategy submitStrategy = null;
     try {
-      Class<?> commitStrategyClass = CommitStrategyFactory.class.forName(clazz);
+      Class<?> commitStrategyClass = SubmitStrategyFactory.class.forName(clazz);
       Constructor<?> constructor = commitStrategyClass.getConstructor();
 
-      sumbmitStrategy = (SumbmitStrategy) (constructor.newInstance());
-      sumbmitStrategy.setMaxTime(maxCommitTimes);
+      submitStrategy = (SubmitStrategy) (constructor.newInstance());
+      submitStrategy.setMaxTime(maxCommitTimes);
     } catch (ClassNotFoundException | NoSuchMethodException | SecurityException |
             InstantiationException | IllegalAccessException | IllegalArgumentException |
             InvocationTargetException e) {
-      LOG.warn("Failed to initialize {} sumbmitStrategy class", clazz, e);
+      LOG.warn("Failed to initialize {} submitStrategy class", clazz, e);
     }
 
-    return sumbmitStrategy;
+    return submitStrategy;
   }
 }

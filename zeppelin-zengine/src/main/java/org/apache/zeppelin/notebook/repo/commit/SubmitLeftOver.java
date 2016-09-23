@@ -1,9 +1,9 @@
 package org.apache.zeppelin.notebook.repo.commit;
 
 /**
- * 违反允许的提交次数异常
+ * 还剩多少次提交
  */
-public class SubmitVolationException{
+public class SubmitLeftOver {
   private int currentTimes;
 
   private int maxTimes;
@@ -12,11 +12,15 @@ public class SubmitVolationException{
 
   private String projectId;
 
-  public SubmitVolationException(String team, String projectId, int currentTimes, int maxTimes) {
+  private String strategyTypeName;
+
+  public SubmitLeftOver(String team, String projectId, int currentTimes, int maxTimes,
+                        String strategyTypeName) {
     this.team = team;
     this.projectId = projectId;
     this.currentTimes = currentTimes;
     this.maxTimes = maxTimes;
+    this.strategyTypeName = strategyTypeName;
   }
 
   /**
@@ -61,5 +65,16 @@ public class SubmitVolationException{
 
   public void setProjectId(String projectId) {
     this.projectId = projectId;
+  }
+
+  /**
+   * 限制提交次数的策略名称，如"小时，日、周、月"等,由submitStrategy.getTypeName()赋值而来
+   */
+  public String getStrategyTypeName() {
+    return strategyTypeName;
+  }
+
+  public void setStrategyTypeName(String strategyTypeName) {
+    this.strategyTypeName = strategyTypeName;
   }
 }

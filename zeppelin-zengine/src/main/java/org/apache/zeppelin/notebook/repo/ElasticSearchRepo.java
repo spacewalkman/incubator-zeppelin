@@ -5,17 +5,16 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.util.GsonUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -33,9 +32,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -125,16 +122,16 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   /**
    * use ES scroll api to handler large dataset
    *
-   * @param subject contains user information.
+   * @param principal contains user information.
    * @return notes from all shards within scroll time range
    */
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
+  public List<NoteInfo> list(String principal) throws IOException {
     SearchResponse scrollResp = client.prepareSearch(indexName).setTypes(noteTypeName)
             .addSort(AGGREGATION_FILED_LAST_UPDATED, SortOrder.DESC)
             .setScroll(new TimeValue(defaultScrollTimeOut))
-            .setQuery(subject == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
-                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, (String) (subject.getPrincipal()))))
+            .setQuery(principal == null ? QueryBuilders.matchAllQuery() : QueryBuilders.boolQuery()
+                    .must(QueryBuilders.termQuery(AGGREGATION_FILED_AUTHOR, principal)))
 //            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_TAGS).field(AGGREGATION_FILED_TAGS).size(defaultTermsAggSize))
 //            .addAggregation(AggregationBuilders.terms(AGGREGATION_NAME_AUTHOR).field(AGGREGATION_FILED_AUTHOR).size(defaultTermsAggSize))
 //            .addAggregation(AggregationBuilders.dateHistogram(AGGREGATION_NAME_LAST_UPDATED).field(AGGREGATION_FILED_LAST_UPDATED).interval(DateHistogramInterval.MONTH).format(DATE_RANGE_FORMAT))
@@ -195,7 +192,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
+  public Note get(String noteId, String principal) throws IOException {
     if (null == noteId || noteId.isEmpty()) {
       LOG.error("noteId can't be null");
       return null;
@@ -233,7 +230,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
   }
 
   @Override
-  public void save(Note note, Subject subject) throws IOException {
+  public void save(Note note, String principal) throws IOException {
     indexNoteAndParagraphs(note);
   }
 
@@ -320,7 +317,7 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
 
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     this.deleteChildren(noteId);
 
     //then, delete note
@@ -559,21 +556,29 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     }
   }
 
-  //TODO:(qy) below are really interface pollution
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
-    // Auto-generated method stub
+  public Revision checkpoint(Note note, String checkpointMsg, String principal)
+          throws IOException {
+    // no-op
+    LOG.info("Checkpoint feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, Subject subject) throws IOException {
+  public Note get(String noteId, String revId, String principal) throws IOException {
+    LOG.info("get revision feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
-    // Auto-generated method stub
+  public List<Revision> revisionHistory(String noteId, String principalt) {
+    LOG.info("revisionHistory feature isn't supported in {}", this.getClass().toString());
+    return null;
+  }
+
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 }

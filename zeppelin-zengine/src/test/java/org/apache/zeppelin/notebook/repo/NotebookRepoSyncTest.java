@@ -72,11 +72,11 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
 
   @Before
   public void setUp() throws Exception {
-    String zpath = System.getProperty("java.io.tmpdir")+"/ZeppelinLTest_"+System.currentTimeMillis();
+    String zpath = System.getProperty("java.io.tmpdir") + "/ZeppelinLTest_" + System.currentTimeMillis();
     mainZepDir = new File(zpath);
     mainZepDir.mkdirs();
     new File(mainZepDir, "conf").mkdirs();
-    String mainNotePath = zpath+"/notebook";
+    String mainNotePath = zpath + "/notebook";
     String secNotePath = mainNotePath + "_secondary";
     mainNotebookDir = new File(mainNotePath);
     secNotebookDir = new File(secNotePath);
@@ -131,7 +131,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     // check that automatically saved on both storages
     assertEquals(1, notebookRepoSync.list(0, null).size());
     assertEquals(1, notebookRepoSync.list(1, null).size());
-    assertEquals(notebookRepoSync.list(0, null).get(0).getId(),notebookRepoSync.list(1, null).get(0).getId());
+    assertEquals(notebookRepoSync.list(0, null).get(0).getId(), notebookRepoSync.list(1, null).get(0).getId());
 
   }
 
@@ -147,7 +147,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     /* check that created in both storage systems */
     assertEquals(1, notebookRepoSync.list(0, null).size());
     assertEquals(1, notebookRepoSync.list(1, null).size());
-    assertEquals(notebookRepoSync.list(0, null).get(0).getId(),notebookRepoSync.list(1, null).get(0).getId());
+    assertEquals(notebookRepoSync.list(0, null).get(0).getId(), notebookRepoSync.list(1, null).get(0).getId());
 
     /* remove Note */
     notebookSync.removeNote(notebookRepoSync.list(0, null).get(0).getId(), null);
@@ -292,10 +292,11 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     // create note
     Note note = vNotebookSync.createNote(null);
     assertThat(vRepoSync.list(null).size()).isEqualTo(1);
-
     String noteId = vRepoSync.list(null).get(0).getId();
+    Note note1 = vNotebookSync.getNote(noteId);
+
     // first checkpoint
-    vRepoSync.checkpoint(noteId, "checkpoint message", null);
+    vRepoSync.checkpoint(note1, "checkpoint message", null);
     int vCount = gitRepo.revisionHistory(noteId, null).size();
     assertThat(vCount).isEqualTo(1);
 
@@ -307,16 +308,16 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
 
     // save and checkpoint again
     vRepoSync.save(note, null);
-    vRepoSync.checkpoint(noteId, "checkpoint message 2", null);
+    vRepoSync.checkpoint(note1, "checkpoint message 2", null);
     assertThat(gitRepo.revisionHistory(noteId, null).size()).isEqualTo(vCount + 1);
   }
 
-  static void delete(File file){
-    if(file.isFile()) file.delete();
-    else if(file.isDirectory()){
-      File [] files = file.listFiles();
-      if(files!=null && files.length>0){
-        for(File f : files){
+  static void delete(File file) {
+    if (file.isFile()) file.delete();
+    else if (file.isDirectory()) {
+      File[] files = file.listFiles();
+      if (files != null && files.length > 0) {
+        for (File f : files) {
           delete(f);
         }
       }
@@ -326,7 +327,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
 
   @Override
   public ParagraphJobListener getParagraphJobListener(Note note) {
-    return new ParagraphJobListener(){
+    return new ParagraphJobListener() {
 
       @Override
       public void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output) {

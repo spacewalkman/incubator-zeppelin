@@ -22,10 +22,9 @@ import com.google.common.collect.Lists;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.NameScope;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -83,48 +82,65 @@ public class GitNotebookRepo extends VFSNotebookRepo {
     FileObject gitIgnore = getRootDir().resolveFile(GIT_IGNORE, NameScope.CHILD);
     if (!gitIgnore.exists()) {
       gitIgnore.createFile();
+      OutputStream defaultIgnoreOutput = gitIgnore.getContent().getOutputStream();
+
+      String line = System.getProperty("line.separator");
+      defaultIgnoreOutput.write(("*.swp" + line).getBytes("UTF-8"));//其他的ignore项
+      defaultIgnoreOutput.write(("*.note.json" + line).getBytes("UTF-8"));//默认note保存时的临时文件
+      defaultIgnoreOutput.write(("#*" + line).getBytes("UTF-8"));//如下是其他2各临时文件
+      defaultIgnoreOutput.write(("~*" + line).getBytes("UTF-8"));
+
+      defaultIgnoreOutput.close();
     }
+    checkpoint(GIT_IGNORE, "ignore *.swp and *.note.json by default");//如果不commit，则每次jgit diff的时候都会显示这次.gitignore在diff中
+  }
 
-    OutputStream defaultIgnoreOutput = gitIgnore.getContent().getOutputStream();
-
-    String line = System.getProperty("line.separator");
-    defaultIgnoreOutput.write(("*.swp" + line).getBytes("UTF-8"));//其他的ignore项
-    defaultIgnoreOutput.write(("*.note.json" + line).getBytes("UTF-8"));//默认note保存时的临时文件
-    defaultIgnoreOutput.write(("#*" + line).getBytes("UTF-8"));//如下是其他2各临时文件
-    defaultIgnoreOutput.write(("~*" + line).getBytes("UTF-8"));
-
-    defaultIgnoreOutput.close();
-    checkpoint(GIT_IGNORE, "ignore *.swp and *.note.json by default", null);//如果不commit，则每次jgit diff的时候都会显示这次.gitignore在diff中
+  void checkpoint(String file, String commitMessage) {
+    try {
+      List<DiffEntry> gitDiff = git.diff().setPathFilter(PathFilter.create(file)).call();//仅仅显示当前note的diff,避免diff整个notebook目录，gitDiff总不会为空，造成commit没有note内容，仅仅有message
+      if (!gitDiff.isEmpty()) {
+        LOG.debug("Changes found for file '{}': {}", file, gitDiff);
+        DirCache added = git.add().addFilepattern(file).call();
+        LOG.debug("{} changes are about to be committed", added.getEntryCount());
+        git.commit().setMessage(commitMessage).setAuthor("admin", "")
+                .setCommitter("admin", "").call();//TODO:大赛组委会如何联系？
+      } else {
+        LOG.debug("No changes found for file {}", file);
+      }
+    } catch (GitAPIException e) {
+      LOG.error("Failed to add+commit {} to Git", file, e);
+    }
   }
 
   @Override
-  public synchronized void save(Note note, Subject subject) throws IOException {
-    super.save(note, subject);
+  public synchronized void save(Note note, String principal) throws IOException {
+    super.save(note, principal);
   }
 
   /**
    * implemented as git add+commit
    *
-   * @param pattern       is the noteId
+   * @param note          note
    * @param commitMessage is a commit message (checkpoint message) (non-Javadoc)
-   * @see org.apache.zeppelin.notebook.repo.RevisionService#checkpoint(String, String, Subject)
    */
   @Override
-  public Revision checkpoint(String pattern, String commitMessage, Subject subject) {
+  public Revision checkpoint(Note note, String commitMessage,
+                             String principal) {
     Revision revision = null;
     try {
-      List<DiffEntry> gitDiff = git.diff().setPathFilter(PathFilter.create(pattern)).call();//仅仅显示当前note的diff,避免diff整个notebook目录，gitDiff总不会为空，造成commit没有note内容，仅仅有message
+      List<DiffEntry> gitDiff = git.diff().setPathFilter(PathFilter.create(note.getId())).call();//仅仅显示当前note的diff,避免diff整个notebook目录，gitDiff总不会为空，造成commit没有note内容，仅仅有message
       if (!gitDiff.isEmpty()) {
-        LOG.debug("Changes found for pattern '{}': {}", pattern, gitDiff);
-        DirCache added = git.add().addFilepattern(pattern).call();
+        LOG.debug("Changes found for pattern '{}': {}", note.getId(), gitDiff);
+        DirCache added = git.add().addFilepattern(note.getId()).call();
         LOG.debug("{} changes are about to be committed", added.getEntryCount());
-        RevCommit commit = git.commit().setMessage(commitMessage).setAuthor(subject == null ? "" : (String) (subject.getPrincipal()), "").call();//TODO:email要如何获取？
-        revision = new Revision(commit.getName(), commit.getShortMessage(), commit.getCommitTime());
+        RevCommit commit = git.commit().setMessage(commitMessage).setAuthor(principal, "")
+                .setCommitter(principal, "").call();//TODO:email要如何获取？
+        revision = new Revision(commit.getName(), note.getId(), note.getName(), commit.getShortMessage(), commit.getCommitTime(), commit.getAuthorIdent().getName(), principal, note.getGroup(), note.getProjectId());
       } else {
-        LOG.debug("No changes found {}", pattern);
+        LOG.debug("No changes found {}", note.getId());
       }
     } catch (GitAPIException e) {
-      LOG.error("Failed to add+commit {} to Git", pattern, e);
+      LOG.error("Failed to add+commit {} to Git", note.getId(), e);
     }
     return revision;
   }
@@ -137,7 +153,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
    * 4. apply stash on top and remove it
    */
   @Override
-  public synchronized Note get(String noteId, String revId, Subject subject)
+  public synchronized Note get(String noteId, String revId, String principal)
           throws IOException {
     Note note = null;
     RevCommit stash = null;
@@ -154,7 +170,7 @@ public class GitNotebookRepo extends VFSNotebookRepo {
       // checkout to target revision
       git.checkout().setStartPoint(revId).addPath(noteId).call();
       // get the note
-      note = super.get(noteId, subject);
+      note = super.get(noteId, principal);
       // checkout back to head
       git.checkout().setStartPoint(head.getName()).addPath(noteId).call();
       if (modified && stash != null) {
@@ -172,13 +188,15 @@ public class GitNotebookRepo extends VFSNotebookRepo {
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
+  public List<Revision> revisionHistory(String noteId, String principal) {
     List<Revision> history = Lists.newArrayList();
     LOG.debug("Listing history for {}:", noteId);
     try {
       Iterable<RevCommit> logs = git.log().addPath(noteId).call();
       for (RevCommit log : logs) {
-        history.add(new Revision(log.getName(), log.getShortMessage(), log.getCommitTime()));
+        history.add(new Revision(log.getName(), noteId, "", log.getShortMessage(), log.getCommitTime(),
+                log.getAuthorIdent() == null ? "" : log.getAuthorIdent().getName(),
+                log.getCommitterIdent() == null ? "" : log.getCommitterIdent().getName(), "", ""));//TODO：git实现的无法获取note的title,team和projectId
         LOG.debug(" - ({},{},{})", log.getName(), log.getCommitTime(), log.getFullMessage());
       }
     } catch (NoHeadException e) {
@@ -202,6 +220,12 @@ public class GitNotebookRepo extends VFSNotebookRepo {
 
   void setGit(Git git) {
     this.git = git;
+  }
+
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
+    return null;
   }
 
 }

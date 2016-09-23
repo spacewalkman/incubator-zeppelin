@@ -17,13 +17,11 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,37 +123,37 @@ public class NotebookRepoSync implements NotebookRepo {
    * Lists Notebooks from the first repository
    */
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
-    return getRepo(0).list(subject);
+  public List<NoteInfo> list(String principal) throws IOException {
+    return getRepo(0).list(principal);
   }
 
   /* list from specific repo (for tests) */
-  List<NoteInfo> list(int repoIndex, Subject subject) throws IOException {
-    return getRepo(repoIndex).list(subject);
+  List<NoteInfo> list(int repoIndex, String principal) throws IOException {
+    return getRepo(repoIndex).list(principal);
   }
 
   /**
    * Returns from Notebook from the first repository
    */
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
-    return getRepo(0).get(noteId, subject);
+  public Note get(String noteId, String principal) throws IOException {
+    return getRepo(0).get(noteId, principal);
   }
 
   /* get note from specific repo (for tests) */
-  Note get(int repoIndex, String noteId, Subject subject) throws IOException {
-    return getRepo(repoIndex).get(noteId, subject);
+  Note get(int repoIndex, String noteId, String principal) throws IOException {
+    return getRepo(repoIndex).get(noteId, principal);
   }
 
   /**
    * Saves to all repositories
    */
   @Override
-  public void save(Note note, Subject subject) throws IOException {
-    getRepo(0).save(note, subject);
+  public void save(Note note, String principal) throws IOException {
+    getRepo(0).save(note, principal);
     if (getRepoCount() > 1) {
       try {
-        getRepo(1).save(note, subject);
+        getRepo(1).save(note, principal);
       } catch (IOException e) {
         LOG.info(e.getMessage() + ": Failed to write to secondary storage");
       }
@@ -163,14 +161,14 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   /* save note to specific repo (for tests) */
-  void save(int repoIndex, Note note, Subject subject) throws IOException {
-    getRepo(repoIndex).save(note, subject);
+  void save(int repoIndex, Note note, String principal) throws IOException {
+    getRepo(repoIndex).save(note, principal);
   }
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     for (NotebookRepo repo : repos) {
-      repo.remove(noteId, subject);
+      repo.remove(noteId, principal);
     }
     /* TODO(khalid): handle case when removing from secondary storage fails */
   }
@@ -274,7 +272,8 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   private Map<String, List<String>> notesCheckDiff(List<NoteInfo> sourceNotes,
-                                                   NotebookRepo sourceRepo, List<NoteInfo> destNotes, NotebookRepo destRepo)
+                                                   NotebookRepo sourceRepo,
+                                                   List<NoteInfo> destNotes, NotebookRepo destRepo)
           throws IOException {
     List<String> pushIDs = new ArrayList<String>();
     List<String> pullIDs = new ArrayList<String>();
@@ -290,8 +289,8 @@ public class NotebookRepoSync implements NotebookRepo {
       dnote = containsID(destNotes, snote.getId());
       if (dnote != null) {
         /* note exists in source and destination storage systems */
-        sdate = lastModificationDate(sourceRepo.get(snote.getId(), null));
-        ddate = lastModificationDate(destRepo.get(dnote.getId(), null));
+        sdate = sourceRepo.get(snote.getId(), null).getLastUpdated();
+        ddate = destRepo.get(dnote.getId(), null).getLastUpdated();
 
         if (sdate.compareTo(ddate) != 0) {
           if (sdate.after(ddate) || oneWaySync) {
@@ -349,33 +348,6 @@ public class NotebookRepoSync implements NotebookRepo {
     return null;
   }
 
-  /**
-   * checks latest modification date based on Paragraph fields
-   *
-   * @return -Date
-   */
-  private Date lastModificationDate(Note note) {
-    Date latest = new Date(0L);
-    Date tempCreated, tempStarted, tempFinished;
-
-    for (Paragraph paragraph : note.getParagraphs()) {
-      tempCreated = paragraph.getDateCreated();
-      tempStarted = paragraph.getDateStarted();
-      tempFinished = paragraph.getDateFinished();
-
-      if (tempCreated != null && tempCreated.after(latest)) {
-        latest = tempCreated;
-      }
-      if (tempStarted != null && tempStarted.after(latest)) {
-        latest = tempStarted;
-      }
-      if (tempFinished != null && tempFinished.after(latest)) {
-        latest = tempFinished;
-      }
-    }
-    return latest;
-  }
-
   @Override
   public void close() {
     LOG.info("Closing all notebook storages");
@@ -386,7 +358,8 @@ public class NotebookRepoSync implements NotebookRepo {
 
   //checkpoint to all available storages
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
+  public Revision checkpoint(Note note, String checkpointMsg,
+                             String principal) throws IOException {
     int repoCount = getRepoCount();
     int repoBound = Math.min(repoCount, getMaxRepoNum());
     int errorCount = 0;
@@ -394,13 +367,13 @@ public class NotebookRepoSync implements NotebookRepo {
     List<Revision> allRepoCheckpoints = new ArrayList<Revision>(repoBound);
     for (int i = 0; i < repoBound; i++) {
       try {
-        Revision rev = getRepo(i).checkpoint(noteId, checkpointMsg, subject);
+        Revision rev = getRepo(i).checkpoint(note, checkpointMsg, principal);
         if (rev != null) {
           allRepoCheckpoints.add(rev);
         }
       } catch (IOException e) {
         LOG.warn("Couldn't checkpoint in {} storage with index {} for note {}",
-                getRepo(i).getClass().toString(), i, noteId);
+                getRepo(i).getClass().toString(), i, note.getId());
         errorMessage += "Error on storage class " + getRepo(i).getClass().toString() +
                 " with index " + i + " : " + e.getMessage() + "\n";
         errorCount++;
@@ -428,10 +401,10 @@ public class NotebookRepoSync implements NotebookRepo {
    * @param revId  revision of the Notebook
    */
   @Override
-  public Note get(String noteId, String revId, Subject subject) {
+  public Note get(String noteId, String revId, String principal) {
     try {
       for (int i = 0; i < getRepoCount(); i++) {
-        Note revisionNote = getRepo(i).get(noteId, revId, subject);
+        Note revisionNote = getRepo(i).get(noteId, revId, principal);
         if (revisionNote != null) {
           return revisionNote;
         }
@@ -448,10 +421,10 @@ public class NotebookRepoSync implements NotebookRepo {
    * @param noteId id of the Notebook
    */
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
+  public List<Revision> revisionHistory(String noteId, String principal) {
     try {
       for (int i = 0; i < getRepoCount(); i++) {
-        List<Revision> returnRevisions = getRepo(i).revisionHistory(noteId, subject);
+        List<Revision> returnRevisions = getRepo(i).revisionHistory(noteId, principal);
         if (returnRevisions != null) {
           return returnRevisions;
         }
@@ -470,5 +443,26 @@ public class NotebookRepoSync implements NotebookRepo {
       return repos.get(0);
     else
       return null;
+  }
+
+  /**
+   * 短路设计，primary和back up repo依次提交，首次完成提交，即返回
+   *
+   * @param noteId     当前提交的note id，在dbms中由于revisionId是主键，故没有使用noteid
+   * @param revisionId 待提交的版本
+   */
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    try {
+      for (int i = 0; i < getRepoCount(); i++) {
+        SubmitLeftOver submitLeftOver = getRepo(i).submit(noteId, revisionId);
+        if (submitLeftOver != null) {
+          return submitLeftOver;
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to submit revision:'{}' of note:'{}'", revisionId, noteId, e);
+    }
+    return null;
   }
 }

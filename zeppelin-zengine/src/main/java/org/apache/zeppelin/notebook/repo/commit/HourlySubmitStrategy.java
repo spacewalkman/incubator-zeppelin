@@ -5,7 +5,11 @@ import java.util.Calendar;
 /**
  * 按照小时限制次数
  */
-public class HourlyComitStrategy extends CommitStrategy {
+public class HourlySubmitStrategy extends SubmitStrategy {
+
+  public HourlySubmitStrategy() {
+    this.typeName = "小时";
+  }
 
   @Override
   public long[] getTimeRange() {

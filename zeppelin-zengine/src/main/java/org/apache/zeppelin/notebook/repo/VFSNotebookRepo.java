@@ -25,15 +25,14 @@ import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.NameScope;
 import org.apache.commons.vfs2.Selectors;
 import org.apache.commons.vfs2.VFS;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.util.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +43,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 public class VFSNotebookRepo implements NotebookRepo {
-  Logger logger = LoggerFactory.getLogger(VFSNotebookRepo.class);
+  Logger LOG = LoggerFactory.getLogger(VFSNotebookRepo.class);
 
   private FileSystemManager fsManager;
   private URI filesystemRoot;
@@ -79,7 +79,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     fsManager = VFS.getManager();
     FileObject file = fsManager.resolveFile(filesystemRoot.getPath());
     if (!file.exists()) {
-      logger.info("Notebook dir doesn't exist, create.");
+      LOG.info("Notebook dir doesn't exist, create.");
       file.createFolder();
     }
   }
@@ -105,7 +105,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
+  public List<NoteInfo> list(String principalø) throws IOException {
     FileObject rootDir = getRootDir();
 
     FileObject[] children = rootDir.getChildren();
@@ -135,7 +135,7 @@ public class VFSNotebookRepo implements NotebookRepo {
           infos.add(info);
         }
       } catch (Exception e) {
-        logger.error("Can't read note " + f.getName().toString(), e);
+        LOG.error("Can't read note " + f.getName().toString(), e);
       }
     }
 
@@ -158,9 +158,8 @@ public class VFSNotebookRepo implements NotebookRepo {
     ins.close();
 
     Note note = GsonUtil.fromJson(json, Note.class);
-//    note.setReplLoader(replLoader);
-//    note.jobListenerFactory = jobListenerFactory;
 
+    Date lastUpdated = null;
     for (Paragraph p : note.getParagraphs()) {
       if (p.getStatus() == Status.PENDING || p.getStatus() == Status.RUNNING) {
         p.setStatus(Status.ABORT);
@@ -185,7 +184,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
+  public Note get(String noteId, String principal) throws IOException {
     FileObject rootDir = fsManager.resolveFile(getPath("/"));
     FileObject noteDir = rootDir.resolveFile(noteId, NameScope.CHILD);
 
@@ -207,7 +206,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public synchronized void save(Note note, Subject subject) throws IOException {
+  public synchronized void save(Note note, String principal) throws IOException {
     String json = GsonUtil.toJson(note);
 
     FileObject rootDir = getRootDir();
@@ -229,7 +228,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     FileObject rootDir = fsManager.resolveFile(getPath("/"));
     FileObject noteDir = rootDir.resolveFile(noteId, NameScope.CHILD);
 
@@ -252,20 +251,34 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject) throws IOException {
-    // Auto-generated method stub
+  public Revision checkpoint(Note note, String checkpointMsg, String principal)
+          throws IOException {
+    // no-op
+    LOG.info("Checkpoint feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, Subject subject) throws IOException {
-    // Auto-generated method stub
+  public Note get(String noteId, String revId, String principal) throws IOException {
+    LOG.info("get revision feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
-    // Auto-generated method stub
+  public List<Revision> revisionHistory(String noteId, String principal) {
+    LOG.info("revisionHistory feature isn't supported in {}", this.getClass().toString());
+    return null;
+  }
+
+  /**
+   * TODO:这里应该做成push 到remote 远程git repo上
+   *
+   * @param noteId     当前提交的note id，在dbms中由于revisionId是主键，故没有使用noteid
+   * @param revisionId 待提交的版本
+   */
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 

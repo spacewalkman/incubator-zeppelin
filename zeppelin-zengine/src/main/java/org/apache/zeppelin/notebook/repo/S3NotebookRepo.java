@@ -37,15 +37,14 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +136,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
+  public List<NoteInfo> list(String principal) throws IOException {
     List<NoteInfo> infos = new LinkedList<>();
     NoteInfo info;
     try {
@@ -197,12 +196,12 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
+  public Note get(String noteId, String principal) throws IOException {
     return getNote(user + "/" + "notebook" + "/" + noteId + "/" + "note.json");
   }
 
   @Override
-  public void save(Note note, Subject subject) throws IOException {
+  public void save(Note note, String principal) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -223,7 +222,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     String key = user + "/" + "notebook" + "/" + noteId;
     final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
             .withBucketName(bucketName).withPrefix(key);
@@ -247,21 +246,27 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject)
+  public Revision checkpoint(Note note, String checkpointMsg, String principal)
           throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public Note get(String noteId, String revId, Subject subject) throws IOException {
+  public Note get(String noteId, String revId, String principal) throws IOException {
     // Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
+  public List<Revision> revisionHistory(String noteId, String principal) {
     // Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 }

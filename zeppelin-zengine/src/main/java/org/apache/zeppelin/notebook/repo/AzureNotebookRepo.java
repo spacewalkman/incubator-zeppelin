@@ -19,22 +19,32 @@ package org.apache.zeppelin.notebook.repo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.*;
+import com.microsoft.azure.storage.file.CloudFile;
+import com.microsoft.azure.storage.file.CloudFileClient;
+import com.microsoft.azure.storage.file.CloudFileDirectory;
+import com.microsoft.azure.storage.file.CloudFileShare;
+import com.microsoft.azure.storage.file.ListFileItem;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Date;
@@ -74,7 +84,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NoteInfo> list(Subject subject) throws IOException {
+  public List<NoteInfo> list(String principal) throws IOException {
     List<NoteInfo> infos = new LinkedList<NoteInfo>();
     NoteInfo info = null;
 
@@ -139,12 +149,12 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, Subject subject) throws IOException {
+  public Note get(String noteId, String principalt) throws IOException {
     return getNote(noteId);
   }
 
   @Override
-  public void save(Note note, Subject subject) throws IOException {
+  public void save(Note note, String principal) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
     Gson gson = gsonBuilder.create();
@@ -191,7 +201,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, Subject subject) throws IOException {
+  public void remove(String noteId, String principal) throws IOException {
     try {
       CloudFileDirectory dir = rootDir.getDirectoryReference(noteId);
 
@@ -210,7 +220,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Revision checkpoint(String noteId, String checkpointMsg, Subject subject)
+  public Revision checkpoint(Note note, String checkpointMsg, String principal)
           throws IOException {
     // no-op
     LOG.info("Checkpoint feature isn't supported in {}", this.getClass().toString());
@@ -218,14 +228,20 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String revId, Subject subject) throws IOException {
-    // Auto-generated method stub
+  public Note get(String noteId, String revId, String principal) throws IOException {
+    LOG.info("get revision feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, Subject subject) {
-    // Auto-generated method stub
+  public List<Revision> revisionHistory(String noteId, String principal) {
+    LOG.info("revisionHistory feature isn't supported in {}", this.getClass().toString());
+    return null;
+  }
+
+  @Override
+  public SubmitLeftOver submit(String noteId, String revisionId) {
+    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
   }
 }
