@@ -131,6 +131,7 @@ public class Message {
     NOTE_REVISION,          // [c-s] get certain revision of note
                             // @param noteId
                             // @param revisionId
+    NOTE_REVISION_SUBMIT,   // [c-s] 提交note一个指定的revision版本到组委会
 
     APP_APPEND_OUTPUT,      // [s-c] append output
     APP_UPDATE_OUTPUT,      // [s-c] update (replace) output
@@ -145,7 +146,9 @@ public class Message {
     SAVE_INTERPRETER_BINDINGS, // [c-s] save interpreter bindings
                                // @param noteID
                                // @param selectedSettingIds
-    INTERPRETER_BINDINGS // [s-c] interpreter bindings
+    INTERPRETER_BINDINGS, // [s-c] interpreter bindings
+
+    REVISION_SUBMIT//[s-c] submit note到组委会
   }
 
   public OP op;
