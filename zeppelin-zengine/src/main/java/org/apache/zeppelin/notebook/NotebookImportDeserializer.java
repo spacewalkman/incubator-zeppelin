@@ -35,7 +35,8 @@ import java.util.Locale;
 public class NotebookImportDeserializer implements JsonDeserializer<Date> {
   private static final String[] DATE_FORMATS = new String[] {
     "yyyy-MM-dd'T'HH:mm:ssZ",
-    "MMM dd, yyyy HH:mm:ss"
+    "MMM dd, yyyy HH:mm:ss",
+    "yyyy-MM-dd HH:mm:ss" //增加目前ES使用的日期格式
   };
 
   @Override
