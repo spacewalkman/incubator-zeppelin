@@ -170,19 +170,6 @@ public class NotebookServer extends WebSocketServlet implements
       }
 
       Subject subject = TicketContainer.instance.getCachedSubject(messagereceived.ticket);
-      NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-
-      HashSet<String> userAndRoles = new HashSet<String>();//从前端缓存并传递过来的roles集合？
-      userAndRoles.add(messagereceived.principal);
-      if (!messagereceived.roles.equals("")) {
-        HashSet<String> roles = GsonUtil.fromJson(messagereceived.roles,
-                new TypeToken<HashSet<String>>() {
-                }.getType());
-        if (roles != null) {
-          userAndRoles.addAll(roles);
-        }
-      }
-
 
       /** Lets be elegant here */
       switch (messagereceived.op) {
