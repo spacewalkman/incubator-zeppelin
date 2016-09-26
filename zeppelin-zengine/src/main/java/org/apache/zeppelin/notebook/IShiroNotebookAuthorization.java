@@ -10,49 +10,64 @@ import java.util.List;
 public interface IShiroNotebookAuthorization {
 
   /**
-   * 参赛队队长的role名字,占位符为队id,如果队id叫abc,那么该队的队长的role的名称为group_leader_abc
+   * 某个note可读,占位符为具体的noteId，后面2个占位符分别为groupId和noteId
    */
-  String GROUP_LEADER_ROLE_NAME_FORMAT = "group_leader_%s";
+  String NOTE_GROUP_READER_PERMISSION_FORMAT = "note:readers:%s:%s";//如果是4维的，则note的id是可以重复的，只要保证每个group内部唯一即可
 
   /**
-   * 队长的权限,占位符为形如groupX_*,noteId的schema对应为groupId_noteId
-   */
-  String GROUP_LEADER_PERMISSION_FORMAT = "note:*:%s";
-
-  /**
-   * 某个note可读,占位符为具体的noteId，noteId的schema对应为groupId_noteId
+   * 单个note的reader,权限项
    */
   String NOTE_READER_PERMISSION_FORMAT = "note:readers:%s";
 
   /**
-   * 某个note可写,占位符为具体的noteId，noteId的schema对应为groupId_noteId
+   * 某个note可写,占位符为具体的noteId，后面2个占位符分别为groupId和noteId
+   */
+  String NOTE_GROUP_WRITER_PERMISSION_FORMAT = "note:writers:%s:%s";
+
+  /**
+   * 单个note的writer,权限项
    */
   String NOTE_WRITER_PERMISSION_FORMAT = "note:writers:%s";
 
   /**
-   * 某个note的所有者,占位符为具体的noteId，noteId的schema对应为groupId_noteId
+   * 某个note的所有者,占位符为具体的noteId，后面2个占位符分别为groupId和noteId
+   */
+  String NOTE_GROUP_OWNER_PERMISSION_FORMAT = "note:owners:%s:%s";
+
+  /**
+   * 单个note的owner,权限项
    */
   String NOTE_OWNER_PERMISSION_FORMAT = "note:owners:%s";
 
   /**
    * 某个note可以提交版本历史,占位符为具体的noteId，后面2个占位符分别为groupId和noteId
    */
-  String NOTE_COMMITTER_PERMISSION_FORMAT = "note:committer:%s:%s";
+  String NOTE_GROUP_COMMITTER_PERMISSION_FORMAT = "note:committer:%s:%s";
 
   /**
    * 向组委会提交notes的权利,该权利由队长独有,队员不具备,后面2个占位符分别为groupId和noteId
    */
-  String NOTE_SUBMIT_PERMISSION_FORMAT = "note:submitters:%s:%s";
+  String NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT = "note:submitters:%s:%s";
 
   /**
    * 队员的权限列表,可以:读写提交版本控制,占位符为形如groupX_*,noteId的schema对应为groupId_noteId
    */
-  String[] GROUP_MEMBER_PERMISSION_FORMATS = {NOTE_READER_PERMISSION_FORMAT, NOTE_WRITER_PERMISSION_FORMAT, NOTE_OWNER_PERMISSION_FORMAT, NOTE_COMMITTER_PERMISSION_FORMAT};
+  String GROUP_MEMBER_PERMISSIONS_FORMAT = "note:%s:%s:%s";
+
+  /**
+   * multi-part权限，对应到NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT的第二个占位符
+   */
+  String GROUP_MEMBER_PERMISSIONS = "readers,writers,owners,committer";
 
   /**
    * 参赛队队员的role的名称,同一个对内部所有的note都可以读写,不再对队内部的note区分谁是owner
    */
   String GROUP_MEMBER_ROLE_NAME_FORMAT = "group_member_%s";
+
+  /**
+   * 组submitter的角色名称，group_leader=group_member  +  group_sumbmitter
+   */
+  String GROUP_SUBMITTER_ROLE_NAME_FORMAT = "group_submitter_%s";
 
   /**
    * 控制哪些用户能使用哪些interpreter的角色名字,占位符为interpreter的id
@@ -94,6 +109,21 @@ public interface IShiroNotebookAuthorization {
    * 是否能够提交版本控制
    */
   boolean isCommitter(Subject subject, String groupId, String noteId);
+
+  /**
+   * 是否是note的reader
+   */
+  boolean isReader(Subject subject, String groupId, String noteId);
+
+  /**
+   * 是否是note的writer
+   */
+  boolean isWriter(Subject subject, String groupId, String noteId);
+
+  /**
+   * 是否是note的owner
+   */
+  boolean isOwner(Subject subject, String groupId, String noteId);
 
   /**
    * 添加队员

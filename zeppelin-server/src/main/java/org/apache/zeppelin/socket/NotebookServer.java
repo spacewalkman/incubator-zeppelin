@@ -497,8 +497,8 @@ public class NotebookServer extends WebSocketServlet implements
 
     List<Map<String, String>> notesInfo = new LinkedList<>();
     for (Note note : notes) {
-      if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
-        //if (subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_READER_PERMISSION_FORMAT, note.getId()))) {
+      if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {//TODO:返回note要置readOnly状态
+        //if (subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_GROUP_READER_PERMISSION_FORMAT, note.getId()))) {
         continue;
         //如果不是组内成员，但是是组内note的reader吗？
       }

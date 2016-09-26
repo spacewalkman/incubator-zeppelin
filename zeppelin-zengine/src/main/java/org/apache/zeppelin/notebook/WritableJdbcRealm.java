@@ -2,7 +2,6 @@ package org.apache.zeppelin.notebook;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
-import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
 import org.apache.shiro.util.JdbcUtils;
@@ -65,8 +64,6 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   public static final String INSERT_PERMISSION_TO_ROLE_SQL = "insert into ROLE_PERMISSION(role_name,permission) values (?,?)";
 
-  public Connection connection;
-
   /**
    * add new userName if not exist
    * TODO:创建队伍的时候使用
@@ -88,7 +85,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
 
     PreparedStatement ps = null;
     try {
-      ps = getNewConnection().prepareStatement(INSERT_USER_SQL);
+      ps = getConnection().prepareStatement(INSERT_USER_SQL);
       ps.setString(1, userName);
       ps.setString(2, hashedPassword);//与shiro.ini配置文件中的sha256Matcher.storedCredentialsHexEncoded = false对应
 
@@ -110,14 +107,9 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   }
 
 
-  public Connection getNewConnection() throws SQLException {
-    if (connection == null) {
-      connection = this.dataSource.getConnection();
-    }
-
-    return connection;
+  public Connection getConnection() throws SQLException {
+    return this.dataSource.getConnection();
   }
-
 
   /**
    * 用户是否存在
@@ -126,7 +118,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     PreparedStatement ps = null;
     ResultSet rs = null;
     try {
-      ps = this.getNewConnection().prepareStatement(IS_USER_EXSIT_SQL);
+      ps = this.getConnection().prepareStatement(IS_USER_EXSIT_SQL);
       ps.setString(1, userName);
 
       // Execute query
@@ -166,7 +158,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public int deleteUser(String userName) {
     PreparedStatement ps = null;
     try {
-      ps = this.getNewConnection().prepareStatement(DELETE_USER_EXSIT_SQL);
+      ps = this.getConnection().prepareStatement(DELETE_USER_EXSIT_SQL);
       ps.setString(1, userName);
       return ps.executeUpdate();
 
@@ -188,7 +180,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     PreparedStatement ps = null;
     ResultSet rs = null;
     try {
-      ps = this.getNewConnection().prepareStatement(IS_ROLE_EXSIT_SQL);
+      ps = this.getConnection().prepareStatement(IS_ROLE_EXSIT_SQL);
       ps.setString(1, roleName);
 
       // Execute query
@@ -220,31 +212,49 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   }
 
   /**
-   * assign role to user
+   * assign roles to user(transactional)
    *
-   * @param user user name
-   * @param role role name
+   * @param user  user name
+   * @param roles role names
    */
-  public void assignRoleToUser(String user, String role) throws AuthenticationException {
+  public void assignRoleToUser(String user, String... roles) throws AuthenticationException {
     PreparedStatement ps = null;
-    try {
-      ps = getNewConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
-      ps.setString(1, user);
-      ps.setString(2, role);
+    Connection connection = null;
 
-      int count = ps.executeUpdate();
-      if (count < 1) {
-        throw new AuthenticationException("can't assign role: " + role + " to user: " + user);
+    try {
+      connection = getConnection();
+      connection.setAutoCommit(false);
+
+      ps = getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
+      for (String role : roles) {
+        ps.setString(1, user);
+        ps.setString(2, role);
+
+        ps.addBatch();
       }
 
+      int[] counts = ps.executeBatch();
+
+      connection.commit();
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign role to user [" + user + "]";
       if (LOG.isErrorEnabled()) {
         LOG.error(message, e);
       }
+
+      try {
+        connection.rollback();
+      } catch (SQLException e1) {
+        LOG.error("error rolling back transaction", e);
+      }
       // Rethrow any SQL errors as an authentication exception
       throw new AuthenticationException(message, e);
     } finally {
+      try {
+        connection.setAutoCommit(true);
+      } catch (SQLException e) {
+        LOG.error("error reset to auto commit ", e);
+      }
       JdbcUtils.closeStatement(ps);
       JdbcUtils.closeConnection(connection);
     }
@@ -260,8 +270,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   public void assignPermissionToRole(String role, String permission) {
     PreparedStatement ps = null;
+    Connection connection = null;
+
     try {
-      ps = getNewConnection().prepareStatement(INSERT_PERMISSION_TO_ROLE_SQL);
+      connection = getConnection();
+      ps = connection.prepareStatement(INSERT_PERMISSION_TO_ROLE_SQL);
       ps.setString(1, role);
       ps.setString(2, permission);
 
@@ -291,12 +304,16 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public List<String> getUsersForGroup(final String groupPermissionPrefix) {
     PreparedStatement ps = null;
     List<String> userNames = new ArrayList<String>();
+    Connection connection = null;
+    ResultSet rs = null;
+
     try {
-      ps = getNewConnection().prepareStatement(SELECT_USER_FOR_GROUP_SQL);
+      connection = getConnection();
+      ps = connection.prepareStatement(SELECT_USER_FOR_GROUP_SQL);
       ps.setString(1, groupPermissionPrefix);
 
       // Execute query
-      ResultSet rs = ps.executeQuery();
+      rs = ps.executeQuery();
       while (rs.next()) {
         userNames.add(rs.getString(1));
       }
@@ -308,10 +325,12 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
       }
       throw new AuthenticationException(message, e);
     } finally {
+      JdbcUtils.closeResultSet(rs);
       JdbcUtils.closeStatement(ps);
       JdbcUtils.closeConnection(connection);
-      return userNames;
     }
+
+    return userNames;
   }
 
   /**
@@ -324,8 +343,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public boolean isRoleExistForUser(final String userName, final String roleName) {
     PreparedStatement ps = null;
     ResultSet rs = null;
+    Connection connection = null;
+
     try {
-      ps = this.getNewConnection().prepareStatement(IS_USE_HAS_ROLE_SQL);
+      connection = getConnection();
+      ps = connection.prepareStatement(IS_USE_HAS_ROLE_SQL);
       ps.setString(1, userName);
       ps.setString(2, roleName);
 
@@ -344,6 +366,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     } finally {
       JdbcUtils.closeResultSet(rs);
       JdbcUtils.closeStatement(ps);
+      JdbcUtils.closeConnection(connection);
     }
   }
 }

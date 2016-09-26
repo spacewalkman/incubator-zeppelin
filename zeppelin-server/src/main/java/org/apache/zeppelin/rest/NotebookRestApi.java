@@ -39,7 +39,6 @@ import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.types.InterpreterSettingsList;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
@@ -859,7 +858,7 @@ public class NotebookRestApi {
 //      if (!notebookAuthorization.isOwner(noteId, userAndRoles) &&
 //              !notebookAuthorization.isReader(noteId, userAndRoles) &&
 //              !notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      if (!subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_READER_PERMISSION_FORMAT, groupId + "_" + noteId))) {
+      if (!subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_GROUP_READER_PERMISSION_FORMAT, groupId, noteId))) {
         notebooksFound.remove(i);
         i--;
       }

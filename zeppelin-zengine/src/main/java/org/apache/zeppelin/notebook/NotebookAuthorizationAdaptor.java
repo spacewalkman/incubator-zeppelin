@@ -37,6 +37,21 @@ public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebook
   }
 
   @Override
+  public boolean isReader(Subject subject, String groupId, String noteId) {
+    return false;
+  }
+
+  @Override
+  public boolean isWriter(Subject subject, String groupId, String noteId) {
+    return false;
+  }
+
+  @Override
+  public boolean isOwner(Subject subject, String groupId, String noteId) {
+    return false;
+  }
+
+  @Override
   public void addGroupMember(String groupId, String userName) {
   }
 

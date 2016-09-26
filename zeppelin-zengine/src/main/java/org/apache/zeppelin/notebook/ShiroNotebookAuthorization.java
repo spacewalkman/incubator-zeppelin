@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * shiro-based authorization,use writableJdbcRealm
@@ -50,9 +49,11 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
+    //group_leader同样是group_member
     return subject.hasRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
 
+  //group_leader=group_member +  group_submitter,避免为group_leader设置单独的role
   @Override
   public boolean isGroupLeader(Subject subject, String groupId) {
     if (!subject.isAuthenticated()) {
@@ -63,7 +64,8 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
-    return subject.hasRole(String.format(GROUP_LEADER_ROLE_NAME_FORMAT, groupId));
+
+    return subject.hasRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId)) && subject.hasRole(String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId));
   }
 
   /**
@@ -75,7 +77,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       return false;
     }
 
-    return subject.isPermitted(String.format(NOTE_SUBMIT_PERMISSION_FORMAT, groupId, noteId));
+    return subject.isPermitted(String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, noteId));
   }
 
 
@@ -89,7 +91,42 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       return false;
     }
 
-    return subject.isPermitted(String.format(NOTE_COMMITTER_PERMISSION_FORMAT, groupId, noteId));
+    return subject.isPermitted(String.format(NOTE_GROUP_COMMITTER_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+  @Override
+  public boolean isReader(Subject subject, String groupId, String noteId) {
+    if (!subject.isAuthenticated()) {
+      return false;
+    }
+
+    if (groupId == null || groupId.isEmpty()) {//组为空，表明是单个note级别的权限，用来控制"模板"
+      return subject.isPermitted(String.format(NOTE_READER_PERMISSION_FORMAT, noteId));
+    }
+
+    return subject.isPermitted(String.format(NOTE_GROUP_READER_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+  @Override
+  public boolean isWriter(Subject subject, String groupId, String noteId) {
+    if (!subject.isAuthenticated()) {
+      return false;
+    }
+
+    if (groupId == null || groupId.isEmpty()) {//组为空，表明是单个note级别的权限，用来控制"模板"
+      return subject.isPermitted(String.format(NOTE_READER_PERMISSION_FORMAT, noteId));
+    }
+
+    return subject.isPermitted(String.format(NOTE_GROUP_WRITER_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+  @Override
+  public boolean isOwner(Subject subject, String groupId, String noteId) {
+    if (!subject.isAuthenticated()) {
+      return false;
+    }
+
+    return subject.isPermitted(String.format(NOTE_GROUP_OWNER_PERMISSION_FORMAT, groupId, noteId));
   }
 
   @Override
@@ -98,7 +135,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       return false;
     }
 
-    return subject.isPermitted(ROLE_ADMIN);
+    return subject.hasRole(ROLE_ADMIN);
   }
 
 
@@ -121,7 +158,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    */
   @Override
   public void addGroupLeader(String groupId, String userName) {
-    writableJdbcRealm.assignRoleToUser(userName, String.format(GROUP_LEADER_PERMISSION_FORMAT, groupId));
+    writableJdbcRealm.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId));
   }
 
   /**
@@ -131,13 +168,11 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    */
   @Override
   public void addGroup(String groupId) {
-    //添加队长的permission到role
-    writableJdbcRealm.assignPermissionToRole(String.format(GROUP_LEADER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_LEADER_PERMISSION_FORMAT, groupId));
+    //添加note sumbmitter role
+    writableJdbcRealm.assignPermissionToRole(String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId), String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, "*"));
 
     //添加队员的permissions到role
-    for (String memberPermissionFormat : GROUP_MEMBER_PERMISSION_FORMATS) {
-      writableJdbcRealm.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(memberPermissionFormat, groupId));
-    }
+    writableJdbcRealm.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_MEMBER_PERMISSIONS_FORMAT, GROUP_MEMBER_PERMISSIONS, groupId, "*"));
   }
 
   /**
