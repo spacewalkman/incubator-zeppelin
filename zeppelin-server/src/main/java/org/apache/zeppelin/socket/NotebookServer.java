@@ -597,7 +597,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (note != null) {
       //if (!notebookAuthorization.isReader(noteId, userAndRoles)) {
-      if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+      if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
         //permissionError(conn, "read", userAndRoles, notebookAuthorization.getReaders(noteId));
         return;
       }
@@ -621,7 +621,7 @@ public class NotebookServer extends WebSocketServlet implements
     if (note != null) {
       NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
       //if (!notebookAuthorization.isReader(noteId, userAndRoles)) {
-      if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+      if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
         //permissionError(conn, "read", userAndRoles, notebookAuthorization.getReaders(noteId));
         return;
       }
@@ -650,7 +650,7 @@ public class NotebookServer extends WebSocketServlet implements
     Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //permissionError(conn, "update", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
     }
@@ -739,7 +739,7 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -779,7 +779,7 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -811,7 +811,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isOwner(noteId, userAndRoles)) {
       //permissionError(conn, "remove", userAndRoles, notebookAuthorization.getOwners(noteId));
       return;
@@ -835,7 +835,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -895,7 +895,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -919,7 +919,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -1194,7 +1194,7 @@ public class NotebookServer extends WebSocketServlet implements
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -1213,7 +1213,7 @@ public class NotebookServer extends WebSocketServlet implements
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -1234,7 +1234,7 @@ public class NotebookServer extends WebSocketServlet implements
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
       //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
       //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
       return;
@@ -1254,7 +1254,7 @@ public class NotebookServer extends WebSocketServlet implements
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    if (!notebookAuthorization.isGroupMember(subject, note.getGroup())) {
+    if (!notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
       return;
     }
 

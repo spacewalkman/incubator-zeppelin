@@ -96,37 +96,44 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
 
   @Override
   public boolean isReader(Subject subject, String groupId, String noteId) {
-    if (!subject.isAuthenticated()) {
-      return false;
-    }
-
-    if (groupId == null || groupId.isEmpty()) {//组为空，表明是单个note级别的权限，用来控制"模板"
-      return subject.isPermitted(String.format(NOTE_READER_PERMISSION_FORMAT, noteId));
-    }
-
-    return subject.isPermitted(String.format(NOTE_GROUP_READER_PERMISSION_FORMAT, groupId, noteId));
+    return doAuthenticate(subject, groupId, String.format(NOTE_READER_PERMISSION_FORMAT, noteId), String.format(NOTE_GROUP_READER_PERMISSION_FORMAT, groupId, noteId));
   }
 
   @Override
   public boolean isWriter(Subject subject, String groupId, String noteId) {
-    if (!subject.isAuthenticated()) {
-      return false;
-    }
-
-    if (groupId == null || groupId.isEmpty()) {//组为空，表明是单个note级别的权限，用来控制"模板"
-      return subject.isPermitted(String.format(NOTE_READER_PERMISSION_FORMAT, noteId));
-    }
-
-    return subject.isPermitted(String.format(NOTE_GROUP_WRITER_PERMISSION_FORMAT, groupId, noteId));
+    return doAuthenticate(subject, groupId, String.format(NOTE_WRITER_PERMISSION_FORMAT, noteId), String.format(NOTE_GROUP_WRITER_PERMISSION_FORMAT, groupId, noteId));
   }
 
   @Override
   public boolean isOwner(Subject subject, String groupId, String noteId) {
+    return doAuthenticate(subject, groupId, String.format(NOTE_OWNER_PERMISSION_FORMAT, noteId), String.format(NOTE_GROUP_OWNER_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+  @Override
+  public boolean isExecutor(Subject subject, String groupId, String noteId) {
+    return doAuthenticate(subject, groupId, String.format(NOTE_EXECUTOR_PERMISSION_FORMAT, noteId), String.format(NOTE_GROUP_EXECUTOR_PERMISSION_FORMAT, groupId, noteId));
+  }
+
+  /**
+   * 判断subject是否具有某种权限
+   *
+   * @param subject                      当前subject
+   * @param groupId                      组id
+   * @param withoutGroupPermissionFormat 权限是3维的，groupId字段为空，直接控制到note级别
+   * @param withGroupPermissionFormat    权限是4维的，groupId字段不为空，控制到组级别
+   */
+  private boolean doAuthenticate(Subject subject, String groupId,
+                                 final String withoutGroupPermissionFormat,
+                                 final String withGroupPermissionFormat) {
     if (!subject.isAuthenticated()) {
       return false;
     }
 
-    return subject.isPermitted(String.format(NOTE_GROUP_OWNER_PERMISSION_FORMAT, groupId, noteId));
+    if (groupId == null || groupId.isEmpty()) {//同上，用来控制"模板"权限
+      return subject.isPermitted(withoutGroupPermissionFormat);
+    }
+
+    return subject.isPermitted(withGroupPermissionFormat);
   }
 
   @Override
