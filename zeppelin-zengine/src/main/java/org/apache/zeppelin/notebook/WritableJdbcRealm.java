@@ -35,7 +35,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   /**
    * is role exist
    */
-  public static final String IS_ROLE_EXSIT_SQL = "select * from role where role_name = ?";
+  public static final String IS_ROLE_EXSIT_SQL = "select * from ROLE_PERMISSION where role_name = ?";
 
   /**
    * select all users for a group
@@ -60,7 +60,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public static final String INSERT_USER_SQL = "insert into USER(user_name,password) values (?,?)";
 
   /**
-   * add permission to role default sql, demo schema as below:
+   * 创建角色，并给角色授权permission
    */
   public static final String INSERT_PERMISSION_TO_ROLE_SQL = "insert into ROLE_PERMISSION(role_name,permission) values (?,?)";
 
@@ -84,8 +84,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     // hashedPassword = new Sha256Hash(password, userName).getBytes();
 
     PreparedStatement ps = null;
+    Connection connection = null;
+
     try {
-      ps = getConnection().prepareStatement(INSERT_USER_SQL);
+      connection = this.getConnection();
+      ps = connection.prepareStatement(INSERT_USER_SQL);
       ps.setString(1, userName);
       ps.setString(2, hashedPassword);//与shiro.ini配置文件中的sha256Matcher.storedCredentialsHexEncoded = false对应
 
@@ -103,6 +106,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
       throw new AuthenticationException(message, e);
     } finally {
       JdbcUtils.closeStatement(ps);
+      JdbcUtils.closeConnection(connection);
     }
   }
 
@@ -117,8 +121,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public boolean isUserExist(String userName) {
     PreparedStatement ps = null;
     ResultSet rs = null;
+    Connection connection = null;
+
     try {
-      ps = this.getConnection().prepareStatement(IS_USER_EXSIT_SQL);
+      connection = this.getConnection();
+      ps = connection.prepareStatement(IS_USER_EXSIT_SQL);
       ps.setString(1, userName);
 
       // Execute query
@@ -146,6 +153,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     } finally {
       JdbcUtils.closeResultSet(rs);
       JdbcUtils.closeStatement(ps);
+      JdbcUtils.closeConnection(connection);
     }
   }
 
@@ -157,8 +165,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   public int deleteUser(String userName) {
     PreparedStatement ps = null;
+    Connection connection = null;
+
     try {
-      ps = this.getConnection().prepareStatement(DELETE_USER_EXSIT_SQL);
+      connection = this.getConnection();
+      ps = connection.prepareStatement(DELETE_USER_EXSIT_SQL);
       ps.setString(1, userName);
       return ps.executeUpdate();
 
@@ -170,6 +181,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
       throw new AuthenticationException(message, e);
     } finally {
       JdbcUtils.closeStatement(ps);
+      JdbcUtils.closeConnection(connection);
     }
   }
 
@@ -179,8 +191,11 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   public boolean isRoleExist(String roleName) {
     PreparedStatement ps = null;
     ResultSet rs = null;
+    Connection connection = null;
+
     try {
-      ps = this.getConnection().prepareStatement(IS_ROLE_EXSIT_SQL);
+      connection = this.getConnection();
+      ps = connection.prepareStatement(IS_ROLE_EXSIT_SQL);
       ps.setString(1, roleName);
 
       // Execute query
@@ -208,6 +223,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     } finally {
       JdbcUtils.closeResultSet(rs);
       JdbcUtils.closeStatement(ps);
+      JdbcUtils.closeConnection(connection);
     }
   }
 
@@ -222,7 +238,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = getConnection();
+      connection = this.getConnection();
       connection.setAutoCommit(false);
 
       ps = getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
