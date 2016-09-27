@@ -1303,15 +1303,18 @@ public class NotebookServer extends WebSocketServlet implements
     //是否有commit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isCommitter(subject, group, noteId)) {
-      LOG.warn("{} is not committer of group:{}, note:{}", subject.getPrincipal(), group, noteId);
+      permissionError(conn, subject, "保存草稿", group, noteId);//即：类似git的commit，提交一个版本，UI设计时叫"保存草稿"
       return;
     }
 
     Revision revision = notebook.checkpointNote(noteId, commitMessage, (String) (subject.getPrincipal()));
-    if (revision != null) {//TODO:如果没有更新，前台目前没有获得任何通知
+    if (revision != null) {
       List<Revision> revisions = notebook.listRevisionHistory(noteId, (String) (subject.getPrincipal()));
       conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY)
               .put("revisionList", revisions)));
+    } else {//如果note没有更新，通知前台
+      conn.send(serializeMessage(new Message(OP.NO_CHANGE_FOUND)
+              .put("info", "算法没有修改")));
     }
   }
 
@@ -1366,6 +1369,7 @@ public class NotebookServer extends WebSocketServlet implements
     //是否有commit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isCommitter(subject, group, noteId)) {
+      permissionError(conn, subject, "查看历史版本", group, noteId);//即：类似git的commit，提交一个版本，UI设计时叫"查看历史版本"
       return;
     }
 

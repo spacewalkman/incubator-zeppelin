@@ -92,7 +92,21 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           }
         }]
       });
-    } else if (op === 'PARAGRAPH') {
+    } else if (op === 'NO_CHANGE_FOUND') {
+      BootstrapDialog.show({
+        closable: false,
+        closeByBackdrop: false,
+        closeByKeyboard: false,
+        title: 'NO change found',
+        message: data.info.toString(),
+        buttons: [{
+          label: 'OK',
+          action: function(dialog) {
+            dialog.close();
+          }
+        }]
+      });
+    }else if (op === 'PARAGRAPH') {
       $rootScope.$broadcast('updateParagraph', data);
     } else if (op === 'PARAGRAPH_APPEND_OUTPUT') {
       $rootScope.$broadcast('appendParagraphOutput', data);

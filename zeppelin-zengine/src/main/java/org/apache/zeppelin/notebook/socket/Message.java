@@ -148,7 +148,8 @@ public class Message {
                                // @param selectedSettingIds
     INTERPRETER_BINDINGS, // [s-c] interpreter bindings
 
-    REVISION_SUBMIT//[s-c] submit note到组委会
+    REVISION_SUBMIT,//[s-c] submit note到组委会
+    NO_CHANGE_FOUND //[s-c]当checkpoint时，由于sha1没有变化，即：没有diff，提示客户端
   }
 
   public OP op;
