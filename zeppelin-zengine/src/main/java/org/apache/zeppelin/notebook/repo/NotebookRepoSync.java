@@ -383,7 +383,7 @@ public class NotebookRepoSync implements NotebookRepo {
     if (errorCount == repoBound) {
       throw new IOException(errorMessage);
     }
-    if (allRepoCheckpoints.size() > 0) {
+    if (allRepoCheckpoints.size() > 0) {//只返回primary repo的checkpoint成功之后的revision
       Revision returnRev = allRepoCheckpoints.get(0);
       // if failed to checkpoint on first storage, then return result on second
       if (allRepoCheckpoints.size() > 1 && returnRev == null) {

@@ -84,12 +84,24 @@ public class WritableJdbcRealmTest {
 
   @Test
   public void assignRoleToUser() throws Exception {
+    final String templateReaderRole = "template_reader";
+    final String userName = "wangyuda";
+    writableJdbcRealm.assignRoleToUser(userName, templateReaderRole);
 
+    boolean isExist = writableJdbcRealm.isRoleExistForUser(userName, templateReaderRole);
+    assertTrue(isExist);
   }
 
+  /**
+   * 测试单独建立template_reader role和permission插入
+   */
   @Test
   public void assignPermissionToRole() throws Exception {
+    final String templateReaderRole = "template_reader";
+    writableJdbcRealm.assignPermissionToRole(templateReaderRole, "note:reader:2BZJE92ZD,2BVBBJYAV");
 
+    boolean isExist = writableJdbcRealm.isRoleExist(templateReaderRole);
+    assertTrue(isExist);
   }
 
   @Test

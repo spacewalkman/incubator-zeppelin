@@ -68,7 +68,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
   /**
    * 提交次数限制策略
    */
-  private SubmitStrategy submitStrategy;
+  private SubmitStrategy submitStrategy;//TODO:promote到NotebookRepo中
 
   private ZeppelinConfiguration conf;
 
@@ -80,6 +80,9 @@ public class JdbcNotebookRepo implements NotebookRepo {
     hashFunction = Hashing.sha1();
   }
 
+  /**
+   * 算法(note)列表
+   */
   @Override
   public List<NoteInfo> list(String principal) throws IOException {
     List<NoteInfo> resultNotes = new LinkedList<>();
