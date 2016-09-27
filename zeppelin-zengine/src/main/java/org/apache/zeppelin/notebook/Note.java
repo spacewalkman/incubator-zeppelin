@@ -112,15 +112,19 @@ public class Note implements Serializable, ParagraphJobListener {
   public Note() {
   }
 
+  /**
+   * 创建note模板，使用此构造函数创建的note，默认projectId和group都为String.Empty，这2个属性为空的note会被认为是note模板，所有的用户只读
+   */
   public Note(NotebookRepo repo, InterpreterFactory factory,
               JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials,
               String principal, NoteEventListener noteEventListener) {
-    this(repo, factory, jlFactory, noteIndex, credentials, principal, "default_team", noteEventListener);//TODO:qy,default teamname
+    this(repo, factory, jlFactory, noteIndex, credentials, principal, "", "", noteEventListener);//TODO:qy,default teamname
   }
 
   public Note(NotebookRepo repo, InterpreterFactory factory,
               JobListenerFactory jlFactory, SearchService noteIndex, Credentials credentials,
-              String principal, String group, NoteEventListener noteEventListener) {
+              String principal, String groupId, String projectId,
+              NoteEventListener noteEventListener) {
     this.repo = repo;
     this.factory = factory;
     this.jobListenerFactory = jlFactory;
@@ -129,7 +133,8 @@ public class Note implements Serializable, ParagraphJobListener {
     this.credentials = credentials;
     generateId();
     this.createdBy = principal;
-    this.group = group;
+    this.group = groupId;
+    this.projectId = projectId;
     this.lastUpdated = new Date();
   }
 
