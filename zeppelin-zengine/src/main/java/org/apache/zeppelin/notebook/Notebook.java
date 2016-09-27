@@ -212,6 +212,7 @@ public class Notebook implements NoteEventListener {
         newNote.addCloneParagraph(p);
       }
 
+
       //TODO:import时authenttication问题
       //notebookAuthorization.addOwner(newNote.id(), subject.getPrincipal());
       newNote.persist(principal);
@@ -244,6 +245,9 @@ public class Notebook implements NoteEventListener {
     } else {
       newNote.setName("Note " + newNote.getId());
     }
+    newNote.setProjectId(sourceNote.getProjectId());
+    newNote.setGroup(sourceNote.getGroup());
+
     // Copy the interpreter bindings
     List<String> boundInterpreterSettingsIds = getBindedInterpreterSettingsIds(sourceNote.getId());
     bindInterpretersToNote(newNote.getId(), boundInterpreterSettingsIds);
