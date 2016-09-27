@@ -139,6 +139,31 @@ public class ShiroNotebookAuthorizationTest extends AbstractShiroTest {
 
   }
 
+
+  /**
+   * 分析组内部所有的账户名字+IP监控项目用户
+   */
+  final String[] all_users = {"qianyong", "duqiang", "wangyuda", "fanyeliang", "duchangtai", "fengyan", "fumingzhu",
+          "gongjuntai", "jianglinhui", "mayunlong", "ouyangfeng", "xiefen", "yangzhenyong", "yaunli", "zhangmeiqi",
+          "zhangrongyu", "zhangshu", "zhaolei", "zhouyuanyuan", "zuojun", "goupan", "shiyang", "wangyanfeng", "zhouchao1", "chenhonghong3", "user1"};
+
+
+  /**
+   * 初始化所有的测试参赛队
+   */
+  @Test
+  public void initGroups() {
+    for (int i = 0; i < all_users.length; i++) {
+      authorization.addGroup(all_users[i]);
+      authorization.addGroupLeader(all_users[i], all_users[i]);
+
+      List<String> members = authorization.getUsersForGroup(all_users[i]);
+      assertNotNull(members);
+      assertEquals(members.get(0), all_users[i]);
+    }
+
+  }
+
   @Test
   public void addGroup() throws Exception {
     authorization.addGroup("wangyuda");

@@ -44,6 +44,32 @@ public class WritableJdbcRealmTest {
     return new Subject.Builder(realmSecurityManager).principals(principals).buildSubject();
   }
 
+  /**
+   * 分析组内部所有的账户名字+IP监控项目用户
+   */
+  final String[] all_users = {"qianyong", "duqiang", "wangyuda", "fanyeliang", "duchangtai", "fengyan", "fumingzhu",
+          "gongjuntai", "jianglinhui", "mayunlong", "ouyangfeng", "xiefen", "yangzhenyong", "yaunli", "zhangmeiqi",
+          "zhangrongyu", "zhangshu", "zhaolei", "zhouyuanyuan", "zuojun", "goupan", "shiyang", "wangyanfeng", "zhouchao1", "chenhonghong3","user1"};
+
+
+  /**
+   * 初始化所有的测试账户
+   */
+  @Test
+  public void initUsers() throws Exception {
+    for (int i = 0; i < all_users.length; i++) {
+      writableJdbcRealm.createUser(all_users[i], "123");
+
+      boolean isUserExsit = writableJdbcRealm.isUserExist(all_users[i]);
+      assertTrue(isUserExsit);
+
+      //测试登录
+      Subject subject = buildNewSubject(all_users[i], RealmName);
+      Subject subjectAfter = realmSecurityManager.login(subject, new UsernamePasswordToken(all_users[i], "123"));//传递给login的password不能hash
+      assertTrue(subjectAfter.isAuthenticated());
+    }
+  }
+
   @Test
   public void createUser() throws Exception {
     writableJdbcRealm.createUser("user1", "123");
