@@ -66,7 +66,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -467,14 +466,10 @@ public class NotebookServer extends WebSocketServlet implements
             .put("interpreterBindings", settingList)));
   }
 
-  public List<Map<String, String>> generateNotebooksInfo(boolean needsReload, Subject subject) {
-    return refreshNotesAndFilter(needsReload, subject);
-  }
-
   /**
    * refresh notes from repo,and apply filtered by userAndRoles
    */
-  private List<Map<String, String>> refreshNotesAndFilter(boolean needsReload, Subject subject) {
+  public List<Map<String, String>> generateNotebooksInfo(boolean needsReload, Subject subject) {
     Notebook notebook = refreshNotes(needsReload, subject);
     List<Note> notes = notebook.getAllNotes();
     ZeppelinConfiguration conf = notebook.getConf();
@@ -485,7 +480,6 @@ public class NotebookServer extends WebSocketServlet implements
     List<Map<String, String>> notesInfo = new LinkedList<>();
     for (Note note : notes) {
       if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {//TODO:返回note要置readOnly状态
-        //if (subject.isPermitted(String.format(IShiroNotebookAuthorization.NOTE_GROUP_READER_PERMISSION_FORMAT, note.getId()))) {
         continue;
         //如果不是组内成员，但是是组内note的reader吗？
       }
@@ -553,18 +547,19 @@ public class NotebookServer extends WebSocketServlet implements
     unicast(new Message(OP.NOTES_INFO).put("notes", notesInfo), conn);
   }
 
-  //TODO:修改了权限控制机制，采用shiro Subject.hasRole来控制之后，此方法没有使用
-  void permissionError(NotebookSocket conn, String op, Set<String> userAndRoles,
-                       Set<String> allowed) throws IOException {
-    LOG.info("Cannot {}. Connection readers {}. Allowed readers {}",
-            op, userAndRoles, allowed);
-
-    String userName = userAndRoles.iterator().next();
-
+  /**
+   * 权限不足时，发送给前端的message通知
+   *
+   * @param conn    当前WS connection
+   * @param subject 当前用户
+   * @param op      操作类型
+   * @param group   参赛队
+   * @param noteId  note的id
+   */
+  void permissionError(NotebookSocket conn, Subject subject, String op, String group,
+                       String noteId) throws IOException {
     conn.send(serializeMessage(new Message(OP.AUTH_INFO).put("info",
-            "Insufficient privileges to " + op + " notebook.\n\n" +
-                    "Allowed users or roles: " + allowed.toString() + "\n\n" +
-                    "But the user " + userName + " belongs to: " + userAndRoles.toString())));
+            "权限不足:用户[" + (String) (subject.getPrincipal()) + "]不能" + op + "算法:[" + noteId + "],参赛队:[" + group + "]")));
   }
 
   private void sendNote(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -583,9 +578,8 @@ public class NotebookServer extends WebSocketServlet implements
     Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (note != null) {
-      //if (!notebookAuthorization.isReader(noteId, userAndRoles)) {
       if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
-        //permissionError(conn, "read", userAndRoles, notebookAuthorization.getReaders(noteId));
+        permissionError(conn, subject, "读取", note.getGroup(), note.getId());
         return;
       }
       addConnectionToNote(note.getId(), conn);
@@ -607,9 +601,8 @@ public class NotebookServer extends WebSocketServlet implements
 
     if (note != null) {
       NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-      //if (!notebookAuthorization.isReader(noteId, userAndRoles)) {
       if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
-        //permissionError(conn, "read", userAndRoles, notebookAuthorization.getReaders(noteId));
+        permissionError(conn, subject, "读取", note.getGroup(), note.getId());
         return;
       }
       addConnectionToNote(note.getId(), conn);
@@ -636,9 +629,8 @@ public class NotebookServer extends WebSocketServlet implements
 
     Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
-    //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //permissionError(conn, "update", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -727,8 +719,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -767,8 +758,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -799,8 +789,7 @@ public class NotebookServer extends WebSocketServlet implements
     Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isOwner(noteId, userAndRoles)) {
-      //permissionError(conn, "remove", userAndRoles, notebookAuthorization.getOwners(noteId));
+      permissionError(conn, subject, "删除", note.getGroup(), note.getId());
       return;
     }
 
@@ -823,8 +812,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -883,8 +871,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -907,8 +894,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -1182,8 +1168,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -1201,8 +1186,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
     }
 
@@ -1222,8 +1206,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
-      //if (!notebookAuthorization.isWriter(noteId, userAndRoles)) {
-      //permissionError(conn, "write", userAndRoles, notebookAuthorization.getWriters(noteId));
+      permissionError(conn, subject, "取消执行", note.getGroup(), note.getId());
       return;
     }
 
@@ -1242,6 +1225,7 @@ public class NotebookServer extends WebSocketServlet implements
     final Note note = notebook.getNote(noteId);
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
+      permissionError(conn, subject, "执行", note.getGroup(), note.getId());
       return;
     }
 
