@@ -98,10 +98,10 @@ public class LoginRestApi {
         //if no exception, that's it, we're done!
       } catch (UnknownAccountException uae) {
         //username wasn't in the system, show them an error message?
-        LOG.error("Exception in login: ", uae);
+        LOG.error("username and password doesn't match: ", uae);
       } catch (IncorrectCredentialsException ice) {
         //password didn't match, try again?
-        LOG.error("Exception in login: ", ice);
+        LOG.error("username and password doesn't match: ", ice);
       } catch (LockedAccountException lae) {
         //account for that username is locked - can't login.  Show them a message?
         LOG.error("Exception in login: ", lae);
