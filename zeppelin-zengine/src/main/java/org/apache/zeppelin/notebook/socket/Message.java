@@ -149,6 +149,8 @@ public class Message {
     INTERPRETER_BINDINGS, // [s-c] interpreter bindings
 
     REVISION_SUBMIT,//[s-c] submit note到组委会
+    QUERY_SUBMIT_TIME,//[c-s] 查询参赛队对赛题已经提交的次数
+    ACK_SUBMIT_TIME,//[s-c] 响应QUERY_SUBMIT_TIME查询请求，当前参赛队已经提交的次数
     NO_CHANGE_FOUND //[s-c]当checkpoint时，由于sha1没有变化，即：没有diff，提示客户端
   }
 
