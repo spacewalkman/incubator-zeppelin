@@ -36,6 +36,8 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategy;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyFactory;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,5 +245,11 @@ public class AzureNotebookRepo implements NotebookRepo {
   public SubmitLeftOver submit(String noteId, String revisionId) {
     LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
+  }
+
+  @Override
+  public int currentSubmitTimes(String team, String projectId) {
+    LOG.info("query current submit times feature isn't supported in {}", this.getClass().toString());
+    return -1;
   }
 }

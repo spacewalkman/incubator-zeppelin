@@ -44,6 +44,7 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.notebook.repo.NotebookRepo.Revision;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyVolationException;
 import org.apache.zeppelin.notebook.socket.Message;
 import org.apache.zeppelin.notebook.socket.Message.OP;
 import org.apache.zeppelin.scheduler.Job;
@@ -248,7 +249,10 @@ public class NotebookServer extends WebSocketServlet implements
           getNoteByRevision(conn, notebook, messagereceived);
           break;
         case NOTE_REVISION_SUBMIT://提交到组委会
-          submittNotebook(conn, notebook, messagereceived);
+          submitNotebook(conn, notebook, messagereceived);
+          break;
+        case QUERY_SUBMIT_TIME://查询已经提交的次数
+          currentSubmitTimes(conn, notebook, messagereceived);
           break;
         case LIST_NOTEBOOK_JOBS:
           unicastNotebookJobInfo(conn, messagereceived);
@@ -1310,19 +1314,18 @@ public class NotebookServer extends WebSocketServlet implements
     Revision revision = notebook.checkpointNote(noteId, commitMessage, (String) (subject.getPrincipal()));
     if (revision != null) {
       List<Revision> revisions = notebook.listRevisionHistory(noteId, (String) (subject.getPrincipal()));
-      conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY)
-              .put("revisionList", revisions)));
+      conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY).put("revisionList", revisions)));
     } else {//如果note没有更新，通知前台
-      conn.send(serializeMessage(new Message(OP.NO_CHANGE_FOUND)
-              .put("info", "算法没有修改")));
+      conn.send(serializeMessage(new Message(OP.NO_CHANGE_FOUND).put("info", "算法没有修改")));
     }
   }
 
   /**
-   * 提交note的revision到组委会
+   * 提交note的revision到组委会，根据提交策略，限制提交次数
+   * TODO:前端是否将"提交到组委会"label中显示目前允许提交的次数
    */
-  private void submittNotebook(NotebookSocket conn, Notebook notebook,
-                               Message fromMessage) throws IOException {
+  private void submitNotebook(NotebookSocket conn, Notebook notebook,
+                              Message fromMessage) throws IOException {
     String noteId = (String) fromMessage.get("noteId");
     String revisionId = (String) fromMessage.get("revisionId");
     String group = fromMessage.group;
@@ -1340,8 +1343,39 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    SubmitLeftOver submitLeftOver = notebook.submit(revisionId, (String) (subject.getPrincipal()));
-    conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver)));//TODO：前端需要处理这个OP，并且binding submitLeftOver，显示指定时间内还剩余提交次数
+    SubmitLeftOver submitLeftOver = null;
+    try {
+      submitLeftOver = notebook.submit(noteId, revisionId);
+    } catch (Exception e) {
+      if (e instanceof SubmitStrategyVolationException) {
+        conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", e.getMessage())));
+      }
+
+      return;
+    }
+
+    if (submitLeftOver == null) {//已经提交了
+      conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", "该版本已经提交过了")));
+      return;
+    }
+
+    conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver.toString())));
+  }
+
+  /**
+   * 查询已经提交的次数
+   */
+  private void currentSubmitTimes(NotebookSocket conn, Notebook notebook,
+                                  Message fromMessage) throws IOException {
+    String group = fromMessage.group;
+    String projectId = fromMessage.projectId;
+
+    if (group == null || group.isEmpty()) {
+      throw new IllegalArgumentException("group is null");
+    }
+
+    int submitTimes = notebook.currentSubmitTimes(group, projectId);
+    conn.send(serializeMessage(new Message(OP.ACK_SUBMIT_TIME).put("info", submitTimes)));//TODO：前端需要处理这个OP=ACK_SUBMIT_TIME，并且binding submitLeftOver，显示指定时间内还剩余提交次数
   }
 
   private void listRevisionHistory(NotebookSocket conn, Notebook notebook,

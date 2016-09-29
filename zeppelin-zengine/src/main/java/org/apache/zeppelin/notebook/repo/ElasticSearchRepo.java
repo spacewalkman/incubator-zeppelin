@@ -581,4 +581,11 @@ public class ElasticSearchRepo implements NotebookRepo, SearchService {
     LOG.info("submit feature isn't supported in {}", this.getClass().toString());
     return null;
   }
+
+  @Override
+  public int currentSubmitTimes(String team, String projectId) {
+    LOG.info("query current submit times feature isn't supported in {}", this.getClass().toString());
+    return -1;
+  }
+
 }

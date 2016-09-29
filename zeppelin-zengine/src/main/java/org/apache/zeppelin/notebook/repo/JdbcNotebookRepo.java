@@ -7,9 +7,10 @@ import com.google.common.hash.Hashing;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyFactory;
-import org.apache.zeppelin.notebook.repo.commit.SubmitStrategy;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategy;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyFactory;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyVolationException;
 import org.apache.zeppelin.util.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,15 +46,14 @@ public class JdbcNotebookRepo implements NotebookRepo {
   private static final String REVISION_INSERT_SQL = "insert into " + NOTE_REVISION_TABLE_NAME + "(noteId,note_name,committer,team,projectId,message,commit_date,content,sha1) values (?,?,?,?,?,?,?,?,?)";
   private static final String GET_REVISION_BY_ID = "select id,noteId,note_name,committer,team,projectId,message,commit_date,content,sha1 FROM " + NOTE_REVISION_TABLE_NAME + " where id=?";
   private static final String GET_REVISION_CONTENT_BY_ID = "select content from " + NOTE_REVISION_TABLE_NAME + " where id=? and noteId=? and committer=?";
-  private static final String SELECT_REVISION_BY_NOTE_ID = "select id,note_name,committer,message,commit_date,team,projectId from " + NOTE_REVISION_TABLE_NAME + " where noteId=? and committer=? order by commit_date desc";
-  private static final String SET_SUBMITTED_FLAG_SQL = "update " + NOTE_REVISION_TABLE_NAME + " set is_submit=true where id=?";
+  private static final String SELECT_REVISION_BY_NOTE_ID = "select id,note_name,committer,message,commit_date,team,projectId,is_submit from " + NOTE_REVISION_TABLE_NAME + " where noteId=? and committer=? order by commit_date desc";
+  private static final String SET_SUBMITTED_FLAG_SQL = "update " + NOTE_REVISION_TABLE_NAME + " set is_submit=true where id=? and (is_submit is null OR is_submit=false)";//限制is_submit=false，避免重复submit同一个revision占用提交次数
   private static final String SELECT_LAST_NOTE_CONTENT_SQL = "select n1.sha1 from " + NOTE_REVISION_TABLE_NAME + " n1 where n1.noteId=? and n1.commit_date in (select max(n2.commit_date) from " + NOTE_REVISION_TABLE_NAME + " n2 where n2.noteId=?)";
 
   /**
    * 查询一段时间内一个参赛队为一个赛题提交次数sql
    */
-  public static final String SELECT_TEAM_COMMIT_TIMES_IN_RANGE = "select count(*) FROM " + JdbcNotebookRepo.NOTE_REVISION_TABLE_NAME + " where team=? and projectId=? and commit_date >=? and commit_date <?";
-
+  public static final String SELECT_TEAM_COMMIT_TIMES_IN_RANGE = "select count(*) FROM " + JdbcNotebookRepo.NOTE_REVISION_TABLE_NAME + " where team=? and projectId=? and is_submit=true and commit_date >=? and commit_date <?";
 
   /**
    * connection pooling机制
@@ -75,9 +75,16 @@ public class JdbcNotebookRepo implements NotebookRepo {
   public JdbcNotebookRepo(ZeppelinConfiguration conf) throws Exception {
     this.conf = conf;
     notebookDataSource = NotebookDataSource.getInstance(conf);
-    SubmitStrategyFactory submitStrategyFactory = SubmitStrategyFactory.getInstance(conf);
-    submitStrategy = submitStrategyFactory.create();
     hashFunction = Hashing.sha1();
+  }
+
+  public SubmitStrategy getSubmitStrategy() {
+    if (submitStrategy == null) {
+      SubmitStrategyFactory submitStrategyFactory = SubmitStrategyFactory.getInstance(conf);
+      submitStrategy = submitStrategyFactory.create();
+    }
+
+    return submitStrategy;
   }
 
   /**
@@ -352,7 +359,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
    * @param revId revision的id
    * @return 该版本的revision
    */
-  public Revision getRevision(String revId) {
+  public Revision getRevision(String noteId, String revId) {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Connection connection = null;
@@ -367,7 +374,10 @@ public class JdbcNotebookRepo implements NotebookRepo {
       if (rs.next()) {
         //id,noteId,note_name,committer,team,projectId,message,commit_date,content,sha1
         int id = rs.getInt(1);
-        String noteId = rs.getString(2);
+        String noteID = rs.getString(2);
+        if (!noteID.equals(noteId)) {
+          LOG.error("getRevison should return the same noteId as argument,expected:{},but actual:{}", noteId, noteID);
+        }
         String noteName = rs.getString(3);
         String committer = rs.getString(4);
         String team = rs.getString(5);
@@ -433,12 +443,13 @@ public class JdbcNotebookRepo implements NotebookRepo {
       while (rs.next()) {
         int id = rs.getInt(1);
         String noteName = rs.getString(2);
-        String committer = rs.getString(3);//TODO：如何显示是否已经提交组委会
+        String committer = rs.getString(3);
         String message = rs.getString(4);
-        Timestamp commitTime = rs.getTimestamp(5);
+        Timestamp commitDate = rs.getTimestamp(5);
         String team = rs.getString(6);
         String projectId = rs.getString(7);
-        Revision revision = new Revision(id + "", noteId, noteName, message, commitTime.getTime(), committer, committer, team, projectId);//基于dbms的存储，无法区分commit的author和committer，除非做 行级别的代码与用户之间的对应关系
+        boolean isSubmit = rs.getBoolean(8);//TODO：如何显示是否已经提交组委会
+        Revision revision = new Revision(id + "", noteId, noteName, message, commitDate.getTime(), committer, committer, team, projectId, isSubmit);//基于dbms的存储，无法区分commit的author和committer，除非做 行级别的代码与用户之间的对应关系
         revisionList.add(revision);
       }
     } catch (SQLException e) {
@@ -489,17 +500,21 @@ public class JdbcNotebookRepo implements NotebookRepo {
    * <li>在Revision上打个标记，表示该note的这个版本已经提交到组委会</li>
    * <li>根据限制提交次数的策略，控制一个参赛队在一段时间内容的提交次数</li>
    *
-   * @param revisionId 待提交的版本
    * @param noteId     当前提交的note id，在dbms中由于revisionId是主键，故没有使用noteid
-   * @return 指定id的note的版本
+   * @param revisionId 待提交的版本
+   * @return 为null，表示该revision已经提交过了;不为null，返回SubmitLeftOver POJO表示按照目前的提交策略，剩余的提交次数限制
+   * @throws Exception 违反提交次数限制的异常
    */
   @Override
-  public SubmitLeftOver submit(String noteId, String revisionId) {
+  public SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException {
     if (revisionId == null) {
       throw new IllegalArgumentException("revision is null");
     }
 
-    Revision revision = this.getRevision(revisionId);
+    Revision revision = this.getRevision(noteId, revisionId);
+    if (revision == null) {
+      throw new IllegalArgumentException("revision is null");
+    }
 
     if (revision.team == null || revision.team.isEmpty()) {
       throw new IllegalArgumentException("revision's team is null");
@@ -509,20 +524,37 @@ public class JdbcNotebookRepo implements NotebookRepo {
     }
 
     int currentSubmitTimes = this.currentSubmitTimes(revision.team, revision.projectId);
-    final int maxTimes = this.submitStrategy.getMaxTime();
-    LOG.debug("team='{}',groupId='{}',当前已经提交次数:{},允许提交次数:{}", revision.team, revision.projectId);
+    final int maxTimes = this.getSubmitStrategy().getMaxTime();
+    LOG.debug("team='{}',groupId='{}',当前已经提交次数:{},允许提交次数:{}", revision.team, revision.projectId, currentSubmitTimes, maxTimes);
     //提交之前检查是否超过允许提交次数
-    if (currentSubmitTimes < maxTimes) {
-      this.updateSubmitFlag(revisionId);
+    if (currentSubmitTimes >= maxTimes) {
+      throw new SubmitStrategyVolationException("超过提交次数限制");
     }
 
-    return new SubmitLeftOver(revision.team, revision.projectId, currentSubmitTimes, maxTimes, this.submitStrategy.getTypeName());
+    int affected = this.doSubmit(revisionId);
+    if (affected == 1) {
+      return new SubmitLeftOver(revision.team, revision.projectId, currentSubmitTimes + 1, maxTimes, this.getSubmitStrategy().getTypeName());
+    } else {//该版本已经submit过了
+      return null;
+    }
+  }
+
+  /**
+   * 查询当前队伍对当前题目已经的提交次数
+   *
+   * @param team      队伍
+   * @param projectId 赛题
+   * @return 已经提交的次数
+   */
+  @Override
+  public int currentSubmitTimes(String team, String projectId) {
+    return this.queryCurrentSubmitTimes(team, projectId);
   }
 
   /**
    * update该revesion的"是否已经提交"的标志位为true
    */
-  private int updateSubmitFlag(String revisionId) {
+  private int doSubmit(String revisionId) {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Connection connection = null;
@@ -547,15 +579,15 @@ public class JdbcNotebookRepo implements NotebookRepo {
   }
 
   /**
-   * 是否超过限制次数
+   * 查询当前该参赛队、该题目，已经提交了多少次了
    */
-  public int currentSubmitTimes(String team, String projectId) {
+  public int queryCurrentSubmitTimes(String team, String projectId) {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Connection connection = null;
 
     int result = Integer.MIN_VALUE;
-    long[] timeRanges = this.submitStrategy.getTimeRange();
+    long[] timeRanges = this.getSubmitStrategy().getTimeRange();
     try {
       NotebookDataSource dataSource = NotebookDataSource.getInstance(conf);
 

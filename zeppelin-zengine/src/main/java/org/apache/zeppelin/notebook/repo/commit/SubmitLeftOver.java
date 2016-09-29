@@ -1,7 +1,9 @@
 package org.apache.zeppelin.notebook.repo.commit;
 
+import java.util.Date;
+
 /**
- * 还剩多少次提交
+ * 根据提交策略，计算出来的POJO，用来向前台发送提示消息
  */
 public class SubmitLeftOver {
   private int currentTimes;
@@ -76,5 +78,10 @@ public class SubmitLeftOver {
 
   public void setStrategyTypeName(String strategyTypeName) {
     this.strategyTypeName = strategyTypeName;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("每%s最多允许提交%d次,目前已经提交了%d次", this.getStrategyTypeName(), this.getMaxTimes(), this.getCurrentTimes());
   }
 }

@@ -21,6 +21,8 @@ import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategy;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyVolationException;
 
 import java.io.IOException;
 import java.util.List;
@@ -114,7 +116,16 @@ public interface NotebookRepo {
    * @param noteId     当前提交的note id，在dbms中由于revisionId是主键，故没有使用noteid
    * @return 指定id的note的版本
    */
-  SubmitLeftOver submit(String noteId, String revisionId);
+  SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException;
+
+  /**
+   * 获取当前参赛队对该题目已经提交的次数
+   *
+   * @param team      参赛队
+   * @param projectId 题目id
+   * @return 已经提交到组委会的次数, 如果为-1表示不支持查询已经提交的次数
+   */
+  int currentSubmitTimes(String team, String projectId);
 
   /**
    * Represents the 'Revision' a point in life of the notebook

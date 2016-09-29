@@ -22,6 +22,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyVolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -452,7 +453,7 @@ public class NotebookRepoSync implements NotebookRepo {
    * @param revisionId 待提交的版本
    */
   @Override
-  public SubmitLeftOver submit(String noteId, String revisionId) {
+  public SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException {
     try {
       for (int i = 0; i < getRepoCount(); i++) {
         SubmitLeftOver submitLeftOver = getRepo(i).submit(noteId, revisionId);
@@ -464,5 +465,20 @@ public class NotebookRepoSync implements NotebookRepo {
       LOG.error("Failed to submit revision:'{}' of note:'{}'", revisionId, noteId, e);
     }
     return null;
+  }
+
+  @Override
+  public int currentSubmitTimes(String team, String projectId) {
+    try {
+      for (int i = 0; i < getRepoCount(); i++) {
+        int time = getRepo(i).currentSubmitTimes(team, projectId);
+        if (time != -1) {
+          return time;
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to query current submit time for team:'{}' of project:'{}'", team, projectId, e);
+    }
+    return -1;
   }
 }
