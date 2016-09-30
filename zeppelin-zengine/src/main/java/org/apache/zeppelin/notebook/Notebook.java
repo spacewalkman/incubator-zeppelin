@@ -758,9 +758,13 @@ public class Notebook implements NoteEventListener {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");//TODO:这里noteid为null，报错
+      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
-      note.runAll();
+      //TODO:这里会报错，原因是job相关联的notebook被持serialize了，deserialize之后，notebook的notes已经与系统运行时的notes不匹配了
+      // Caused by: java.lang.NullPointerException
+      //at org.apache.zeppelin.notebook.Notebook$CronJob.execute(Notebook.java:763)
+      //at org.quartz.core.JobRunShell.run(JobRunShell.java:202)
+      //note.runAll();
 
       while (!note.isTerminated()) {
         try {
