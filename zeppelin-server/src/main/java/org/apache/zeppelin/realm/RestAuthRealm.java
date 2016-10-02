@@ -54,10 +54,17 @@ public class RestAuthRealm extends AuthenticatingRealm {
       throw new AuthenticationException("稻田REST身份鉴别接口失效", e);
     }
 
-    SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(userProfile.getUserName(), userProfile.getTicket(), getName());
+    //TODO：这里只有用户的principal，没有用户credentials
+    //Object[] principals = {userProfile.getUserName(), userProfile.getTicket(), userProfile.getTeam(), userProfile.getIps(), userProfile.getProjectIds()};
+    SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(userProfile, null, getName());
     return info;
   }
 
+  @Override
+  protected void assertCredentialsMatch(AuthenticationToken token,
+                                        AuthenticationInfo info) throws AuthenticationException {
+    return;
+  }
 
   /**
    * 通过httpClient调用稻田提供的REST接口，传入ticket鉴定用户

@@ -1,42 +1,40 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.config.IniSecurityManagerFactory;
-import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collection;
+import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.sql.SQLException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class WritableJdbcRealmTest {
-  static WritableJdbcRealm writableJdbcRealm;
+public class UserDAOTest {
+  static UserDAO userDAO;
 
   static RealmSecurityManager realmSecurityManager;
 
-  static final String RealmName = ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
+  static ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+
+  static final String RealmName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws PropertyVetoException, SQLException, IOException {
     IniSecurityManagerFactory factory = new IniSecurityManagerFactory("classpath:shiro.ini");
     SecurityManager securityManager = factory.getInstance();
     realmSecurityManager = (RealmSecurityManager) securityManager;
-    Collection<Realm> realms = realmSecurityManager.getRealms();
-    for (Realm realm : realms) {
-      if (realm.getName().equals(RealmName)) {
-        writableJdbcRealm = (WritableJdbcRealm) realm;
-        break;
-      }
-    }
+
+    userDAO = new UserDAO(conf);
   }
 
   private Subject buildNewSubject(String principal, String realmName) {
@@ -49,7 +47,7 @@ public class WritableJdbcRealmTest {
    */
   final String[] all_users = {"qianyong", "duqiang", "wangyuda", "fanyeliang", "duchangtai", "fengyan", "fumingzhu",
           "gongjuntai", "jianglinhui", "mayunlong", "ouyangfeng", "xiefen", "yangzhenyong", "yaunli", "zhangmeiqi",
-          "zhangrongyu", "zhangshu", "zhaolei", "zhouyuanyuan", "zuojun", "goupan", "shiyang", "wangyanfeng", "zhouchao1", "chenhonghong3","user1"};
+          "zhangrongyu", "zhangshu", "zhaolei", "zhouyuanyuan", "zuojun", "goupan", "shiyang", "wangyanfeng", "zhouchao1", "chenhonghong3", "user1"};
 
 
   /**
@@ -58,9 +56,9 @@ public class WritableJdbcRealmTest {
   @Test
   public void initUsers() throws Exception {
     for (int i = 0; i < all_users.length; i++) {
-      writableJdbcRealm.createUser(all_users[i], "123");
+      userDAO.createUser(all_users[i], "123", new HashedCredentialsMatcher("SHA-256"));
 
-      boolean isUserExsit = writableJdbcRealm.isUserExist(all_users[i]);
+      boolean isUserExsit = userDAO.isUserExist(all_users[i]);
       assertTrue(isUserExsit);
 
       //测试登录
@@ -72,9 +70,9 @@ public class WritableJdbcRealmTest {
 
   @Test
   public void createUser() throws Exception {
-    writableJdbcRealm.createUser("user1", "123");
+    userDAO.createUser("user1", "123", new HashedCredentialsMatcher("SHA-256"));
 
-    boolean isUserExsit = writableJdbcRealm.isUserExist("user1");
+    boolean isUserExsit = userDAO.isUserExist("user1");
     assertTrue(isUserExsit);
 
     //测试登录
@@ -82,10 +80,10 @@ public class WritableJdbcRealmTest {
     Subject subjectAfter = realmSecurityManager.login(subject, new UsernamePasswordToken("user1", "123"));//传递给login的password不能hash
     assertTrue(subjectAfter.isAuthenticated());
 
-    int affectedCount = writableJdbcRealm.deleteUser("user1");
+    int affectedCount = userDAO.deleteUser("user1");
     assertTrue(affectedCount >= 1);
 
-    isUserExsit = writableJdbcRealm.isUserExist("user1");
+    isUserExsit = userDAO.isUserExist("user1");
     assertFalse(isUserExsit);
 
     subjectAfter.logout();
@@ -112,9 +110,9 @@ public class WritableJdbcRealmTest {
   public void assignRoleToUser() throws Exception {
     final String templateReaderRole = "template_reader";
     final String userName = "wangyuda";
-    writableJdbcRealm.assignRoleToUser(userName, templateReaderRole);
+    userDAO.assignRoleToUser(userName, templateReaderRole);
 
-    boolean isExist = writableJdbcRealm.isRoleExistForUser(userName, templateReaderRole);
+    boolean isExist = userDAO.isRoleExistForUser(userName, templateReaderRole);
     assertTrue(isExist);
   }
 
@@ -124,9 +122,9 @@ public class WritableJdbcRealmTest {
   @Test
   public void assignPermissionToRole() throws Exception {
     final String templateReaderRole = "template_reader";
-    writableJdbcRealm.assignPermissionToRole(templateReaderRole, "note:reader:2BZJE92ZD,2BVBBJYAV");
+    userDAO.assignPermissionToRole(templateReaderRole, "note:reader:2BZJE92ZD,2BVBBJYAV");
 
-    boolean isExist = writableJdbcRealm.isRoleExist(templateReaderRole);
+    boolean isExist = userDAO.isRoleExist(templateReaderRole);
     assertTrue(isExist);
   }
 

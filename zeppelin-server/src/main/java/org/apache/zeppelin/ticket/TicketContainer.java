@@ -19,91 +19,31 @@ package org.apache.zeppelin.ticket;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.subject.Subject;
+import org.apache.zeppelin.realm.UserProfile;
 
-import java.util.Calendar;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Very simple ticket container
- * No cleanup is done, since the same user accross different devices share the same ticket
- * The Map size is at most the number of different user names having access to a Zeppelin instance
- */
-
-//TODO: use shiro session managment
+//TODO:TicketContainer构造函数中启动一个timeout清理线程，如果超过一定的时效，则清理subjectCache缓存，同时也需要记录subject加入的时间
 public class TicketContainer {
-  public static final class Entry {
-    public final String ticket;
-    // lastAccessTime still unused
-    public final long lastAccessTime;
-
-    public final Subject subject;
-
-    Entry(Subject subject, String ticket) {
-      this.subject = subject;
-      this.ticket = ticket;
-      this.lastAccessTime = Calendar.getInstance().getTimeInMillis();
-    }
-
-    Entry(String ticket) {
-      this.subject = null;
-      this.ticket = ticket;
-      this.lastAccessTime = Calendar.getInstance().getTimeInMillis();
-    }
-  }
-
-  private Map<String, Entry> sessions = new ConcurrentHashMap<>();
-  private Map<String, Subject> subjectCache = new ConcurrentHashMap<>();
+  private Map<UserProfile, Subject> subjectCache = new ConcurrentHashMap<>();
   public static final TicketContainer instance = new TicketContainer();
-
-  /**
-   * For test use
-   *
-   * @return true if ticket assigned to principal.
-   */
-  public boolean isValid(String principal, String ticket) {
-    if ("anonymous".equals(principal) && "anonymous".equals(ticket))
-      return true;
-    Entry entry = sessions.get(principal);
-    return entry != null && entry.ticket.equals(ticket);
-  }
 
   /**
    * 缓存已经登录的ticket,记录ticket（uuid）与Shiro Subject之间的映射关系
    */
-  public synchronized Subject putSubject(String ticket, Subject subject) {
+  public synchronized Subject putSubject(UserProfile userProfile, Subject subject) {
     if (!subject.isAuthenticated()) {
       throw new AuthenticationException("not allowed no login user to");
     }
-    return subjectCache.put(ticket, subject);
+    return subjectCache.put(userProfile, subject);
   }
 
   /**
    * 获取已经登录的Subject
    */
-  public Subject getCachedSubject(String ticket) {
-    return subjectCache.get(ticket);
-  }
-
-  /**
-   * get or create ticket for Websocket authentication assigned to authenticated shiro user
-   * For unathenticated user (anonymous), always return ticket value "anonymous"
-   */
-  public synchronized String getTicket(String principal) {
-    Entry entry = sessions.get(principal);
-    String ticket;
-    if (entry == null) {
-      if (principal.equals("anonymous"))
-        ticket = "anonymous";
-      else
-        ticket = UUID.randomUUID().toString();
-    } else {
-      ticket = entry.ticket;
-    }
-    entry = new Entry(ticket);
-    sessions.put(principal, entry);
-    return ticket;
+  public Subject getCachedSubject(String ticket, String userName) {
+    return subjectCache.get(new UserProfile(ticket, userName));
   }
 }
 

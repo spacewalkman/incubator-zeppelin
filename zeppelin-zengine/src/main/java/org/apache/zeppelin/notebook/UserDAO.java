@@ -1,14 +1,16 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.SimpleHash;
-import org.apache.shiro.realm.jdbc.JdbcRealm;
 import org.apache.shiro.util.JdbcUtils;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.repo.NotebookDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,12 +18,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 /**
  * add CRUD capability to JdbcRealm,which can be used By zeppelin
  */
-public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主外键约束
+public class UserDAO {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WritableJdbcRealm.class);
+  private static final Logger LOG = LoggerFactory.getLogger(UserDAO.class);
 
   /**
    * is user exist
@@ -65,20 +69,28 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   public static final String INSERT_PERMISSION_TO_ROLE_SQL = "insert into ROLE_PERMISSION(role_name,permission) values (?,?)";
 
+  private DataSource dataSource;
+
+  public UserDAO(
+          ZeppelinConfiguration conf) throws PropertyVetoException, SQLException, IOException {
+    this.dataSource = NotebookDataSource.getInstance(conf).getDataSource();
+  }
+
   /**
    * add new userName if not exist
    * TODO:创建队伍的时候使用
    *
    * @param userName username
    * @param password user password,not hashed yet
+   * @credentialsMatcher shrio realm用到的处理密码加密之后匹配的工具类
    */
-  public void createUser(String userName, String password) {
+  public void createUser(String userName, String password,
+                         HashedCredentialsMatcher hashedCredentialsMatcher) {
     if (isUserExist(userName)) {
       LOG.warn("user: " + userName + " , already exist,ignore add request");
       return;
     }
 
-    HashedCredentialsMatcher hashedCredentialsMatcher = (HashedCredentialsMatcher) this.getCredentialsMatcher();
     SimpleHash hash = new SimpleHash(hashedCredentialsMatcher.getHashAlgorithmName(), password, null, 1024);
     final String hashedPassword = hash.toBase64();
     LOG.debug("hash之后的byte长度{},\n{}", hashedPassword.length(), hashedPassword);
@@ -88,7 +100,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(INSERT_USER_SQL);
       ps.setString(1, userName);
       ps.setString(2, hashedPassword);//与shiro.ini配置文件中的sha256Matcher.storedCredentialsHexEncoded = false对应
@@ -111,11 +123,6 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     }
   }
 
-
-  public Connection getConnection() throws SQLException {
-    return this.dataSource.getConnection();
-  }
-
   /**
    * 用户是否存在
    */
@@ -125,7 +132,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(IS_USER_EXSIT_SQL);
       ps.setString(1, userName);
 
@@ -169,7 +176,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(DELETE_USER_EXSIT_SQL);
       ps.setString(1, userName);
       return ps.executeUpdate();
@@ -195,7 +202,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(IS_ROLE_EXSIT_SQL);
       ps.setString(1, roleName);
 
@@ -239,10 +246,10 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       connection.setAutoCommit(false);
 
-      ps = getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
+      ps = dataSource.getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
       for (String role : roles) {
         ps.setString(1, user);
         ps.setString(2, role);
@@ -290,7 +297,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(INSERT_PERMISSION_TO_ROLE_SQL);
       ps.setString(1, role);
       ps.setString(2, permission);
@@ -325,7 +332,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     ResultSet rs = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(SELECT_USER_FOR_GROUP_SQL);
       ps.setString(1, groupPermissionPrefix);
 
@@ -363,7 +370,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(IS_USE_HAS_ROLE_SQL);
       ps.setString(1, userName);
       ps.setString(2, roleName);
@@ -387,12 +394,5 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     }
   }
 
-  /**
-   * 表明该realm不参与用户身份鉴别
-   * TODO：如果是原生zeppelin引用，应该删除这段代码
-   */
-  @Override
-  public boolean supports(AuthenticationToken token) {
-    return false;
-  }
+
 }

@@ -9,13 +9,18 @@ public class UserProfile {
 
   private String ticket;
 
-  private String[] projectIds;
+  private String projectId;
 
-  private String[] ips;
+  private String ip;
 
   private String team;
 
   private boolean isLeader;
+
+  public UserProfile(String ticket, String userName) {
+    this.userName = userName;
+    this.ticket = ticket;
+  }
 
   /**
    * 用户名
@@ -40,28 +45,6 @@ public class UserProfile {
   }
 
   /**
-   * 用户参与的赛题
-   */
-  public String[] getProjectIds() {
-    return projectIds;
-  }
-
-  public void setProjectIds(String[] projectIds) {
-    this.projectIds = projectIds;
-  }
-
-  /**
-   * 允许用户登录的ip列表
-   */
-  public String[] getIps() {
-    return ips;
-  }
-
-  public void setIps(String[] ips) {
-    this.ips = ips;
-  }
-
-  /**
    * 用户所属的参赛队
    */
   public String getTeam() {
@@ -81,5 +64,69 @@ public class UserProfile {
 
   public void setLeader(boolean leader) {
     isLeader = leader;
+  }
+
+  //相等性比较只取了userName和uuid ticket
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+
+    if (!(obj instanceof UserProfile)) {
+      return false;
+    }
+
+    UserProfile other = (UserProfile) obj;
+    if (!this.getUserName().equals(other.getUserName())) {
+      return false;
+    }
+
+    if (!this.getTicket().equals(other.getTicket())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getUserName().hashCode() << 1 + this.getTicket().hashCode() << 2;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("UserProfile:[");
+    sb.append("userName=" + this.getUserName());
+    sb.append("ticket=" + this.getTicket());
+    sb.append("team=" + this.getTeam());
+    sb.append("isLeader=" + this.isLeader());
+    sb.append("projectId=" + this.getProjectId());
+    sb.append("ip=" + this.getIp());
+    sb.append("]");
+
+    return sb.toString();
+  }
+
+  /**
+   * 比赛的题目，或者是众包的id，如果一个用户参参加了不同的比赛(projectId)，那么应该生成2个UserProfile实例，ticket也应该是不同的
+   */
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
+  }
+
+  /**
+   * 允许登录的机器ip
+   */
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
   }
 }

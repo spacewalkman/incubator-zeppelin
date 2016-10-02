@@ -57,39 +57,6 @@ public class SecurityRestApi {
   }
 
   /**
-   * Get ticket
-   * Returns username & ticket
-   * for anonymous access, username is always anonymous.
-   * After getting this ticket, access through websockets become safe
-   *
-   * @return 200 response
-   */
-  @GET
-  @Path("ticket")
-  @ZeppelinApi
-  public Response ticket() {
-    String principal = SecurityUtils.getPrincipal();
-    HashSet<String> roles = SecurityUtils.getRoles();
-    JsonResponse response;
-    // ticket set to anonymous for anonymous user. Simplify testing.
-    String ticket;
-    if ("anonymous".equals(principal))
-      ticket = "anonymous";
-    else
-      ticket = TicketContainer.instance.getTicket(principal);
-
-    TicketContainer.instance.putSubject(ticket, org.apache.shiro.SecurityUtils.getSubject());
-    Map<String, String> data = new HashMap<>();
-    data.put("principal", principal);
-    data.put("roles", roles.toString());
-    data.put("ticket", ticket);
-
-    response = new JsonResponse(Response.Status.OK, "", data);
-    LOG.warn(response.toString());
-    return response.build();
-  }
-
-  /**
    * Get userlist
    * Returns list of all user from available realms
    *

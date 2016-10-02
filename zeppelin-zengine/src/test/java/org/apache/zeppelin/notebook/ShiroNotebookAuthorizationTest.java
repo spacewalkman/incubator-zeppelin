@@ -10,11 +10,15 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.repo.NotebookDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
@@ -49,27 +53,24 @@ public class ShiroNotebookAuthorizationTest extends AbstractShiroTest {
     clearSubject();
   }
 
-  static WritableJdbcRealm writableJdbcRealm;
+  static UserDAO userDAO;
 
   static RealmSecurityManager realmSecurityManager;
 
   static Subject subject;
 
-  static final String RealmName = ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
+  static ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+
+  static final String RealmName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws PropertyVetoException, SQLException, IOException {
     IniSecurityManagerFactory factory = new IniSecurityManagerFactory("classpath:shiro.ini");
     SecurityManager securityManager = factory.getInstance();
     SecurityUtils.setSecurityManager(securityManager);
     realmSecurityManager = (RealmSecurityManager) securityManager;
-    Collection<Realm> realms = realmSecurityManager.getRealms();
-    for (Realm realm : realms) {
-      if (realm.getName().equals(RealmName)) {
-        writableJdbcRealm = (WritableJdbcRealm) realm;
-        break;
-      }
-    }
+
+    userDAO = new UserDAO(conf);
   }
 
   private Subject buildNewSubject(String principal, String realmName) {
@@ -79,9 +80,9 @@ public class ShiroNotebookAuthorizationTest extends AbstractShiroTest {
 
 
   @Before
-  public void setUp() {
+  public void setUp() throws PropertyVetoException, IOException, SQLException {
     subject = buildNewSubject("qianyong", RealmName);
-    authorization = new ShiroNotebookAuthorization(ZeppelinConfiguration.create());
+    authorization = new ShiroNotebookAuthorization(conf);
   }
 
   @Test

@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
 /**
  * singleton解决Datasource的唯一实例问题，供JdbcNotebookRepo使用，解决connection pooling的问题
  */
@@ -51,6 +53,11 @@ public class NotebookDataSource {
   public Connection getConnection() throws SQLException {
     return this.ds.getConnection();
   }
+
+  public DataSource getDataSource() {
+    return this.ds;
+  }
+
 
   public void close() {
     this.ds.close();
