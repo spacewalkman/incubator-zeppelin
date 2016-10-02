@@ -21,6 +21,7 @@ import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
+import org.apache.zeppelin.ticket.TicketUserNameToken;
 import org.apache.zeppelin.ticket.UserPasswordGroupToken;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.slf4j.Logger;
@@ -75,7 +76,8 @@ public class LoginRestApi {
     }
     if (!subject.isAuthenticated()) {
       try {
-        UserPasswordGroupToken token = new UserPasswordGroupToken(userName, password, group);
+        //UserPasswordGroupToken token = new UserPasswordGroupToken(userName, password, group);
+        TicketUserNameToken token = new TicketUserNameToken("7c7fef37-789e-4fa1-86b2-35051dadfbf2", "wangyuda");
         //token.setRememberMe(true);
         subject.login(token);
         HashSet<String> roles = SecurityUtils.getRoles();

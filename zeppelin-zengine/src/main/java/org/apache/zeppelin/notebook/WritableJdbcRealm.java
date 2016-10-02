@@ -1,6 +1,7 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
@@ -384,5 +385,14 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
       JdbcUtils.closeStatement(ps);
       JdbcUtils.closeConnection(connection);
     }
+  }
+
+  /**
+   * 表明该realm不参与用户身份鉴别
+   * TODO：如果是原生zeppelin引用，应该删除这段代码
+   */
+  @Override
+  public boolean supports(AuthenticationToken token) {
+    return false;
   }
 }
