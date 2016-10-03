@@ -7,12 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyVetoException;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
- * shiro-based authorization,use userDAO
+ * shiro-based authorization,singleton模式，全局唯一实例
  */
 public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   private static final Logger LOG = LoggerFactory.getLogger(ShiroNotebookAuthorization.class);
@@ -22,10 +20,22 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    */
   private UserDAO userDAO;
 
-  //TODO:需要缓存下来吗?
-  public ShiroNotebookAuthorization(
-          ZeppelinConfiguration conf) throws PropertyVetoException, IOException, SQLException {
+  private ShiroNotebookAuthorization(ZeppelinConfiguration conf) throws PropertyVetoException {
     this.userDAO = new UserDAO(conf);
+  }
+
+  //"懒汉式"singleton
+  private volatile static ShiroNotebookAuthorization instance;
+
+  public static ShiroNotebookAuthorization getInstance() throws PropertyVetoException {
+    if (instance == null) {
+      synchronized (ShiroNotebookAuthorization.class) {
+        if (instance == null) {
+          instance = new ShiroNotebookAuthorization(ZeppelinConfiguration.create());
+        }
+      }
+    }
+    return instance;
   }
 
   @Override
@@ -38,7 +48,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
-    //group_leader同样是group_member
+    //group_leader没有单独的role，group_leader = group_member+group_submitter
     return subject.hasRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
 
@@ -134,16 +144,26 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
     return subject.hasRole(ROLE_ADMIN);
   }
 
-
-  //TODO:unique userName and roleName
+  /**
+   * 单独添加参赛队,实际上创建了2个角色,一个是队员,一个是队长角色,并为这2个角色设置权限
+   *
+   * @param groupId 队id
+   */
   @Override
-  public void addGroupMember(String groupId, String userName) {
-    if (!userDAO.isUserExist(userName)) {
-      LOG.warn("user: " + userName + " doesn't exist!");
-      return;
+  public void addGroup(String groupId) {
+    final String groupSubmitterRole = String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId);
+    boolean isSubmitterRoleExist = userDAO.isRoleExist(groupSubmitterRole);
+    if (!isSubmitterRoleExist) {
+      //添加note sumbmitter role
+      userDAO.assignPermissionToRole(groupSubmitterRole, String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, "*"));
     }
 
-    userDAO.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
+    final String groupMemberRole = String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId);
+    boolean isMemberRoleExist = userDAO.isRoleExist(groupMemberRole);
+    if (!isMemberRoleExist) {
+      //添加队员的permissions到role
+      userDAO.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_MEMBER_PERMISSIONS_FORMAT, GROUP_MEMBER_PERMISSIONS, groupId, "*"));
+    }
   }
 
   /**
@@ -157,19 +177,19 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
     userDAO.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId));
   }
 
-  /**
-   * 单独添加参赛队,实际上创建了2个角色,一个是队员,一个是队长角色,并为这2个角色设置权限
-   *
-   * @param groupId 队id
-   */
+  //TODO:unique userName and roleName
   @Override
-  public void addGroup(String groupId) {
-    //添加note sumbmitter role
-    userDAO.assignPermissionToRole(String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId), String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, "*"));
+  public void addGroupMember(String groupId, String userName) {
+    //这里不需要判断同名用户存在不存在，稻田中user表zeppelin不维护
+    //    if (!userDAO.isUserExist(userName)) {
+    //      LOG.warn("user: " + userName + " doesn't exist!");
+    //      return;
+    //    }
 
-    //添加队员的permissions到role
-    userDAO.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_MEMBER_PERMISSIONS_FORMAT, GROUP_MEMBER_PERMISSIONS, groupId, "*"));
+    //这里直接添加group
+    userDAO.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
+
 
   /**
    * 为用户授角色

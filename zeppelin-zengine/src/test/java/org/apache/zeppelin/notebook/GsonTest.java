@@ -45,7 +45,7 @@ public class GsonTest implements JobListenerFactory {
 
     SearchService search = mock(SearchService.class);
     NotebookRepo notebookRepo = new ElasticSearchRepo(conf);
-    NotebookAuthorization notebookAuthorization = new NotebookAuthorization(conf);
+    NotebookAuthorization notebookAuthorization = NotebookAuthorization.getInstance();
     Credentials credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
 
     notebook = new Notebook(conf, notebookRepo, new SchedulerFactory(), factory, this, search,

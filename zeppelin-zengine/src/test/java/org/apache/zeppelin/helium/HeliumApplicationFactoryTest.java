@@ -100,7 +100,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
 
     SearchService search = mock(SearchService.class);
     notebookRepo = new VFSNotebookRepo(conf);
-    NotebookAuthorization notebookAuthorization = new NotebookAuthorization(conf);
+    NotebookAuthorization notebookAuthorization =NotebookAuthorization.getInstance();
     notebook = new Notebook(
             conf,
             notebookRepo,

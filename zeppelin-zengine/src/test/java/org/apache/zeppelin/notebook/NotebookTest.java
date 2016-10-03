@@ -109,7 +109,7 @@ public class NotebookTest implements JobListenerFactory{
 
     SearchService search = mock(SearchService.class);
     notebookRepo = new VFSNotebookRepo(conf);
-    notebookAuthorization = new NotebookAuthorization(conf);
+    notebookAuthorization = NotebookAuthorization.getInstance();
     credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
 
     notebook = new Notebook(conf, notebookRepo, schedulerFactory, factory, this, search,

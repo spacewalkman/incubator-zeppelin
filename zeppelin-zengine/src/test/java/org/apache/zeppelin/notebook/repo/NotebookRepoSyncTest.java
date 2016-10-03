@@ -102,7 +102,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
 
     search = mock(SearchService.class);
     notebookRepoSync = new NotebookRepoSync(conf);
-    notebookAuthorization = new NotebookAuthorization(conf);
+    notebookAuthorization = NotebookAuthorization.getInstance();
     credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
     notebookSync = new Notebook(conf, notebookRepoSync, schedulerFactory, factory, this, search,
             notebookAuthorization, credentials);

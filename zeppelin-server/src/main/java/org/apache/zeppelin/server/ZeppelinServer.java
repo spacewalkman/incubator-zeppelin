@@ -25,10 +25,8 @@ import org.apache.zeppelin.helium.Helium;
 import org.apache.zeppelin.helium.HeliumApplicationFactory;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
 import org.apache.zeppelin.notebook.ShiroNotebookAuthorization;
-import org.apache.zeppelin.notebook.repo.ElasticSearchRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.rest.ConfigurationsRestApi;
@@ -117,7 +115,7 @@ public class ZeppelinServer extends Application {
       this.notebookIndex = new LuceneSearch();
     }
 
-    this.notebookAuthorization = new ShiroNotebookAuthorization(conf); //NotebookAuthorization
+    this.notebookAuthorization = ShiroNotebookAuthorization.getInstance(); //授权换成singleton实现
     this.credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());
     notebook = new Notebook(conf,
             notebookRepo, schedulerFactory, replFactory, notebookWsServer,

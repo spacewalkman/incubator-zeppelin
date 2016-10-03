@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class NotebookAuthorizationTest {
 
-    NotebookAuthorization noteAuth = new NotebookAuthorization(ZeppelinConfiguration.create());
+    NotebookAuthorization noteAuth = NotebookAuthorization.getInstance();
 
     @Test
     public void testSaveToFile() {
