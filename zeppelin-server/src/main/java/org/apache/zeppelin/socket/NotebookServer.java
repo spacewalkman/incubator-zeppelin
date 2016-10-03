@@ -473,18 +473,28 @@ public class NotebookServer extends WebSocketServlet implements
 
     List<Map<String, String>> notesInfo = new LinkedList<>();
     for (Note note : notes) {
-      if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {//TODO:返回note要置readOnly状态
+      //返回该user对该note的读写和owner权限
+      String mask = null;
+      if (notebookAuthorization.isAdmin(subject)) {
+        mask = "admin";
+      } else if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
+        mask = "owner";//如果不是组内成员，但是是组内note的reader吗？
+      } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
+        mask = "writer";
+      } else if (notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
+        mask = "reader";
+      } else {
         continue;
-        //如果不是组内成员，但是是组内note的reader吗？
       }
 
-      Map<String, String> info = new HashMap<>(1);
+      Map<String, String> info = new HashMap<>(3);
       if (hideHomeScreenNotebookFromList && note.getId().equals(homescreenNotebookId)) {
         continue;
       }
 
       info.put("id", note.getId());
       info.put("name", note.getName());
+      info.put("mask", mask);//TODO:前台可以根据状态显示只读和可写图标
       notesInfo.add(info);
     }
 
