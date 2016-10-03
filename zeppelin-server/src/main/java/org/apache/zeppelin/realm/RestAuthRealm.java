@@ -105,9 +105,9 @@ public class RestAuthRealm extends AuthenticatingRealm {
       }
     };
 
-    UserProfile uerProfile = httpclient.execute(httpget, rh);
+    UserProfile userProfile = httpclient.execute(httpget, rh);
     httpclient.close();
-    return uerProfile;
+    return userProfile;
   }
 
   @Override
