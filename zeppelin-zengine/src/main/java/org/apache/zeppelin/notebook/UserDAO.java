@@ -71,14 +71,13 @@ public class UserDAO {
 
   private DataSource dataSource;
 
-  public UserDAO(
-          ZeppelinConfiguration conf) throws PropertyVetoException, SQLException, IOException {
+  public UserDAO(ZeppelinConfiguration conf) throws PropertyVetoException {
     this.dataSource = NotebookDataSource.getInstance(conf).getDataSource();
   }
 
   /**
    * add new userName if not exist
-   * TODO:创建队伍的时候使用
+   * TODO:创建队伍的时候使用,由于zeppelin并不维护user表，该表由稻田维护，故该方法没有使用
    *
    * @param userName username
    * @param password user password,not hashed yet
@@ -125,6 +124,7 @@ public class UserDAO {
 
   /**
    * 用户是否存在
+   * TODO：同上理，该方法也没有使用
    */
   public boolean isUserExist(String userName) {
     PreparedStatement ps = null;
@@ -236,7 +236,7 @@ public class UserDAO {
   }
 
   /**
-   * assign roles to user(transactional)
+   * 给用户授角色，非事务性，处理了"违反user_role表唯一性约束"的问题，出现这种情况认为是成功
    *
    * @param user  user name
    * @param roles role names
@@ -247,47 +247,37 @@ public class UserDAO {
 
     try {
       connection = this.dataSource.getConnection();
-      connection.setAutoCommit(false);
-
       ps = dataSource.getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
       for (String role : roles) {
         ps.setString(1, user);
         ps.setString(2, role);
 
-        ps.addBatch();
+        try {
+          ps.executeUpdate();
+        } catch (SQLException e) {
+          if (e.getSQLState().equals("23000")) {//由于user_role表的unique约束失败，说明已经存在了，认为成功。官方文档：Error: 1169 SQLSTATE: 23000 (ER_DUP_UNIQUE), Message: Can't write, because of unique constraint, to table '%s'
+            LOG.warn("用户角色: user:{}, role:{}已经存在，重复插入", user, role);
+            continue;
+          } else {
+            throw e;
+          }
+        }
       }
-
-      int[] counts = ps.executeBatch();
-
-      connection.commit();
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign role to user [" + user + "]";
       if (LOG.isErrorEnabled()) {
         LOG.error(message, e);
       }
-
-      try {
-        connection.rollback();
-      } catch (SQLException e1) {
-        LOG.error("error rolling back transaction", e);
-      }
       // Rethrow any SQL errors as an authentication exception
       throw new AuthenticationException(message, e);
     } finally {
-      try {
-        connection.setAutoCommit(true);
-      } catch (SQLException e) {
-        LOG.error("error reset to auto commit ", e);
-      }
       JdbcUtils.closeStatement(ps);
       JdbcUtils.closeConnection(connection);
     }
   }
 
-
   /**
-   * assign permission to role
-   * TODO:创建队伍的时候使用
+   * 给角色授权限，非事务性，处理了违反唯一性约束问题，这种情况认为是成功
    *
    * @param permission permission,which is confront to Shiro WildcardPermission
    * @param role       role name
@@ -302,9 +292,14 @@ public class UserDAO {
       ps.setString(1, role);
       ps.setString(2, permission);
 
-      int count = ps.executeUpdate();
-      if (count < 1) {
-        throw new AuthenticationException("can't assign permission: " + permission + " to role: " + role);
+      try {
+        ps.executeUpdate();
+      } catch (SQLException e) {
+        if (e.getSQLState().equals("23000")) {//违反唯一性约束问题，认为成功
+          LOG.warn("角色权限: role:{}, permission:{}已经存在，重复插入", role, permission);
+        } else {
+          throw e;
+        }
       }
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign permission: " + permission + " to role: " + role;
@@ -358,7 +353,7 @@ public class UserDAO {
   }
 
   /**
-   * is user has a specific role
+   * 判断用户是否有某个角色
    *
    * @param userName user'name
    * @param roleName role name
