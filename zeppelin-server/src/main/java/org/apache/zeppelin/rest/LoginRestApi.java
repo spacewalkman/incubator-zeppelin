@@ -23,6 +23,7 @@ import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.notebook.ShiroNotebookAuthorization;
 import org.apache.zeppelin.realm.UserProfile;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
@@ -30,6 +31,7 @@ import org.apache.zeppelin.ticket.TicketUserNameToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyVetoException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
@@ -71,16 +73,12 @@ public class LoginRestApi {
   public Response postLogin(@FormParam("ticket") String ticket,
                             @FormParam("userName") String userName) {
     JsonResponse response = null;
-    // ticket set to anonymous for anonymous user. Simplify testing.
 
     Subject subject = TicketContainer.instance.getCachedSubject(ticket, userName);
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
     }
 
-//    if (subject.isAuthenticated()) {
-//      subject.logout();
-//    }
     if (!subject.isAuthenticated()) {
       try {
         TicketUserNameToken token = new TicketUserNameToken(ticket, userName);
@@ -99,12 +97,26 @@ public class LoginRestApi {
           ip = InetAddress.getLocalHost();
           LOG.debug("当前ip地址:{}", ip.toString());
         } catch (UnknownHostException e) {
-          e.printStackTrace();
+          LOG.error("无法获取当前host的ip地址", e);
         }
 
         boolean isIpMatch = isIpMatch(userProfile, ip);
         if (isIpMatch) {
           TicketContainer.instance.putSubject(userProfile, subject);
+
+          //创建user_role,role_permission等，保证用户经过RestAuth验证通过的用户，授权能过
+          try {
+            //TODO:这里与zeppelinServer构造函数中实例化的NotebookAuthorizationAdaptor的子类保持一致，目前没有处理自动初始化子类的问题
+            ShiroNotebookAuthorization notebookAuthorization = ShiroNotebookAuthorization.getInstance();
+            notebookAuthorization.addGroup(userProfile.getTeam());//创建组
+            if (userProfile.isLeader()) {
+              notebookAuthorization.addGroupLeader(userProfile.getTeam(), userProfile.getUserName());//创建组长
+            } else {
+              notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员
+            }
+          } catch (PropertyVetoException e) {
+            LOG.error("创建授权的DataSource失败", e);
+          }
 
           response = buildOKResponse(userProfile);
           //if no exception, that's it, we're done!
