@@ -5,7 +5,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 
 import java.beans.PropertyVetoException;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -20,7 +19,7 @@ public class NotebookDataSource {
   private ComboPooledDataSource ds;
 
   private NotebookDataSource(
-          ZeppelinConfiguration conf) throws IOException, SQLException, PropertyVetoException {
+          ZeppelinConfiguration conf) throws PropertyVetoException {
     String dbType = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_DB_TYPE);
     String driver = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_DRIVER);
     String host = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_HOST);
@@ -41,13 +40,12 @@ public class NotebookDataSource {
   }
 
   public static NotebookDataSource getInstance(
-          ZeppelinConfiguration conf) throws IOException, SQLException, PropertyVetoException {
+          ZeppelinConfiguration conf) throws PropertyVetoException {
     if (datasource == null) {
       datasource = new NotebookDataSource(conf);
-      return datasource;
-    } else {
-      return datasource;
     }
+
+    return datasource;
   }
 
   public Connection getConnection() throws SQLException {
