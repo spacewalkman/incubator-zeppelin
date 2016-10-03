@@ -74,7 +74,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
 
   /**
    * 表明该realm不参与用户身份鉴别
-   * TODO：如果是原生zeppelin引用，应该删除这段代码
+   * TODO：如果需要通过mysql来Authentication用户，应该删除这段代码
    */
   @Override
   public boolean supports(AuthenticationToken token) {
