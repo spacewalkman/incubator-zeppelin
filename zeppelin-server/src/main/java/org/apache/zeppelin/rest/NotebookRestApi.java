@@ -286,7 +286,7 @@ public class NotebookRestApi {
   }
 
   private UserProfile getCachedUserProfile(NewNotebookRequest request) {
-    Subject subject = TicketContainer.instance.getCachedSubject(request.getTicket(), request.getName());
+    Subject subject = TicketContainer.instance.getCachedSubject(request.getTicket());
     return (UserProfile) (subject.getPrincipal());
   }
 

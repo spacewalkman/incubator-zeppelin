@@ -149,7 +149,7 @@ public class NotebookServer extends WebSocketServlet implements
         LOG.trace("RECEIVE MSG = " + messagereceived);
       }
 
-      Subject subject = TicketContainer.instance.getCachedSubject(messagereceived.ticket, messagereceived.principal);
+      Subject subject = TicketContainer.instance.getCachedSubject(messagereceived.ticket);
       if (subject == null || !subject.isAuthenticated()) {
         return;
       }
@@ -1316,7 +1316,7 @@ public class NotebookServer extends WebSocketServlet implements
       throw new IllegalArgumentException("group is null");
     }
 
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket, fromMessage.principal);
+    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
 
     //是否有commit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
@@ -1349,7 +1349,7 @@ public class NotebookServer extends WebSocketServlet implements
       throw new IllegalArgumentException("group is null");
     }
 
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket, fromMessage.principal);
+    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
 
     //是否有submit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
@@ -1397,7 +1397,7 @@ public class NotebookServer extends WebSocketServlet implements
   private void listRevisionHistory(NotebookSocket conn, Notebook notebook,
                                    Message fromMessage) throws IOException {
     String noteId = (String) fromMessage.get("noteId");
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket, fromMessage.principal);
+    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     List<Revision> revisions = notebook.listRevisionHistory(noteId, userProfile.getUserName());
 
@@ -1415,7 +1415,7 @@ public class NotebookServer extends WebSocketServlet implements
       throw new IllegalArgumentException("group is null");
     }
 
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket, fromMessage.principal);
+    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
 
     //是否有commit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();

@@ -1,7 +1,7 @@
 package org.apache.zeppelin.realm;
 
 /**
- * 从稻田REST authentication接口中期望获取的数据格式
+ * zeppelin期望从"稻田"用户验证接口中获取到的用户相关信息
  */
 public class UserProfile {
 
@@ -11,15 +11,21 @@ public class UserProfile {
 
   private String projectId;
 
-  private String ip;
+  private int serverIndex;
 
   private String team;
 
   private boolean isLeader;
 
-  public UserProfile(String ticket, String userName) {
-    this.userName = userName;
+  /**
+   * 默认构造函数，jackson反序列化时需要
+   */
+  public UserProfile() {
+  }
+
+  public UserProfile(String ticket, int serverIndex) {
     this.ticket = ticket;
+    this.serverIndex = serverIndex;
   }
 
   /**
@@ -78,16 +84,28 @@ public class UserProfile {
     }
 
     UserProfile other = (UserProfile) obj;
-    if (!this.getUserName().equals(other.getUserName())) {
+    if (!this.getTicket().equals(other.getTicket())) {
       return false;
     }
 
-    if (!this.getTicket().equals(other.getTicket())) {
+    if (this.getServerIndex() == other.getServerIndex()) {
       return false;
     }
 
     return true;
   }
+
+  /**
+   * 比赛的题目，或者是众包的id，如果一个用户参参加了不同的比赛(projectId)，那么应该生成2个UserProfile实例，ticket也应该是不同的
+   */
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
+  }
+
 
   @Override
   public int hashCode() {
@@ -102,31 +120,17 @@ public class UserProfile {
     sb.append("team=" + this.getTeam());
     sb.append("isLeader=" + this.isLeader());
     sb.append("projectId=" + this.getProjectId());
-    sb.append("ip=" + this.getIp());
+    sb.append("serverIndex=" + this.getServerIndex());
     sb.append("]");
 
     return sb.toString();
   }
 
-  /**
-   * 比赛的题目，或者是众包的id，如果一个用户参参加了不同的比赛(projectId)，那么应该生成2个UserProfile实例，ticket也应该是不同的
-   */
-  public String getProjectId() {
-    return projectId;
+  public int getServerIndex() {
+    return serverIndex;
   }
 
-  public void setProjectId(String projectId) {
-    this.projectId = projectId;
-  }
-
-  /**
-   * 允许登录的机器ip
-   */
-  public String getIp() {
-    return ip;
-  }
-
-  public void setIp(String ip) {
-    this.ip = ip;
+  public void setServerIndex(int serverIndex) {
+    this.serverIndex = serverIndex;
   }
 }

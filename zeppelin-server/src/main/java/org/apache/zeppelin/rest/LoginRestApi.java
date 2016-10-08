@@ -32,8 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyVetoException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,17 +69,17 @@ public class LoginRestApi {
   @POST
   @ZeppelinApi
   public Response postLogin(@FormParam("ticket") String ticket,
-                            @FormParam("userName") String userName) {
+                            @FormParam("serverindex") int serverindex) {
     JsonResponse response = null;
 
-    Subject subject = TicketContainer.instance.getCachedSubject(ticket, userName);
+    Subject subject = TicketContainer.instance.getCachedSubject(ticket);
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
     }
 
     if (!subject.isAuthenticated()) {
       try {
-        TicketUserNameToken token = new TicketUserNameToken(ticket, userName);
+        TicketUserNameToken token = new TicketUserNameToken(ticket, serverindex);
         //token.setRememberMe(true);
 
         Date startTime = new Date();
@@ -92,38 +90,24 @@ public class LoginRestApi {
         PrincipalCollection principalCollection = subject.getPrincipals();
         UserProfile userProfile = (UserProfile) principalCollection.getPrimaryPrincipal();
 
-        InetAddress ip = null;
+        TicketContainer.instance.putSubject(userProfile.getTicket(), subject);
+
+        //创建user_role,role_permission等，保证用户经过RestAuth验证通过的用户，授权能过
         try {
-          ip = InetAddress.getLocalHost();
-          LOG.debug("当前ip地址:{}", ip.toString());
-        } catch (UnknownHostException e) {
-          LOG.error("无法获取当前host的ip地址", e);
-        }
-
-        boolean isIpMatch = isIpMatch(userProfile, ip);
-        if (isIpMatch) {
-          TicketContainer.instance.putSubject(userProfile, subject);
-
-          //创建user_role,role_permission等，保证用户经过RestAuth验证通过的用户，授权能过
-          try {
-            //TODO:这里与zeppelinServer构造函数中实例化的NotebookAuthorizationAdaptor的子类保持一致，目前没有处理自动初始化子类的问题
-            ShiroNotebookAuthorization notebookAuthorization = ShiroNotebookAuthorization.getInstance();
-            notebookAuthorization.addGroup(userProfile.getTeam());//创建组
-            if (userProfile.isLeader()) {
-              notebookAuthorization.addGroupLeader(userProfile.getTeam(), userProfile.getUserName());//创建组长
-            } else {
-              notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员
-            }
-          } catch (PropertyVetoException e) {
-            LOG.error("创建授权的DataSource失败", e);
+          //TODO:这里与zeppelinServer构造函数中实例化的NotebookAuthorizationAdaptor的子类保持一致，目前没有处理自动初始化子类的问题
+          ShiroNotebookAuthorization notebookAuthorization = ShiroNotebookAuthorization.getInstance();
+          notebookAuthorization.addGroup(userProfile.getTeam());//创建组
+          if (userProfile.isLeader()) {
+            notebookAuthorization.addGroupLeader(userProfile.getTeam(), userProfile.getUserName());//创建组长
+          } else {
+            notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员
           }
-
-          response = buildOKResponse(userProfile);
-          //if no exception, that's it, we're done!
-        } else { //如果ip不符合，logout
-          subject.logout();
-          response = new JsonResponse(Response.Status.FORBIDDEN, "不允许在该host上登录", "");
+        } catch (PropertyVetoException e) {
+          LOG.error("创建授权的DataSource失败", e);
         }
+
+        response = buildOKResponse(userProfile);
+        //if no exception, that's it, we're done!
       } catch (UnknownAccountException uae) {
         //username wasn't in the system, show them an error message?
         LOG.error("username and password doesn't match: ", uae);
@@ -139,7 +123,7 @@ public class LoginRestApi {
       }
 
       if (response == null) {
-        response = new JsonResponse(Response.Status.FORBIDDEN, "", "");
+        response = new JsonResponse(Response.Status.FORBIDDEN, "未授权的用户", "");
       }
     } else {//TODO:如果zeppelin缓存命中，则直接通过验证，这里需要增加超时清理机制
       PrincipalCollection principalCollection = subject.getPrincipals();
@@ -163,29 +147,6 @@ public class LoginRestApi {
 
     JsonResponse response = new JsonResponse(Response.Status.OK, "", data);
     return response;
-  }
-
-  /**
-   * 判断ip是否符合
-   */
-  private boolean isIpMatch(UserProfile userProfile, InetAddress ip) {
-    if (userProfile.getIp() == null || userProfile.getIp().isEmpty()) {
-      return true;
-    }
-
-    boolean isIpMatch = true;
-    if (ip != null) {//if ip=null，则表示不限制ip
-      if (ip.getHostAddress().startsWith("127.")) {
-        if (!userProfile.getIp().startsWith("127.") && !userProfile.getIp().equals("localhost")) {
-          isIpMatch = false;
-        }
-      } else {
-        if (!ip.getHostAddress().equals(userProfile.getIp())) {
-          isIpMatch = false;
-        }
-      }
-    }
-    return isIpMatch;
   }
 
   @POST
