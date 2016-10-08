@@ -14,10 +14,14 @@ limitations under the License.
 <div class="noteAction" ng-show="note.id && !paragraphUrl">
   <h3>
     <div style="float: left; width: auto; max-width: 40%"
-      ng-controller="ElasticInputCtrl as input">
-      <input type="text" pu-elastic-input class="form-control2" placeholder="{{noteName(note)}}" style="min-width: 0px; max-width: 95%;"
-           ng-if="input.showEditor" ng-model="note.name" ng-blur="sendNewName();input.showEditor = false;" ng-enter="sendNewName();input.showEditor = false;" ng-escape="note.name = oldName; input.showEditor = false" focus-if="input.showEditor" />
-      <p class="form-control-static2" ng-click="input.showEditor = true; oldName = note.name" ng-show="!input.showEditor">{{noteName(note)}}</p>
+         ng-controller="ElasticInputCtrl as input">
+      <input type="text" pu-elastic-input class="form-control2" placeholder="{{noteName(note)}}"
+             style="min-width: 0px; max-width: 95%;"
+             ng-if="input.showEditor" ng-model="note.name" ng-blur="sendNewName();input.showEditor = false;"
+             ng-enter="sendNewName();input.showEditor = false;"
+             ng-escape="note.name = oldName; input.showEditor = false" focus-if="input.showEditor"/>
+      <p class="form-control-static2" ng-click="input.showEditor = true; oldName = note.name"
+         ng-show="!input.showEditor">{{noteName(note)}}</p>
     </div>
     <div style="float: left; padding-bottom: 10px">
       <span class="labelBtn btn-group">
@@ -55,7 +59,7 @@ limitations under the License.
               ng-hide="viewOnly"
               tooltip-placement="bottom" tooltip="Clone the notebook"
               data-toggle="modal" data-target="#noteNameModal" data-clone="true"
-              >
+      >
         <i class="fa fa-copy"></i>
       </button>
       <button type="button"
@@ -67,7 +71,7 @@ limitations under the License.
       </button>
     </span>
 
-    <span class="labelBtn btn-group" role="group">
+      <span class="labelBtn btn-group" role="group">
       <div class="btn-group" role="group">
         <button type="button"
                 class="btn btn-default btn-xs dropdown-toggle"
@@ -78,7 +82,7 @@ limitations under the License.
           <i class="fa fa-file-code-o"></i>
         </button>
         <ul class="dropdown-menu" style="width:250px"
-          aria-labelledby="versionControlDropdown">
+            aria-labelledby="versionControlDropdown">
           <li>
             <div class="commit-container">
               <div>
@@ -105,8 +109,8 @@ limitations under the License.
           Head
         </button>
         <button type="button" ng-if="noteRevisions.length > 0"
-          class="btn btn-default dropdown-toggle caretSeparator"
-          data-toggle="dropdown" id="revisionsDropdown">
+                class="btn btn-default dropdown-toggle caretSeparator"
+                data-toggle="dropdown" id="revisionsDropdown">
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu pull-right" aria-labelledby="revisionsDropdown">
@@ -124,7 +128,7 @@ limitations under the License.
       </div>
     </span>
 
-<!-- put the delete action by itself for your protection -->
+      <!-- put the delete action by itself for your protection -->
       <span class="labelBtn" style="vertical-align:middle; display:inline-block;">
         <button type="button"
                 class="btn btn-default btn-xs"
@@ -148,7 +152,8 @@ limitations under the License.
           <li>
             <div class="cron-preset-container">
               Run note with cron scheduler.
-              Either choose from preset or write your own <a href="http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger" target="_blank">cron expression</a>.
+              Either choose from preset or write your own <a
+              href="http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger" target="_blank">cron expression</a>.
               <div>
                 <span>- Preset</span>
                 <a class="cron-preset" ng-repeat="cr in cronOption"
@@ -161,7 +166,7 @@ limitations under the License.
                 <input type="text"
                        ng-model="note.config.cron"
                        ng-change="setCronScheduler(note.config.cron)"
-                       dropdown-input ng-model-options="{ debounce: 1000 }" />
+                       dropdown-input ng-model-options="{ debounce: 1000 }"/>
                 <p ng-show="note.info.cron" class="text-danger cron-info">
                   {{note.info.cron}}
                 </p>
@@ -171,7 +176,7 @@ limitations under the License.
                 <input type="text"
                        ng-model="note.config.cronExecutingUser"
                        ng-enter="setCronExecutingUser(note.config.cronExecutingUser)"
-                       dropdown-input />
+                       dropdown-input/>
               </div>
               <div>
                 <span>- auto-restart interpreter on cron execution </span>
@@ -186,7 +191,8 @@ limitations under the License.
     </span>
     </div>
 
-    <div class="pull-right" style="margin-top:15px; margin-right:15px; margin-left: 15px; margin-bottom: 13px; font-size:15px;">
+    <div class="pull-right"
+         style="margin-top:15px; margin-right:15px; margin-left: 15px; margin-bottom: 13px; font-size:15px;">
       <span class="setting-btn"
             type="button"
             data-toggle="modal"
