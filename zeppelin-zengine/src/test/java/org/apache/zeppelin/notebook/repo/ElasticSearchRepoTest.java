@@ -152,7 +152,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
 
   @Test
   public void testSaveNotebook() throws IOException, InterruptedException {
-    Note note = notebook.createNote(null);
+    Note note = notebook.createNote(null, null, null);
 
     Paragraph p1 = note.addParagraph();
     Map<String, Object> config = p1.getConfig();
@@ -170,7 +170,7 @@ public class ElasticSearchRepoTest implements JobListenerFactory {
     note.setTags(tags);
     notebookRepo.save(note, null);
     assertEquals(note.getName(), "testSaveNotebook");
-    notebookRepo.remove(note.getId(),null);
+    notebookRepo.remove(note.getId(), null);
   }
 
   @Override

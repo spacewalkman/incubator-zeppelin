@@ -31,6 +31,7 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.realm.UserProfile;
 import org.apache.zeppelin.rest.message.CronRequest;
 import org.apache.zeppelin.rest.message.NewNotebookRequest;
 import org.apache.zeppelin.rest.message.NewParagraphRequest;
@@ -38,6 +39,7 @@ import org.apache.zeppelin.rest.message.RunParagraphWithParametersRequest;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.socket.NotebookServer;
+import org.apache.zeppelin.ticket.TicketContainer;
 import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
 import org.quartz.CronExpression;
@@ -240,7 +242,8 @@ public class NotebookRestApi {
   @Path("import")
   @ZeppelinApi
   public Response importNotebook(String req) throws IOException {
-    Note newNote = notebook.importNote(req, null, ""); //TODO:imported note的时候没有当前用户身份吗？
+    //NewNotebookRequest request = gson.fromJson(message, NewNotebookRequest.class);
+    Note newNote = notebook.importNote(req, null, "", "", ""); //TODO:imported note的时候没有当前用户身份吗？REST如何识别当前身份
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
   }
 
@@ -257,7 +260,8 @@ public class NotebookRestApi {
     LOG.info("Create new notebook by JSON {}", message);
 
     NewNotebookRequest request = gson.fromJson(message, NewNotebookRequest.class);
-    Note note = notebook.createNote(request.getPrincipal());
+    UserProfile userProfile = getCachedUserProfile(request);
+    Note note = notebook.createNote(userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
     List<NewParagraphRequest> initialParagraphs = request.getParagraphs();
     if (initialParagraphs != null) {
       for (NewParagraphRequest paragraphRequest : initialParagraphs) {
@@ -279,6 +283,11 @@ public class NotebookRestApi {
     notebookServer.broadcastNote(note);
     notebookServer.broadcastNoteList(SecurityUtils.getSubject());//TODO:(qy) when create note using REST, could cause note filter by current user failed
     return new JsonResponse<>(Status.CREATED, "", note.getId()).build();
+  }
+
+  private UserProfile getCachedUserProfile(NewNotebookRequest request) {
+    Subject subject = TicketContainer.instance.getCachedSubject(request.getTicket(), request.getName());
+    return (UserProfile) (subject.getPrincipal());
   }
 
   /**
@@ -330,9 +339,9 @@ public class NotebookRestApi {
     if (request != null) {
       newNoteName = request.getName();
     }
-//    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-//    Note newNote = notebook.cloneNote(notebookId, newNoteName, subject);
-    Note newNote = notebook.cloneNote(notebookId, newNoteName, "");//TODO:rest 安全
+
+    UserProfile userProfile = getCachedUserProfile(request);
+    Note newNote = notebook.cloneNote(notebookId, newNoteName, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());//TODO:rest 安全
     notebookServer.broadcastNote(newNote);
     notebookServer.broadcastNoteList(SecurityUtils.getSubject());
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();

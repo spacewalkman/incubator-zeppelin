@@ -128,12 +128,12 @@ public class Notebook implements NoteEventListener {
   /**
    * Create new note.
    */
-  public Note createNote(String principal) throws IOException {
+  public Note createNote(String principal, String groupId, String projectId) throws IOException {
     Note note;
     if (conf.getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_AUTO_INTERPRETER_BINDING)) {
-      note = createNote(replFactory.getDefaultInterpreterSettingList(), principal);
+      note = createNote(replFactory.getDefaultInterpreterSettingList(), principal, groupId, projectId);
     } else {
-      note = createNote(null, principal);
+      note = createNote(null, principal, groupId, projectId);
     }
 
     //notebookIndex.addIndexDoc(note);
@@ -143,14 +143,15 @@ public class Notebook implements NoteEventListener {
   /**
    * Create new note.
    */
-  public Note createNote(List<String> interpreterIds, String principal)
+  public Note createNote(List<String> interpreterIds, String principal, String groupId,
+                         String projectId)
           throws IOException {
     Note note = new Note(
             notebookRepo,
             replFactory,
             jobListenerFactory,
             notebookIndex,
-            credentials, principal,
+            credentials, principal, groupId, projectId,
             this);
     synchronized (notes) {
       notes.put(note.getId(), note);
@@ -192,7 +193,8 @@ public class Notebook implements NoteEventListener {
    * @param principal  current principal
    * @return notebook ID
    */
-  public Note importNote(String sourceJson, String noteName, String principal) throws IOException {
+  public Note importNote(String sourceJson, String noteName, String principal, String groupId,
+                         String projectId) throws IOException {
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.setPrettyPrinting();
 
@@ -203,7 +205,7 @@ public class Notebook implements NoteEventListener {
     Note newNote;
     try {
       Note oldNote = gson.fromJson(reader, Note.class);
-      newNote = createNote(principal);
+      newNote = createNote(principal, groupId, projectId);
       if (noteName != null)
         newNote.setName(noteName);
       else
@@ -234,13 +236,14 @@ public class Notebook implements NoteEventListener {
    * @return noteId
    * @throws IOException, CloneNotSupportedException, IllegalArgumentException
    */
-  public Note cloneNote(String sourceNoteID, String newNoteName, String principal) throws
-                                                                                   IOException, CloneNotSupportedException, IllegalArgumentException {
+  public Note cloneNote(String sourceNoteID, String newNoteName,
+                        String principal, String groupId,
+                        String projectId) throws IOException, CloneNotSupportedException, IllegalArgumentException {
     Note sourceNote = getNote(sourceNoteID);
     if (sourceNote == null) {
       throw new IllegalArgumentException(sourceNoteID + "not found");
     }
-    Note newNote = createNote(principal);
+    Note newNote = createNote(principal, groupId, projectId);
     if (newNoteName != null) {
       newNote.setName(newNoteName);
     } else {
@@ -258,8 +261,11 @@ public class Notebook implements NoteEventListener {
       newNote.addCloneParagraph(p);
     }
 
-    //notebookAuthorization.addOwner(newNote.id(), subject.getPrincipal()); TODO:这里如果要控制per-note的权限,则需要设置note的owner角色
-    //notebookIndex.addIndexDoc(newNote); TODO:check comment do no harm
+    notebookAuthorization.addOwner(newNote.getId(), principal);
+    if (this.notebookRepo != this.notebookIndex) {//避免既实现了NotebookRepo接口又实现了SearchService接口的类重复add，例如ElasticSearchRepo
+      notebookIndex.addIndexDoc(newNote);
+    }
+
     newNote.persist(principal);
     return newNote;
   }
@@ -532,6 +538,15 @@ public class Notebook implements NoteEventListener {
       Collections.sort(noteList, new Comparator<Note>() {
         @Override
         public int compare(Note note1, Note note2) {
+          //第一order按照lastUpdatedTime降序
+          Date lastUpdated1 = note1.getLastUpdated();
+          Date lastUpdated2 = note2.getLastUpdated();
+
+          if (lastUpdated1 != null && lastUpdated2 != null) {
+            return lastUpdated2.compareTo(lastUpdated1);
+          }
+
+          //第二排序按照name
           String name1 = note1.getId();
           if (note1.getName() != null) {
             name1 = note1.getName();

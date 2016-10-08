@@ -230,7 +230,8 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
 
   @Override
   public void addOwner(String noteId, String userName) {
-    throw new NotImplementedException();//TODO:实现
+    //由于当前按照group控制note的权限，该方法在clone和create note是会用到，而这2个方法都已经将note的group set成当前user的group了
+    return;
   }
 
   /**

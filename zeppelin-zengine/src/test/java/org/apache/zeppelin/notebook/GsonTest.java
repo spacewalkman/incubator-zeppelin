@@ -64,7 +64,7 @@ public class GsonTest implements JobListenerFactory {
    */
   @Test
   public void testGsonNoteSearilization() throws IOException {
-    Note note = notebook.createNote(null);
+    Note note = notebook.createNote(null, null, null);
 
     note.setName("testGsonNoteSearilization");
     note.setTopic("用户画像");

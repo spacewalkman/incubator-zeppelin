@@ -463,8 +463,8 @@ public class NotebookServer extends WebSocketServlet implements
   /**
    * refresh notes from repo,and apply filtered by userAndRoles
    */
-  public List<Map<String, String>> generateNotebooksInfo(boolean needsReload, Subject subject) {
-    Notebook notebook = refreshNotes(needsReload, subject);
+  public List<Map<String, String>> generateNotebooksInfo(boolean isReload, Subject subject) {
+    Notebook notebook = this.refreshNotes(isReload);
     List<Note> notes = notebook.getAllNotes();
     ZeppelinConfiguration conf = notebook.getConf();
     String homescreenNotebookId = conf.getString(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
@@ -510,16 +510,15 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   /**
-   * reload all note from repo, according to needsReload
+   * 重新加载所有的note，不根据用户过滤，根据user过滤的操作放到该方法的调用者上
    */
-  private Notebook refreshNotes(boolean needsReload, Subject subject) {
+  private Notebook refreshNotes(boolean isReload) {
     Notebook notebook = notebook();
 
-    if (needsReload) {
+    if (isReload) {
       try {
         long startTime = System.currentTimeMillis();
-        UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-        notebook.reloadAllNotes(userProfile.getUserName());
+        notebook.reloadAllNotes(null);//这里不能传入userName，如果按照userName=createdBy过滤，则不是creator的note就不能显示出来了
         long endTime = System.currentTimeMillis();
         LOG.debug("查询所有的note列表时间:{} 秒", (endTime - startTime) / 1000.0);
       } catch (IOException e) {
@@ -672,7 +671,7 @@ public class NotebookServer extends WebSocketServlet implements
   private void createNote(NotebookSocket conn, Subject subject, Notebook notebook, Message message)
           throws IOException {
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-    Note note = notebook.createNote(userProfile.getUserName());
+    Note note = notebook.createNote(userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
     note.setGroup(message.group);//设置note所属的参赛队
     note.setProjectId(message.projectId);//设置note所属的题目
     note.addParagraph(); // it's an empty note. so add one paragraph
@@ -845,7 +844,7 @@ public class NotebookServer extends WebSocketServlet implements
     String name = (String) fromMessage.get("name");
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-    Note newNote = notebook.cloneNote(noteId, name, userProfile.getUserName());
+    Note newNote = notebook.cloneNote(noteId, name, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
 
     addConnectionToNote(newNote.getId(), conn);
     conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", newNote)));
@@ -864,10 +863,7 @@ public class NotebookServer extends WebSocketServlet implements
       String noteJson = GsonUtil.toJson(fromMessage.get("notebook"));
 
       UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-      note = notebook.importNote(noteJson, noteName, userProfile.getUserName());
-      note.setCreatedBy(fromMessage.principal);
-      note.setGroup(fromMessage.group);
-      note.setProjectId(fromMessage.projectId);
+      note = notebook.importNote(noteJson, noteName, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
 
       note.persist(userProfile.getUserName());
       broadcastNote(note);

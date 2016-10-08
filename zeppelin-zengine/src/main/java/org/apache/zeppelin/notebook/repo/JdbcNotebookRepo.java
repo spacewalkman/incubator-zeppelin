@@ -89,6 +89,8 @@ public class JdbcNotebookRepo implements NotebookRepo {
 
   /**
    * 算法(note)列表
+   *
+   * @param principal 当前用户，如果不为null，则按照note.createdBy=principal的条件过滤，否则，不过滤，返回所有的note
    */
   @Override
   public List<NoteInfo> list(String principal) throws IOException {
@@ -506,7 +508,8 @@ public class JdbcNotebookRepo implements NotebookRepo {
    * @throws Exception 违反提交次数限制的异常
    */
   @Override
-  public SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException {
+  public SubmitLeftOver submit(String noteId,
+                               String revisionId) throws SubmitStrategyVolationException {
     if (revisionId == null) {
       throw new IllegalArgumentException("revision is null");
     }

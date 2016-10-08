@@ -100,7 +100,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
 
     SearchService search = mock(SearchService.class);
     notebookRepo = new VFSNotebookRepo(conf);
-    NotebookAuthorization notebookAuthorization =NotebookAuthorization.getInstance();
+    NotebookAuthorization notebookAuthorization = NotebookAuthorization.getInstance();
     notebook = new Notebook(
             conf,
             notebookRepo,
@@ -142,7 +142,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
             HeliumTestApplication.class.getName(),
             new String[][]{});
 
-    Note note1 = notebook.createNote(null);
+    Note note1 = notebook.createNote(null, null, null);
     factory.setInterpreters(note1.getId(), factory.getDefaultInterpreterSettingList());
 
     Paragraph p1 = note1.addParagraph();
@@ -186,7 +186,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
             HeliumTestApplication.class.getName(),
             new String[][]{});
 
-    Note note1 = notebook.createNote(null);
+    Note note1 = notebook.createNote(null,null,null);
     factory.setInterpreters(note1.getId(), factory.getDefaultInterpreterSettingList());
 
     Paragraph p1 = note1.addParagraph();
@@ -224,7 +224,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
             HeliumTestApplication.class.getName(),
             new String[][]{});
 
-    Note note1 = notebook.createNote(null);
+    Note note1 = notebook.createNote(null,null,null);
     notebook.bindInterpretersToNote(note1.getId(), factory.getDefaultInterpreterSettingList());
 
     Paragraph p1 = note1.addParagraph();
@@ -254,7 +254,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
   @Test
   public void testInterpreterUnbindOfNullReplParagraph() throws IOException {
     // create note
-    Note note1 = notebook.createNote(null);
+    Note note1 = notebook.createNote(null, null, null);
 
     // add paragraph with invalid magic
     Paragraph p1 = note1.addParagraph();
@@ -283,7 +283,7 @@ public class HeliumApplicationFactoryTest implements JobListenerFactory {
             HeliumTestApplication.class.getName(),
             new String[][]{});
 
-    Note note1 = notebook.createNote(null);
+    Note note1 = notebook.createNote(null, null, null);
     notebook.bindInterpretersToNote(note1.getId(), factory.getDefaultInterpreterSettingList());
     String mock1IntpSettingId = null;
     for (InterpreterSetting setting : notebook.getBindedInterpreterSettings(note1.getId())) {

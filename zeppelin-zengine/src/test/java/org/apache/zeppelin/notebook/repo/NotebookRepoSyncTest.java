@@ -126,7 +126,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     assertEquals(0, notebookRepoSync.list(1, null).size());
 
     /* create note */
-    Note note = notebookSync.createNote(null);
+    Note note = notebookSync.createNote(null, null, null);
 
     // check that automatically saved on both storages
     assertEquals(1, notebookRepoSync.list(0, null).size());
@@ -142,7 +142,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     assertEquals(0, notebookRepoSync.list(0, null).size());
     assertEquals(0, notebookRepoSync.list(1, null).size());
 
-    Note note = notebookSync.createNote(null);
+    Note note = notebookSync.createNote(null, null, null);
 
     /* check that created in both storage systems */
     assertEquals(1, notebookRepoSync.list(0, null).size());
@@ -162,7 +162,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
   public void testSyncUpdateMain() throws IOException {
 
     /* create note */
-    Note note = notebookSync.createNote(null);
+    Note note = notebookSync.createNote(null, null, null);
     Paragraph p1 = note.addParagraph();
     Map config = p1.getConfig();
     config.put("enabled", true);
@@ -290,7 +290,7 @@ public class NotebookRepoSyncTest implements JobListenerFactory {
     // no notes
     assertThat(vRepoSync.list(null).size()).isEqualTo(0);
     // create note
-    Note note = vNotebookSync.createNote(null);
+    Note note = vNotebookSync.createNote(null, null, null);
     assertThat(vRepoSync.list(null).size()).isEqualTo(1);
     String noteId = vRepoSync.list(null).get(0).getId();
     Note note1 = vNotebookSync.getNote(noteId);
