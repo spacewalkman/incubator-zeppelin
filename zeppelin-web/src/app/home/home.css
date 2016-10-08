@@ -13,8 +13,9 @@
  */
 
 body {
-  padding-top: 50px;
+  /*padding-top: 50px;*/
   color: #212121;
+  font-family: Arial,'Microsoft Yahei';
 }
 
 html,
@@ -22,7 +23,12 @@ body {
   height: 100%;
   -ms-overflow-style: scrollbar;
 }
-
+.text-ellipsis{
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+}
 .home {
   margin-bottom: 0px !important;
 }
@@ -43,12 +49,20 @@ body .navbar {
   margin-bottom: 0;
 }
 
+.layout{
+  position: relative;
+  padding-left: 200px;
+  height: 100%;
+  background: #ebeffd;
+}
+
 .container {
   padding-right: 15px;
   padding-left: 15px;
   margin-right: auto;
   margin-left: auto;
   width: auto;
+  overflow: auto;
 }
 
 .navbar-inverse {
@@ -278,7 +292,7 @@ a.navbar-brand:hover {
 }
 
 #main {
-  padding: 10px;
+  padding: 20px;
   height: 100%;
 }
 
