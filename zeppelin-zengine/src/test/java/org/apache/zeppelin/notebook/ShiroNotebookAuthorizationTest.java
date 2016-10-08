@@ -5,71 +5,68 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collection;
+import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ShiroNotebookAuthorizationTest extends AbstractShiroTest {
 
   ShiroNotebookAuthorization authorization;
 
+  /**
+   * 分析组内部所有的账户名字+IP监控项目用户
+   */
+  final String[] all_users = {"qianyong", "duqiang", "wangyuda", "fanyeliang", "duchangtai", "fengyan", "fumingzhu",
+          "gongjuntai", "jianglinhui", "mayunlong", "ouyangfeng", "xiefen", "yangzhenyong", "yaunli", "zhangmeiqi",
+          "zhangrongyu", "zhangshu", "zhaolei", "zhouyuanyuan", "zuojun", "goupan", "shiyang", "wangyanfeng", "zhouchao1", "chenhonghong3", "user1"};
+
+
+  /**
+   * 初始化所有的测试参赛队
+   */
   @Test
-  public void testSimple() {
+  public void initGroups() {
+    for (int i = 0; i < all_users.length; i++) {
+      authorization.addGroup(all_users[i]);
+      authorization.addGroupLeader(all_users[i], all_users[i]);
 
-    //1.  Create a mock authenticated Subject instance for the test to run:
-    Subject subjectUnderTest = mock(Subject.class);
-    when(subjectUnderTest.isAuthenticated()).thenReturn(true);
-
-    //2. Bind the subject to the current thread:
-    setSubject(subjectUnderTest);
-
-    //perform test logic here.  Any call to
-    //SecurityUtils.getSubject() directly (or nested in the
-    //call stack) will work properly.
+      List<String> members = authorization.getUsersForGroup(all_users[i]);
+      assertNotNull(members);
+      assertEquals(members.get(0), all_users[i]);
+    }
   }
 
-  @After
-  public void tearDownSubject() {
-    //3. Unbind the subject from the current thread:
-    clearSubject();
-  }
-
-  static WritableJdbcRealm writableJdbcRealm;
+  static UserDAO userDAO;
 
   static RealmSecurityManager realmSecurityManager;
 
   static Subject subject;
 
-  static final String RealmName = ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
+  static ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+
+  static final String RealmName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME);
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws PropertyVetoException, SQLException, IOException {
     IniSecurityManagerFactory factory = new IniSecurityManagerFactory("classpath:shiro.ini");
     SecurityManager securityManager = factory.getInstance();
     SecurityUtils.setSecurityManager(securityManager);
     realmSecurityManager = (RealmSecurityManager) securityManager;
-    Collection<Realm> realms = realmSecurityManager.getRealms();
-    for (Realm realm : realms) {
-      if (realm.getName().equals(RealmName)) {
-        writableJdbcRealm = (WritableJdbcRealm) realm;
-        break;
-      }
-    }
+
+    userDAO = new UserDAO(conf);
   }
 
   private Subject buildNewSubject(String principal, String realmName) {
@@ -79,10 +76,11 @@ public class ShiroNotebookAuthorizationTest extends AbstractShiroTest {
 
 
   @Before
-  public void setUp() {
+  public void setUp() throws PropertyVetoException, IOException, SQLException {
     subject = buildNewSubject("qianyong", RealmName);
-    authorization = new ShiroNotebookAuthorization(ZeppelinConfiguration.create());
+    authorization =ShiroNotebookAuthorization.getInstance();
   }
+
 
   @Test
   public void isGroupMember() throws Exception {

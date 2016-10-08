@@ -75,7 +75,7 @@ public interface IShiroNotebookAuthorization {
   String GROUP_MEMBER_ROLE_NAME_FORMAT = "group_member_%s";
 
   /**
-   * 组submitter的角色名称，group_leader=group_member  +  group_sumbmitter
+   * 组submitter的角色名称，group_leader=group_member  +  group_submitter
    */
   String GROUP_SUBMITTER_ROLE_NAME_FORMAT = "group_submitter_%s";
 

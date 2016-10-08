@@ -33,6 +33,7 @@ import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.notebook.repo.NotebookRepo.Revision;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
+import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyVolationException;
 import org.apache.zeppelin.resource.ResourcePoolUtils;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
@@ -377,8 +378,16 @@ public class Notebook implements NoteEventListener {
     return this.notebookRepo.get(noteId, revisionId, principal);
   }
 
-  public SubmitLeftOver submit(String revisionId, String principal) {
-    return this.notebookRepo.submit(revisionId, principal);
+  public SubmitLeftOver submit(String noteId,
+                               String revisionId) throws SubmitStrategyVolationException {
+    return this.notebookRepo.submit(noteId, revisionId);
+  }
+
+  /**
+   * 查询当前队伍对当前题目已经提交的次数
+   */
+  public int currentSubmitTimes(String groupId, String projectId) {
+    return this.notebookRepo.currentSubmitTimes(groupId, projectId);
   }
 
   @SuppressWarnings("rawtypes")
@@ -749,9 +758,13 @@ public class Notebook implements NoteEventListener {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");//TODO:这里noteid为null，报错
+      String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
-      note.runAll();
+      //TODO:这里会报错，原因是job相关联的notebook被持serialize了，deserialize之后，notebook的notes已经与系统运行时的notes不匹配了
+      // Caused by: java.lang.NullPointerException
+      //at org.apache.zeppelin.notebook.Notebook$CronJob.execute(Notebook.java:763)
+      //at org.quartz.core.JobRunShell.run(JobRunShell.java:202)
+      //note.runAll();
 
       while (!note.isTerminated()) {
         try {

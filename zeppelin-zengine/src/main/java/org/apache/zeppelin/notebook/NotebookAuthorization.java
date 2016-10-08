@@ -28,7 +28,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Contains authorization information for notes
+ * Contains authorization information for notes,singleton解决全局唯一实例问题
  */
 public class NotebookAuthorization extends NotebookAuthorizationAdaptor {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
@@ -37,12 +37,19 @@ public class NotebookAuthorization extends NotebookAuthorizationAdaptor {
    * { "note1": { "owners": ["u1"], "readers": ["u1", "u2"], "writers": ["u1"] },  "note2": ... } }
    */
   private Map<String, Map<String, Set<String>>> authInfo = new HashMap<>();
-  private ZeppelinConfiguration conf;
   private Gson gson;
   private String filePath;
 
-  public NotebookAuthorization(ZeppelinConfiguration conf) {
-    this.conf = conf;
+  //采用静态内部类的方式来实现singleton
+  private static class SingletonHolder {
+    private static final NotebookAuthorization INSTANCE = new NotebookAuthorization(ZeppelinConfiguration.create());
+  }
+
+  public static final NotebookAuthorization getInstance() {
+    return SingletonHolder.INSTANCE;
+  }
+
+  private NotebookAuthorization(ZeppelinConfiguration conf) {
     filePath = conf.getNotebookAuthorizationPath();
     GsonBuilder builder = new GsonBuilder();
     builder.setPrettyPrinting();

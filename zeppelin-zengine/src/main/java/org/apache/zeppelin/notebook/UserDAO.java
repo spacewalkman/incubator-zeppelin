@@ -3,11 +3,14 @@ package org.apache.zeppelin.notebook;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.SimpleHash;
-import org.apache.shiro.realm.jdbc.JdbcRealm;
 import org.apache.shiro.util.JdbcUtils;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.repo.NotebookDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,12 +18,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 /**
  * add CRUD capability to JdbcRealm,which can be used By zeppelin
  */
-public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主外键约束
+public class UserDAO {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WritableJdbcRealm.class);
+  private static final Logger LOG = LoggerFactory.getLogger(UserDAO.class);
 
   /**
    * is user exist
@@ -64,20 +69,27 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   public static final String INSERT_PERMISSION_TO_ROLE_SQL = "insert into ROLE_PERMISSION(role_name,permission) values (?,?)";
 
+  private DataSource dataSource;
+
+  public UserDAO(ZeppelinConfiguration conf) throws PropertyVetoException {
+    this.dataSource = NotebookDataSource.getInstance(conf).getDataSource();
+  }
+
   /**
    * add new userName if not exist
-   * TODO:创建队伍的时候使用
+   * TODO:创建队伍的时候使用,由于zeppelin并不维护user表，该表由稻田维护，故该方法没有使用
    *
    * @param userName username
    * @param password user password,not hashed yet
+   * @credentialsMatcher shrio realm用到的处理密码加密之后匹配的工具类
    */
-  public void createUser(String userName, String password) {
+  public void createUser(String userName, String password,
+                         HashedCredentialsMatcher hashedCredentialsMatcher) {
     if (isUserExist(userName)) {
       LOG.warn("user: " + userName + " , already exist,ignore add request");
       return;
     }
 
-    HashedCredentialsMatcher hashedCredentialsMatcher = (HashedCredentialsMatcher) this.getCredentialsMatcher();
     SimpleHash hash = new SimpleHash(hashedCredentialsMatcher.getHashAlgorithmName(), password, null, 1024);
     final String hashedPassword = hash.toBase64();
     LOG.debug("hash之后的byte长度{},\n{}", hashedPassword.length(), hashedPassword);
@@ -87,7 +99,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(INSERT_USER_SQL);
       ps.setString(1, userName);
       ps.setString(2, hashedPassword);//与shiro.ini配置文件中的sha256Matcher.storedCredentialsHexEncoded = false对应
@@ -110,13 +122,9 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     }
   }
 
-
-  public Connection getConnection() throws SQLException {
-    return this.dataSource.getConnection();
-  }
-
   /**
    * 用户是否存在
+   * TODO：同上理，该方法也没有使用
    */
   public boolean isUserExist(String userName) {
     PreparedStatement ps = null;
@@ -124,7 +132,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(IS_USER_EXSIT_SQL);
       ps.setString(1, userName);
 
@@ -168,7 +176,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(DELETE_USER_EXSIT_SQL);
       ps.setString(1, userName);
       return ps.executeUpdate();
@@ -194,7 +202,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
+      connection = this.dataSource.getConnection();
       ps = connection.prepareStatement(IS_ROLE_EXSIT_SQL);
       ps.setString(1, roleName);
 
@@ -228,7 +236,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   }
 
   /**
-   * assign roles to user(transactional)
+   * 给用户授角色，非事务性，处理了"违反user_role表唯一性约束"的问题，出现这种情况认为是成功
    *
    * @param user  user name
    * @param roles role names
@@ -238,48 +246,38 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = this.getConnection();
-      connection.setAutoCommit(false);
-
-      ps = getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
+      connection = this.dataSource.getConnection();
+      ps = dataSource.getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
       for (String role : roles) {
         ps.setString(1, user);
         ps.setString(2, role);
 
-        ps.addBatch();
+        try {
+          ps.executeUpdate();
+        } catch (SQLException e) {
+          if (e.getSQLState().equals("23000")) {//由于user_role表的unique约束失败，说明已经存在了，认为成功。官方文档：Error: 1169 SQLSTATE: 23000 (ER_DUP_UNIQUE), Message: Can't write, because of unique constraint, to table '%s'
+            LOG.warn("用户角色: user:{}, role:{}已经存在，重复插入", user, role);
+            continue;
+          } else {
+            throw e;
+          }
+        }
       }
-
-      int[] counts = ps.executeBatch();
-
-      connection.commit();
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign role to user [" + user + "]";
       if (LOG.isErrorEnabled()) {
         LOG.error(message, e);
       }
-
-      try {
-        connection.rollback();
-      } catch (SQLException e1) {
-        LOG.error("error rolling back transaction", e);
-      }
       // Rethrow any SQL errors as an authentication exception
       throw new AuthenticationException(message, e);
     } finally {
-      try {
-        connection.setAutoCommit(true);
-      } catch (SQLException e) {
-        LOG.error("error reset to auto commit ", e);
-      }
       JdbcUtils.closeStatement(ps);
       JdbcUtils.closeConnection(connection);
     }
   }
 
-
   /**
-   * assign permission to role
-   * TODO:创建队伍的时候使用
+   * 给角色授权限，非事务性，处理了违反唯一性约束问题，这种情况认为是成功
    *
    * @param permission permission,which is confront to Shiro WildcardPermission
    * @param role       role name
@@ -289,14 +287,19 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(INSERT_PERMISSION_TO_ROLE_SQL);
       ps.setString(1, role);
       ps.setString(2, permission);
 
-      int count = ps.executeUpdate();
-      if (count < 1) {
-        throw new AuthenticationException("can't assign permission: " + permission + " to role: " + role);
+      try {
+        ps.executeUpdate();
+      } catch (SQLException e) {
+        if (e.getSQLState().equals("23000")) {//违反唯一性约束问题，认为成功
+          LOG.warn("角色权限: role:{}, permission:{}已经存在，重复插入", role, permission);
+        } else {
+          throw e;
+        }
       }
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign permission: " + permission + " to role: " + role;
@@ -324,7 +327,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     ResultSet rs = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(SELECT_USER_FOR_GROUP_SQL);
       ps.setString(1, groupPermissionPrefix);
 
@@ -350,7 +353,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
   }
 
   /**
-   * is user has a specific role
+   * 判断用户是否有某个角色
    *
    * @param userName user'name
    * @param roleName role name
@@ -362,7 +365,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
     Connection connection = null;
 
     try {
-      connection = getConnection();
+      connection = dataSource.getConnection();
       ps = connection.prepareStatement(IS_USE_HAS_ROLE_SQL);
       ps.setString(1, userName);
       ps.setString(2, roleName);
@@ -385,4 +388,6 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
       JdbcUtils.closeConnection(connection);
     }
   }
+
+
 }

@@ -92,6 +92,48 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           }
         }]
       });
+    } else if (op === 'NO_CHANGE_FOUND') {
+      BootstrapDialog.show({
+        closable: false,
+        closeByBackdrop: false,
+        closeByKeyboard: false,
+        title: '算法没有更新',
+        message: data.info.toString(),
+        buttons: [{
+          label: 'OK',
+          action: function(dialog) {
+            dialog.close();
+          }
+        }]
+      });
+    } else if (op === 'REVISION_SUBMIT') { //成功提交到组委会
+      BootstrapDialog.show({
+        closable: false,
+        closeByBackdrop: false,
+        closeByKeyboard: false,
+        title: '',
+        message: data.submitLeftOver,
+        buttons: [{
+          label: 'OK',
+          action: function(dialog) {
+            dialog.close();
+          }
+        }]
+      });
+    } else if (op === 'ACK_SUBMIT_TIME') {
+      BootstrapDialog.show({
+        closable: false,
+        closeByBackdrop: false,
+        closeByKeyboard: false,
+        title: '已经提交到组委会次数',
+        message: '已经提交了' + data.info.toString() + '次',
+        buttons: [{
+          label: 'OK',
+          action: function(dialog) {
+            dialog.close();
+          }
+        }]
+      });
     } else if (op === 'PARAGRAPH') {
       $rootScope.$broadcast('updateParagraph', data);
     } else if (op === 'PARAGRAPH_APPEND_OUTPUT') {

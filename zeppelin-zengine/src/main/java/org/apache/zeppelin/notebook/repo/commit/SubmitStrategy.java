@@ -1,9 +1,14 @@
 package org.apache.zeppelin.notebook.repo.commit;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * 限制参赛队在一定时间内提交次数的strategy模式
  */
 public abstract class SubmitStrategy {
+  public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
   private int maxTime = 1;
 
   /**
@@ -39,6 +44,18 @@ public abstract class SubmitStrategy {
    */
   public void setMaxTime(int maxTime) {
     this.maxTime = maxTime;
+  }
+
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("1'" + this.getTypeName() + "'内:[");
+    long[] startEndTime = getTimeRange();
+    sb.append(simpleDateFormat.format(new Date(startEndTime[0])) + "~");
+    sb.append(simpleDateFormat.format(new Date(startEndTime[1])) + "]");
+    sb.append(",最多允许提交" + getMaxTime() + "次");
+
+    return sb.toString();
   }
 }
 

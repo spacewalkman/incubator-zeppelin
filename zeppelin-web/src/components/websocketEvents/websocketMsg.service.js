@@ -165,6 +165,28 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       });
     },
 
+    // 向组委会提交该revision
+    submitNotebook: function(noteId, revisionId) {
+      websocketEvents.sendNewEvent({
+        op: 'NOTE_REVISION_SUBMIT',
+        data: {
+          noteId: noteId,
+          revisionId: revisionId
+        }
+      });
+    },
+
+    // 查询提交次数
+    currentSubmitTimes: function(group, projectId) {
+      websocketEvents.sendNewEvent({
+         op: 'QUERY_SUBMIT_TIME',
+         data: {
+           group: group,
+           projectId: projectId
+         }
+       });
+    },
+
     listRevisionHistory: function(noteId) {
       websocketEvents.sendNewEvent({
         op: 'LIST_REVISION_HISTORY',

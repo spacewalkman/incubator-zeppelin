@@ -1,18 +1,16 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.shiro.mgt.RealmSecurityManager;
-import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.beans.PropertyVetoException;
 import java.util.List;
 
 /**
- * shiro-based authorization,use writableJdbcRealm
+ * shiro-based authorization,singleton模式，全局唯一实例
  */
 public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   private static final Logger LOG = LoggerFactory.getLogger(ShiroNotebookAuthorization.class);
@@ -20,23 +18,24 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   /**
    * 提供可读写的权限
    */
-  private WritableJdbcRealm writableJdbcRealm;
+  private UserDAO userDAO;
 
-  //TODO:需要缓存下来吗?
-  public ShiroNotebookAuthorization(ZeppelinConfiguration conf) {
-    //TODO:handle cast error
-    RealmSecurityManager realmSecurityManager = (RealmSecurityManager) org.apache.shiro.SecurityUtils.getSecurityManager();
-    Collection<Realm> realms = realmSecurityManager.getRealms();
-    for (Realm realm : realms) {
-      if (realm.getName().equals(conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME))) {
-        writableJdbcRealm = (WritableJdbcRealm) realm;
-        break;
+  private ShiroNotebookAuthorization(ZeppelinConfiguration conf) throws PropertyVetoException {
+    this.userDAO = new UserDAO(conf);
+  }
+
+  //"懒汉式"singleton
+  private volatile static ShiroNotebookAuthorization instance;
+
+  public static ShiroNotebookAuthorization getInstance() throws PropertyVetoException {
+    if (instance == null) {
+      synchronized (ShiroNotebookAuthorization.class) {
+        if (instance == null) {
+          instance = new ShiroNotebookAuthorization(ZeppelinConfiguration.create());
+        }
       }
     }
-
-    if (writableJdbcRealm == null) {
-      LOG.error("writableJdbcRealm is null");
-    }
+    return instance;
   }
 
   @Override
@@ -49,7 +48,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
       groupId = "*";
     }
 
-    //group_leader同样是group_member
+    //group_leader没有单独的role，group_leader = group_member+group_submitter
     return subject.hasRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
 
@@ -145,16 +144,26 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
     return subject.hasRole(ROLE_ADMIN);
   }
 
-
-  //TODO:unique userName and roleName
+  /**
+   * 单独添加参赛队,实际上创建了2个角色,一个是队员,一个是队长角色,并为这2个角色设置权限
+   *
+   * @param groupId 队id
+   */
   @Override
-  public void addGroupMember(String groupId, String userName) {
-    if (!writableJdbcRealm.isUserExist(userName)) {
-      LOG.warn("user: " + userName + " doesn't exist!");
-      return;
+  public void addGroup(String groupId) {
+    final String groupSubmitterRole = String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId);
+    boolean isSubmitterRoleExist = userDAO.isRoleExist(groupSubmitterRole);
+    if (!isSubmitterRoleExist) {
+      //添加note sumbmitter role
+      userDAO.assignPermissionToRole(groupSubmitterRole, String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, "*"));
     }
 
-    writableJdbcRealm.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
+    final String groupMemberRole = String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId);
+    boolean isMemberRoleExist = userDAO.isRoleExist(groupMemberRole);
+    if (!isMemberRoleExist) {
+      //添加队员的permissions到role
+      userDAO.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_MEMBER_PERMISSIONS_FORMAT, GROUP_MEMBER_PERMISSIONS, groupId, "*"));
+    }
   }
 
   /**
@@ -165,22 +174,22 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    */
   @Override
   public void addGroupLeader(String groupId, String userName) {
-    writableJdbcRealm.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId));
+    userDAO.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId));
   }
 
-  /**
-   * 单独添加参赛队,实际上创建了2个角色,一个是队员,一个是队长角色,并为这2个角色设置权限
-   *
-   * @param groupId 队id
-   */
+  //TODO:unique userName and roleName
   @Override
-  public void addGroup(String groupId) {
-    //添加note sumbmitter role
-    writableJdbcRealm.assignPermissionToRole(String.format(GROUP_SUBMITTER_ROLE_NAME_FORMAT, groupId), String.format(NOTE_GROUP_SUBMITTER_PERMISSION_FORMAT, groupId, "*"));
+  public void addGroupMember(String groupId, String userName) {
+    //这里不需要判断同名用户存在不存在，稻田中user表zeppelin不维护
+    //    if (!userDAO.isUserExist(userName)) {
+    //      LOG.warn("user: " + userName + " doesn't exist!");
+    //      return;
+    //    }
 
-    //添加队员的permissions到role
-    writableJdbcRealm.assignPermissionToRole(String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId), String.format(GROUP_MEMBER_PERMISSIONS_FORMAT, GROUP_MEMBER_PERMISSIONS, groupId, "*"));
+    //这里直接添加group
+    userDAO.assignRoleToUser(userName, String.format(GROUP_MEMBER_ROLE_NAME_FORMAT, groupId));
   }
+
 
   /**
    * 为用户授角色
@@ -191,7 +200,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   @Override
   public void grantRolesToUser(String userName, String... roleNames) {
     for (String roleName : roleNames) {
-      writableJdbcRealm.assignRoleToUser(userName, roleName);
+      userDAO.assignRoleToUser(userName, roleName);
     }
   }
 
@@ -204,7 +213,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   @Override
   public void grantPermissionsToRole(String roleName, String... permissions) {
     for (String permission : permissions) {
-      writableJdbcRealm.assignPermissionToRole(roleName, permission);
+      userDAO.assignPermissionToRole(roleName, permission);
     }
   }
 
@@ -216,7 +225,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
    */
   @Override
   public List<String> getUsersForGroup(String groupId) {
-    return writableJdbcRealm.getUsersForGroup(String.format("group_%%_%s", groupId));//TODO:转义是否生效;是否使用mysql索引,然后采用<>来比较,走索引会比较快呢?
+    return userDAO.getUsersForGroup(String.format("group_%%_%s", groupId));//TODO:转义是否生效;是否使用mysql索引,然后采用<>来比较,走索引会比较快呢?
   }
 
   @Override
@@ -230,6 +239,6 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   @Override
   public boolean canUseInterpreter(final String userName, final String interpreterId) {
     //对jdbcRealm来讲,就是判断某人是否有指定的角色
-    return writableJdbcRealm.isRoleExistForUser(userName, String.format(INTERPRETER_ROLE_NAME_FORMAT, interpreterId));
+    return userDAO.isRoleExistForUser(userName, String.format(INTERPRETER_ROLE_NAME_FORMAT, interpreterId));
   }
 }

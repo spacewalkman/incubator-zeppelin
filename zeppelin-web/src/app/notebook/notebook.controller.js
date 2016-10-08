@@ -125,7 +125,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: 'Do you want to delete this notebook?',
+      message: '是否确定删除算法?',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.deleteNotebook(noteId);
@@ -146,7 +146,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: 'Do you want to clone this notebook?',
+      message: '是否建立副本?',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.cloneNotebook(noteId);
@@ -162,7 +162,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: 'Commit notebook to current repository?',
+      message: '是否保存草稿?',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.checkpointNotebook($routeParams.noteId, commitMessage);
@@ -170,6 +170,26 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
       }
     });
     document.getElementById('note.checkpoint.message').value = '';
+  };
+
+  // 提交该版本到组委会
+  $scope.submitNotebook = function(revisionId) {
+    console.log('submit noteId:' + $routeParams.noteId + 'revisionId:' + revisionId);
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: '提交该版本到组委会?',
+      callback: function(result) {
+        if (result) {
+          websocketMsgSrv.submitNotebook($routeParams.noteId, revisionId);
+        }
+      }
+    });
+  };
+
+  //查询该参赛队对赛题的当前的提交次数
+  $scope.currentSubmitTimes = function(group, projectId) {
+    websocketMsgSrv.currentSubmitTimes(group, projectId);
   };
 
   //这里显示revision历史
@@ -188,7 +208,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: 'Run all paragraphs?',
+      message: '执行所有?',
       callback: function(result) {
         if (result) {
           _.forEach($scope.note.paragraphs, function(n, key) {
@@ -212,7 +232,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: 'Do you want to clear all output?',
+      message: '确认清除算法输出?',
       callback: function(result) {
         if (result) {
           _.forEach($scope.note.paragraphs, function(n, key) {

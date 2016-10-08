@@ -585,6 +585,12 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS("zeppelin.note.commit.strategy.class", DailySubmitStrategy.class.getName()),
     ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES("zeppelin.note.commit.strategy.max.commit.times", 3),
 
+    /**
+     * zeppelin利用稻田验证用户的REST地址
+     * TODO:验证
+     */
+    DITECH_AUTH_REST_END_POINT("ditech.auth.rest.end.point", "http://localhost:8082/rest/auth"),
+
     ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000");
 
     private String varName;

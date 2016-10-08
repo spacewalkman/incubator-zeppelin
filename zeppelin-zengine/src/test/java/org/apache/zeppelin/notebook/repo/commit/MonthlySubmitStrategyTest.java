@@ -9,8 +9,6 @@ import static org.junit.Assert.*;
 
 public class MonthlySubmitStrategyTest {
 
-  SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
   @Test
   public void getTimeRange() throws Exception {
     MonthlySubmitStrategy strategy = new MonthlySubmitStrategy();
@@ -18,11 +16,7 @@ public class MonthlySubmitStrategyTest {
 
     assert (startEnds != null && startEnds.length == 2);
 
-    Date startDate = new Date(startEnds[0]);
-    Date endDate = new Date(startEnds[1]);
-
-    System.out.println(simpleDateFormat.format(startDate));
-    System.out.println(simpleDateFormat.format(endDate));
+    System.out.println(strategy);
   }
 
 }

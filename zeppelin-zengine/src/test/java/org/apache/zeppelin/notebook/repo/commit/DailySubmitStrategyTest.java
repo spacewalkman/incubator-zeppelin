@@ -8,8 +8,6 @@ import java.util.Date;
 import static org.junit.Assert.*;
 
 public class DailySubmitStrategyTest {
-  SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
   @Test
   public void getTimeRange() throws Exception {
     DailySubmitStrategy strategy = new DailySubmitStrategy();
@@ -17,11 +15,7 @@ public class DailySubmitStrategyTest {
 
     assert (startEnds != null && startEnds.length == 2);
 
-    Date startDate = new Date(startEnds[0]);
-    Date endDate = new Date(startEnds[1]);
-
-    System.out.println(simpleDateFormat.format(startDate));
-    System.out.println(simpleDateFormat.format(endDate));
+    System.out.println(strategy);
   }
 
 }

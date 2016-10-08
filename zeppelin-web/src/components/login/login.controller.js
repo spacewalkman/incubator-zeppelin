@@ -27,9 +27,7 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
         },
         data: $httpParamSerializer({
           'userName': $scope.loginParams.userName,
-          'password': $scope.loginParams.password,
-          'group': $scope.loginParams.group,
-          'projectId': $scope.loginParams.projectId
+          'ticket': $scope.loginParams.ticket,
         })
       }).then(function successCallback(response) {
         $rootScope.ticket = response.data.body;
@@ -37,7 +35,7 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
         $rootScope.$broadcast('loginSuccess', true);
         $rootScope.userName = $scope.loginParams.userName;
       }, function errorCallback(errorResponse) {
-        $scope.loginParams.errorText = 'The username and password that you entered don\'t match.';
+        $scope.loginParams.errorText = errorResponse.data.message;
       });
 
     };
@@ -45,16 +43,13 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
     var initValues = function() {
       $scope.loginParams = {
         userName: '',
-        password: '',
-        group: '',
-        projectId: ''
+        ticket: ''
       };
     };
 
     /*
     ** $scope.$on functions below
     */
-
     $scope.$on('initLoginValues', function() {
       initValues();
     });

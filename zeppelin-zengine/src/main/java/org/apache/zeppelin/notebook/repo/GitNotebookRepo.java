@@ -24,7 +24,6 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.NameScope;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -220,12 +219,6 @@ public class GitNotebookRepo extends VFSNotebookRepo {
 
   void setGit(Git git) {
     this.git = git;
-  }
-
-  @Override
-  public SubmitLeftOver submit(String noteId, String revisionId) {
-    LOG.info("submit feature isn't supported in {}", this.getClass().toString());
-    return null;
   }
 
 }

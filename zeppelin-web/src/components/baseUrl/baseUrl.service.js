@@ -32,7 +32,11 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', function() {
 
   this.getWebsocketUrl = function() {
     var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return wsProtocol + '//' + socketHost + ':' + this.getPort() + skipTrailingSlash(location.pathname) + '/ws';
+    var webSocketUrl = wsProtocol + '//' + location.hostname + ':' + this.getPort() +
+                       skipTrailingSlash(location.pathname) + '/ws';
+    console.log(webSocketUrl);
+    return webSocketUrl;
+    // return wsProtocol + '//' + socketHost + ':' + this.getPort() + skipTrailingSlash(location.pathname) + '/ws';
   };
 
   this.getRestApiBase = function() {
