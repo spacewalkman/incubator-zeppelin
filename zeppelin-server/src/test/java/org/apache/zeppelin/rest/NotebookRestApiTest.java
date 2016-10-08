@@ -58,7 +58,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
   @Test
   public void testPermissions() throws IOException {
-    Note note1 = ZeppelinServer.notebook.createNote(null);
+    Note note1 = ZeppelinServer.notebook.createNote(null, null, null);
     // Set only readers
     String jsonRequest = "{\"readers\":[\"admin-team\"],\"owners\":[]," +
             "\"writers\":[]}";
@@ -81,7 +81,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
     get.releaseConnection();
 
 
-    Note note2 = ZeppelinServer.notebook.createNote(null);
+    Note note2 = ZeppelinServer.notebook.createNote(null, null, null);
     // Set only writers
     jsonRequest = "{\"readers\":[],\"owners\":[]," +
             "\"writers\":[\"admin-team\"]}";
@@ -122,7 +122,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
   @Test
   public void testGetNoteParagraphJobStatus() throws IOException {
-    Note note1 = ZeppelinServer.notebook.createNote(null);
+    Note note1 = ZeppelinServer.notebook.createNote(null, null, null);
     note1.addParagraph();
 
     String paragraphId = note1.getLastParagraph().getId();
@@ -144,7 +144,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
   @Test
   public void testCloneNotebook() throws IOException {
-    Note note1 = ZeppelinServer.notebook.createNote(null);
+    Note note1 = ZeppelinServer.notebook.createNote(null, null, null);
     PostMethod post = httpPost("/notebook/" + note1.getId(), "");
     LOG.info("testCloneNotebook response\n" + post.getResponseBodyAsString());
     assertThat(post, isCreated());
@@ -159,7 +159,7 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
     }.getType());
     Map<String, Object> resp2Body = (Map<String, Object>) resp2.get("body");
 
-    assertEquals((String)resp2Body.get("name"), "Note " + clonedNotebookId);
+    assertEquals((String) resp2Body.get("name"), "Note " + clonedNotebookId);
     get.releaseConnection();
 
     //cleanup

@@ -48,7 +48,7 @@ public class RestAuthRealm extends AuthenticatingRealm {
 
     UserProfile userProfile = null;
     try {
-      userProfile = this.requestUserProfile(ticketUserNameToken.getTicket(), ticketUserNameToken.getUserName());
+      userProfile = this.requestUserProfile(ticketUserNameToken);
     } catch (IOException e) {
       LOG.error("稻田REST身份鉴别接口失效", e);
       throw new AuthenticationException("稻田REST身份鉴别接口失效", e);
@@ -69,12 +69,13 @@ public class RestAuthRealm extends AuthenticatingRealm {
   /**
    * 通过httpClient调用稻田提供的REST接口，传入ticket鉴定用户
    */
-  public UserProfile requestUserProfile(String ticket, String userName) throws IOException {
+  public UserProfile requestUserProfile(
+          TicketUserNameToken ticketUserNameToken) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
     URI uri = null;
 
     try {
-      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticket).setParameter("userName", userName).build();
+      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticketUserNameToken.getTicket()).setParameter("serverindex", ticketUserNameToken.getServerIndex() + "").build();
     } catch (URISyntaxException e) {
       throw new IOException(e);
     }
