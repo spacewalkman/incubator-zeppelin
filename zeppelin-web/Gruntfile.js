@@ -44,6 +44,31 @@ module.exports = function(grunt) {
     // Project settings
     yeoman: appConfig,
 
+    //env divisive
+    ngconstant: {
+      options: {
+        name: 'config',
+        wrap: '"use strict";\n{%= __ngModule %}',
+        space: '  '
+      },
+      development: {
+        options: {
+          dest: '<%= yeoman.app %>/app/config.js'
+        },
+        constants: {
+          ENV: 'development'
+        }
+      },
+      production: {
+        options: {
+          dest: '<%= yeoman.app %>/app/config.js'
+        },
+        constants: {
+          ENV: 'production'
+        }
+      }
+    },
+
     // use ngAnnotate instead og ngMin
     ngAnnotate: {
       dist: {
@@ -184,7 +209,7 @@ module.exports = function(grunt) {
       options: {
         port: 9000,
         // Change this to '0.0.0.0' to access the server from outside.
-        hostname: 'localhost',
+        hostname: '0.0.0.0',
         livereload: 35729
       },
       livereload: {
@@ -507,6 +532,7 @@ module.exports = function(grunt) {
 
     grunt.task.run([
       'clean:server',
+      // 'ngconstant:development',
       'wiredep',
       'concurrent:server',
       'postcss',
@@ -530,10 +556,11 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('build', [
-    'jscs',
+    // 'jscs',
     'eslint',
     'htmlhint',
     'clean:dist',
+    // 'ngconstant:production',
     'wiredep',
     'goog-webfont-dl',
     'useminPrepare',

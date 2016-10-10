@@ -1,0 +1,42 @@
+<div class="side-bar" ng-controller="SideBarCtrl as sideBar">
+  <div class="note-list-container" ng-class="{'active': listActive}">
+    <div class="header-bar">
+        <a href="" class="back">&lt;&nbsp;返回</a>
+        <a href="javascript:;" class="new-note" ng-show="!adding" ng-click="sideBar.showNewArea()">新建</a>
+    </div>
+    <div class="note-list">
+      <div class="new-note-container" ng-show="adding">
+        <input class="input-new">
+        <a href="javascript:;" class="btn-ok">确定</a>
+      </div>
+      <!--repeat start-->
+      <div class="note-list-item"
+           ng-repeat="note in sideBar.notes.root.children | orderBy:sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
+           ng-class="{'active':sideBar.isActive(note.id),'locked':note.locked,'last-child':$last}">
+        <a ng-if="note.id"
+           href="#/notebook/{{note.id}}"
+           class="note-title text-ellipsis"
+           title="{{note.name}}"><span class="value">{{note.name}}</span></a>
+        <a href="javascript:;" class="remove" title="删除" ng-click="sideBar.removeNote(note.id)"></a>
+      </div>
+      <!--repeat end-->
+    </div>
+  </div>
+  <div class="history-list-container" ng-class="{'active': historyActive}">
+    <div class="header-bar">
+      <a href="javascript:;" class="history" ng-click="sideBar.toggleHistory()">查看提交历史<i class="triangle"></i></a>
+    </div>
+    <div class="history-list">
+      <!--repeat start-->
+      <div class="history-item"
+           ng-repeat="revision in noteRevisions | orderBy:'time':true"
+           ng-class="{'committed':revision.isSubmitted,'active':false}">
+        <a href="javascript:;" class="note-title text-ellipsis" title="{{revision.message}}">{{revision.message}}</a>
+        <p class="commit-time">{{revision.time | date:'yyyy-MM-dd HH:mm:ss '}}</p>
+        <p class="commiter"><span class="name">{{revision.committer}}</span></p>
+      </div>
+      <!--repeat end-->
+    </div>
+  </div>
+
+</div>

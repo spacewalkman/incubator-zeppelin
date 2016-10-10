@@ -67,6 +67,7 @@ limitations under the License.
     <link rel="stylesheet" href="fonts/Patua-One.css" />
     <link rel="stylesheet" href="fonts/Source-Code-Pro.css" />
     <link rel="stylesheet" href="fonts/Roboto.css" />
+    <link rel="stylesheet" href="components/sideBar/sidebar.css">
     <!-- endbuild -->
     <link rel="stylesheet" ng-href="assets/styles/looknfeel/{{looknfeel}}.css" />
     <link rel="stylesheet" href="assets/styles/printMode.css" />
@@ -76,11 +77,17 @@ limitations under the License.
     <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
     <toast></toast>
-    <div ng-include src="'components/navbar/navbar.html'"></div>
+    <!--<div ng-include src="'components/navbar/navbar.html'"></div>-->
     <!-- Add your site or application content here -->
-    <div id="main" class="container">
-      <div ng-view></div>
+
+    <div id="layout" class="layout">
+      <div ng-include src="'components/sideBar/side-bar.html'"></div>
+      <div id="main" class="container">
+        <div ng-view></div>
+      </div>
     </div>
+
+
     <!-- Modal ::  Keyboard shortcuts -->
     <div ng-include src="'components/modal-shortcut/modal-shortcut.html'"></div>
     <div ng-controller="NotenameCtrl as notenamectrl">
@@ -163,7 +170,7 @@ limitations under the License.
     <script src="app/notebook/paragraph/paragraph.controller.js"></script>
     <script src="app/search/result-list.controller.js"></script>
     <script src="components/arrayOrderingSrv/arrayOrdering.service.js"></script>
-    <script src="components/navbar/navbar.controller.js"></script>
+    <!--<script src="components/navbar/navbar.controller.js"></script>-->
     <script src="components/ngescape/ngescape.directive.js"></script>
     <script src="components/interpreter/interpreter.directive.js"></script>
     <script src="components/expandCollapse/expandCollapse.directive.js"></script>
@@ -183,6 +190,7 @@ limitations under the License.
     <script src="components/searchService/search.service.js"></script>
     <script src="components/login/login.controller.js"></script>
     <script src="components/elasticInputCtrl/elasticInput.controller.js"></script>
+    <script src="components/sideBar/sidebar.controller.js"></script>
     <!-- endbuild -->
   </body>
 </html>

@@ -1,0 +1,202 @@
+.side-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: #24243e;
+  color: #9191b8;
+}
+.side-bar a{
+  text-decoration: none;
+  color: #9191b8;
+}
+.side-bar a:hover{
+  color: #fff;
+}
+.header-bar{
+  position: relative;
+  height: 50px;
+  overflow: hidden;
+  padding: 13px 20px;
+  text-align: center;
+}
+
+
+.note-list-container{
+  position: relative;
+  max-height: 0;
+  overflow: hidden;
+  -webkit-transition: max-height .2s ease-out;
+  -moz-transition: max-height .2s ease-out;
+  -o-transition: max-height .2s ease-out;
+  -ms-transition: max-height .2s ease-out;
+  transition: max-height .2s ease-out;
+}
+/* note list */
+.note-list-container.active {
+  max-height: 2000px;
+}
+.header-bar .back{
+  display: block;
+  line-height: 24px;
+  float: left;
+}
+.header-bar .new-note{
+  display: block;
+  float: right;
+  width: 50px;
+  text-align: center;
+  line-height: 24px;
+  border: 1px solid #3f6cff;
+  border-radius: 3px;
+  color: #3f6cff;
+}
+.header-bar .new-note:hover{
+  border: 1px solid #fff;
+}
+.note-list{
+  border-top: 1px solid #3a3a52;
+  line-height: 30px;
+  padding: 6px 0;
+}
+.note-list .note-list-item{
+  position: relative;
+  padding: 0 30px 0 20px;
+  margin: 5px 0;
+  height: 30px;
+  border-right: 5px solid #24243e;
+}
+.note-list .note-list-item.active{
+  border-right-color: #3f6cff;
+}
+.note-list .note-list-item.active a{
+  color: #fff;
+}
+.note-list .note-list-item .note-title{
+  position: relative;
+  display: inline-block;
+}
+.note-list .note-list-item.locked .note-title{
+  padding: 0 20px 0 0;
+}
+.note-list .note-list-item.locked .note-title .value:after{
+  content: '';
+  position: absolute;
+  right: 2px;
+  top: 7px;
+  width: 14px;
+  height: 16px;
+  background: url("lock.png");
+}
+.note-list .note-list-item .remove{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  background: url("close.png");
+}
+.note-list .note-list-item.last-child:after{
+  content: '';
+  display: block;
+  height: 1px;
+  background: #3a3a52;
+}
+.note-list .new-note-container{
+  position: relative;
+  padding: 12px 60px 12px 20px;
+  background: #15152a;
+  line-height: 26px;
+}
+.note-list .new-note-container .input-new{
+  border: none;
+  outline:medium;
+  width: 100%;
+  color: #3f6cff;
+  vertical-align: middle;
+  background: transparent;
+}
+.note-list .new-note-container a.btn-ok{
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  color: #fff;
+  width: 48px;
+  background: #3f6cff;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* history list */
+.history-list-container{
+
+}
+.header-bar .history{
+  position: relative;
+  display: inline-block;
+  line-height: 24px;
+  vertical-align: middle;
+}
+.header-bar .history .triangle{
+  display: inline-block;
+  margin-left: 5px;
+  width: 7px;
+  height: 4px;
+  background: url("triangle-up.png");
+  vertical-align: middle;
+  -webkit-transition: -webkit-transform .3s ease-out;
+  -moz-transition: -moz-transform .3s ease-out;
+  -o-transition: -o-transform .3s ease-out;
+  -ms-transition: -ms-transform .3s ease-out;
+  transition: transform .3s ease-out;
+}
+.history-list-container.active .header-bar .history .triangle{
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+.history-list {
+  padding: 6px 10px 6px 20px;
+  line-height: 1.3em;
+
+  max-height: 0;
+  overflow: hidden;
+}
+.history-list-container.active .history-list{
+  border-top: 1px solid #3a3a52;
+  max-height: 2000px;
+}
+.history-list .history-item{
+  padding: 6px 0;
+}
+.history-list .history-item .note-title{
+  display: block;
+  line-height: 2em;
+}
+.history-list .history-item.committed a.note-title {
+  color: #fff;
+}
+.history-list .history-item .commit-time,
+.history-list .history-item .commiter{
+  margin: 0;
+  font-size: 12px;
+  color: #5a5a6e;
+}
+.history-list .history-item.committed .commiter .name{
+  vertical-align: middle;
+}
+.history-list .history-item.committed .commiter .name:after{
+  content: '已提交';
+  display: inline-block;
+  padding: 0 3px;
+  line-height: 16px;
+  color: #fff;
+  background: #3f6cff;
+  vertical-align: middle;
+  border-radius: 3px;
+  margin: 0 0 0 5px;
+}
+
