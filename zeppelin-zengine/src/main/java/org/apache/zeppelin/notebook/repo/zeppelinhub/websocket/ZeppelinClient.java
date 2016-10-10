@@ -128,9 +128,9 @@ public class ZeppelinClient {
 
   public String serialize(Message zeppelinMsg) {
     if (credentialsAvailable()) {
-      zeppelinMsg.principal = authModule.getPrincipal();
+      //zeppelinMsg.principal = authModule.getPrincipal();
       zeppelinMsg.ticket = authModule.getTicket();
-      zeppelinMsg.roles = authModule.getRoles();
+      //zeppelinMsg.roles = authModule.getRoles();
     }
     String msg = gson.toJson(zeppelinMsg);
     return msg;

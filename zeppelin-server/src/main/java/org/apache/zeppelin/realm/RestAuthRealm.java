@@ -54,6 +54,10 @@ public class RestAuthRealm extends AuthenticatingRealm {
       throw new AuthenticationException("稻田REST身份鉴别接口失效", e);
     }
 
+    if (userProfile == null) {
+      throw new AuthenticationException("稻田REST身份鉴别接口失效");
+    }
+
     //TODO：这里只有用户的principal，没有用户credentials
     //Object[] principals = {userProfile.getUserName(), userProfile.getTicket(), userProfile.getTeam(), userProfile.getIps(), userProfile.getProjectIds()};
     SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(userProfile, null, getName());
