@@ -3,16 +3,22 @@
   left: 0;
   top: 0;
   bottom: 0;
+  padding: 50px 0 0 0;
   width: 200px;
   background: #24243e;
   color: #9191b8;
+
+  height: 100%;
 }
 .side-bar a{
   text-decoration: none;
   color: #9191b8;
 }
 .side-bar a:hover{
-  color: #fff;
+  color: #ccc;
+}
+.side-bar .scroll-panel{
+  height: 100%;
 }
 .header-bar{
   position: relative;
@@ -21,22 +27,20 @@
   padding: 13px 20px;
   text-align: center;
 }
-
-
-.note-list-container{
-  position: relative;
-  max-height: 0;
-  overflow: hidden;
-  -webkit-transition: max-height .2s ease-out;
-  -moz-transition: max-height .2s ease-out;
-  -o-transition: max-height .2s ease-out;
-  -ms-transition: max-height .2s ease-out;
-  transition: max-height .2s ease-out;
+.side-head-bar{
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
+.list-in .side-head-bar{
+  display: block;
+  border-bottom: 1px solid #3a3a52;
+}
+
+
 /* note list */
-.note-list-container.active {
-  max-height: 2000px;
-}
 .header-bar .back{
   display: block;
   line-height: 24px;
@@ -56,9 +60,19 @@
   border: 1px solid #fff;
 }
 .note-list{
-  border-top: 1px solid #3a3a52;
   line-height: 30px;
   padding: 6px 0;
+  max-height: 0;
+  overflow: hidden;
+
+  -webkit-transition: max-height .2s ease-out;
+  -moz-transition: max-height .2s ease-out;
+  -o-transition: max-height .2s ease-out;
+  -ms-transition: max-height .2s ease-out;
+  transition: max-height .2s ease-out;
+}
+.list-in .note-list{
+  max-height: 1500px;
 }
 .note-list .note-list-item{
   position: relative;
@@ -117,6 +131,9 @@
   vertical-align: middle;
   background: transparent;
 }
+.note-list .new-note-container.validate-error .input-new{
+  border-bottom: 1px solid red;
+}
 .note-list .new-note-container a.btn-ok{
   position: absolute;
   top: 12px;
@@ -127,10 +144,19 @@
   border-radius: 3px;
   text-align: center;
 }
-
+.note-list .new-note-container .error-area{
+  color: red;
+  padding: 6px 0;
+  line-height: 16px;
+  font-size: 12px;
+}
 /* history list */
-.history-list-container{
-
+.history-in .history-header-bar{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-bottom: 1px solid #3a3a52;
 }
 .header-bar .history{
   position: relative;
@@ -151,7 +177,7 @@
   -ms-transition: -ms-transform .3s ease-out;
   transition: transform .3s ease-out;
 }
-.history-list-container.active .header-bar .history .triangle{
+.history-in .header-bar .history .triangle{
   -webkit-transform: rotate(180deg);
   -moz-transform: rotate(180deg);
   -o-transform: rotate(180deg);
@@ -162,12 +188,11 @@
   padding: 6px 10px 6px 20px;
   line-height: 1.3em;
 
-  max-height: 0;
+  display: none;
   overflow: hidden;
 }
-.history-list-container.active .history-list{
-  border-top: 1px solid #3a3a52;
-  max-height: 2000px;
+.history-in .history-list{
+  display: block;
 }
 .history-list .history-item{
   padding: 6px 0;

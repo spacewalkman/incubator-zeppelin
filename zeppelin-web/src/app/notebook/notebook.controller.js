@@ -22,17 +22,17 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.tableToggled = false;
   $scope.viewOnly = false;
   $scope.showSetting = false;
-  $scope.looknfeelOption = ['default', 'simple', 'report'];
-  $scope.cronOption = [
-    {name: 'None', value: undefined},
-    {name: '1m', value: '0 0/1 * * * ?'},
-    {name: '5m', value: '0 0/5 * * * ?'},
-    {name: '1h', value: '0 0 0/1 * * ?'},
-    {name: '3h', value: '0 0 0/3 * * ?'},
-    {name: '6h', value: '0 0 0/6 * * ?'},
-    {name: '12h', value: '0 0 0/12 * * ?'},
-    {name: '1d', value: '0 0 0 * * ?'}
-  ];
+  $scope.looknfeelOption = [{k:'default',v:'代码试图'},{k:'report',v:'报告试图'}];
+  // $scope.cronOption = [
+  //   {name: 'None', value: undefined},
+  //   {name: '1m', value: '0 0/1 * * * ?'},
+  //   {name: '5m', value: '0 0/5 * * * ?'},
+  //   {name: '1h', value: '0 0 0/1 * * ?'},
+  //   {name: '3h', value: '0 0 0/3 * * ?'},
+  //   {name: '6h', value: '0 0 0/6 * * ?'},
+  //   {name: '12h', value: '0 0 0/12 * * ?'},
+  //   {name: '1d', value: '0 0 0 * * ?'}
+  // ];
 
   $scope.interpreterSettings = [];
   $scope.interpreterBindings = [];
@@ -314,7 +314,15 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     $scope.note.config.looknfeel = looknfeel;
     $scope.setConfig();
   };
-
+  $scope.getLookAndFeel = function() {
+    var result = '';
+    _.forEach($scope.looknfeelOption,function (feel,index) {
+      if($scope.note && feel.k === $scope.note.config.looknfeel){
+        result = feel.v;
+      }
+    });
+    return result;
+  };
   /** Set cron expression for this note **/
   $scope.setCronScheduler = function(cronExpr) {
     $scope.note.config.cron = cronExpr;

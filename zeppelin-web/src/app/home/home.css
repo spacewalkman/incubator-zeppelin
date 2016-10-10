@@ -21,6 +21,7 @@ body {
 html,
 body {
   height: 100%;
+  overflow: hidden;
   -ms-overflow-style: scrollbar;
 }
 .text-ellipsis{
@@ -30,7 +31,7 @@ body {
   max-width: 100%;
 }
 .home {
-  margin-bottom: 0px !important;
+  margin-bottom: 0 !important;
 }
 
 .bodyAsIframe {
@@ -53,14 +54,12 @@ body .navbar {
   position: relative;
   padding-left: 200px;
   height: 100%;
-  background: #ebeffd;
+  background: #f5f6fd;
 }
 
 .container {
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
+  margin: 0;
+  padding: 0;
   width: auto;
   overflow: auto;
 }
@@ -292,7 +291,6 @@ a.navbar-brand:hover {
 }
 
 #main {
-  padding: 20px;
   height: 100%;
 }
 
@@ -838,4 +836,7 @@ This part should be removed when new version of bootstrap handles this issue.
 
 .about .logo img{
   width: 100%;
+}
+.btn-default{
+  border-color: #e6e6e6;
 }

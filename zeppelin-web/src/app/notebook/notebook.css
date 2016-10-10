@@ -13,7 +13,7 @@
  */
 
 .notebookContent {
-  padding-top: 36px;
+  padding: 20px;
 }
 
 .revision  {
@@ -59,8 +59,13 @@
 }
 
 .paragraph-col {
-  margin: 0;
+  margin: 0 0 35px 0;
   padding: 0;
+}
+.paragraph-col .box{
+  border: none;
+  -webkit-box-shadow: 4px 10px 20px #dce3fd,-4px -4px 20px #dce3fd;
+  box-shadow: 0 10px 20px #dce3fd,-4px -4px 20px #dce3fd;
 }
 
 .paragraph {
@@ -69,7 +74,7 @@
 }
 
 .labelBtn {
-  padding: .8em .6em .3em;
+  padding: 0;
   font-size: 75%;
   font-weight: bold;
   line-height: 1;
@@ -80,7 +85,7 @@
 }
 
 .note-jump {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 /*
@@ -126,16 +131,11 @@
 }
 
 .noteAction {
-  margin-left: -20px;
-  margin-right: -20px;
-  /*font-family: 'Roboto', sans-serif;*/
-  background: white;
-  position: fixed;
-  /*top: 50px;*/
-  top:0;
+  margin:0;
+  padding: 20px;
   width: 100%;
-  height: 54px;
-  z-index: 10001;
+  background: #fff;
+  box-shadow: 0 10px 20px #dce3fd !important;
 }
 
 .noteAction h3 {
@@ -152,8 +152,8 @@
 }
 
 .form-control2 {
-  height: 40px;
-  font-size: 29px;
+  height: 34px;
+  font-size: 24px;
   line-height: 1.2;
   color: #555;
   background: #fff;
@@ -161,25 +161,23 @@
   border-radius: 0;
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-  padding: 7px 0;
-  margin: 2px 20px 0 14px;
+  padding: 0;
+  margin: 0;
 }
 
 .form-control-static2 {
-  padding-top: 7px;
-  margin-right: 15px;
-  font-size: 29px;
-  margin-left: 15px;
-  padding-bottom: 7px;
-  margin-bottom: 0;
   display: inline-block;
+  position: relative;
+  margin: 0;
+  padding: 0 15px 0 0;
   width: auto;
-  max-width: 97%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
+  height: 34px;
+  max-width: 99%;
+  font-size: 24px;
 }
-
+.form-control-static2 .value{
+  display: inline-block;
+}
 .noOverflow {
     overflow: hidden !important;
 }
@@ -278,7 +276,7 @@
 .setting-btn {
   position: relative;
   top: 2px;
-  margin-right: 4px;
+  margin: 0 0 0 16px;
   cursor: pointer;
 }
 
@@ -294,7 +292,7 @@
 }
 
 .cron-preset {
-  margin: 0px 2px;
+  margin: 0 2px;
   cursor: pointer;
 }
 
@@ -312,4 +310,90 @@
 .select2-container--default{
   min-width: 150px;
   max-width: 50%;
+}
+
+.note-head-layout{
+  width: 100%;
+  table-layout: fixed;
+  border: 0;
+}
+.note-head-layout .left{
+  width: 100%;
+  padding: 0;
+  text-align: left;
+}
+.note-head-layout .right{
+  width: 570px;
+  padding: 0;
+  text-align: right;
+}
+.events-name{
+  color: #bdbdbd;
+}
+.to-edit-events-btn{
+  position: absolute;
+  right: 2px;
+  bottom: 7px;
+  display: inline-block;
+  width: 10px;
+  height: 11px;
+  cursor: pointer;
+  background: url("pencial.png");
+}
+.btn-xs{
+  font-size: 14px;
+  padding: 8.5px 10px;
+}
+.btn-xs .ico-placeholder,
+.setting-btn .ico-placeholder{
+  display: inline-block;
+  width: 19px;
+}
+.dropdown-menu > li > a.looknfeel-item{
+  padding: 7px 20px;
+}
+
+.btn-execute-all{
+  background: url("run.png") no-repeat center;
+}
+.btn-size-fullscreen,
+.btn-size-actual{
+  background: url("eye.png") no-repeat center;
+}
+.btn-note-output,
+.btn-note-only{
+  background: url("book.png") no-repeat center;
+}
+.btn-clear-output{
+  background: url("clear.png") no-repeat center;
+}
+.btn-shortcut-keys{
+  background: url("keybord.png") no-repeat center;
+}
+.btn-help{
+  background: url("help.png") no-repeat center;
+}
+.btn-note-submit,
+.btn-note-save{
+  display: inline-block;
+  margin: 0 0 0 10px;
+  width: 96px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 3px;
+}
+.btn-note-save{
+  color: #3f6cff;
+  border: 1px solid #3f6cff;
+}
+.btn-note-submit{
+  color: #fff;
+
+  background: -webkit-linear-gradient(left top, #5287ff , #615dff); /* Safari 5.1 - 6.0 */
+  background: -o-linear-gradient(bottom right, #5287ff, #615dff); /* Opera 11.1 - 12.0 */
+  background: -moz-linear-gradient(bottom right, #5287ff, #615dff); /* Firefox 3.6 - 15 */
+  background: linear-gradient(to bottom right, #5287ff , #615dff); /* 标准的语法（必须放在最后） */
+  -webkit-box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
+  box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
 }

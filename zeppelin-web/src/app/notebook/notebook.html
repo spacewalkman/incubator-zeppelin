@@ -14,49 +14,6 @@ limitations under the License.
 <!-- Here the controller <NotebookCtrl> is not needed because explicitly set in the app.js (route) -->
 <div ng-include src="'app/notebook/notebook-actionBar.html'"></div>
 <div class="notebookContent">
-  <!-- settings -->
-  <div ng-if="showSetting" class="setting">
-    <div>
-      <h4>Settings</h4>
-    </div>
-    <hr />
-    <div>
-      <h5>Interpreter binding</h5>
-      <p>
-        Bind interpreter for this note.
-        Click to Bind/Unbind interpreter.
-        Drag and drop to reorder interpreters. <br />
-        The first interpreter on the list becomes default. To create/remove interpreters, go to <a href="#/interpreter">Interpreter</a> menu.
-      </p>
-
-      <div class="interpreterSettings"
-           as-sortable="interpreterSelectionListeners" data-ng-model="interpreterBindings">
-        <div data-ng-repeat="item in interpreterBindings" as-sortable-item>
-          <div as-sortable-item-handle
-               ng-click="item.selected = !item.selected"
-               class="btn"
-               ng-class="{'btn-info': item.selected, 'btn-default': !item.selected}">
-            <font style="font-size:16px">{{item.name}}</font>
-            <small>
-              <span style="display:inline-block" ng-repeat="intp in item.interpreters">
-                <span ng-show="!$first">, </span>
-                %<span ng-show="!$parent.$first || $first">{{item.name}}</span
-                ><span ng-show="(!$parent.$first || $first) && !$first">.</span
-                ><span ng-show="!$first">{{intp.name}}</span>
-                <span ng-show="$parent.$first && $first">(default)</span>
-              </span>
-            </small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <br />
-    <div>
-      <button class="btn btn-primary" ng-click="saveSetting()">Save</button>
-      <button class="btn btn-default" ng-click="closeSetting()">Cancel</button>
-    </div>
-  </div>
-
   <!-- permissions -->
   <div ng-if="showPermissions" class="permissions">
     <div>
@@ -106,18 +63,19 @@ limitations under the License.
        ng-init="init(currentParagraph, note)"
        ng-class="columnWidthClass(currentParagraph.config.colWidth)"
        class="paragraph-col">
-    <div class="new-paragraph" ng-click="insertNew('above')" ng-hide="viewOnly || asIframe">
+    <!--<div class="new-paragraph" ng-click="insertNew('above')" ng-hide="viewOnly || asIframe">
       <h4 class="plus-sign">&#43;</h4>
-    </div>
+    </div>-->
+    <div ng-include src="'app/notebook/paragraph/paragraph-control.html'"></div>
     <div id="{{currentParagraph.id}}_paragraphColumn"
          ng-include src="'app/notebook/paragraph/paragraph.html'"
-         ng-class="{'paragraph-space box paragraph-margin': !asIframe, 'focused': paragraphFocused,
+         ng-class="{'paragraph-space box': !asIframe, 'focused': paragraphFocused,
                     'lastEmptyParagraph': !paragraph.text && !paragraph.result}"
          ng-hide="currentParagraph.config.tableHide && viewOnly">
     </div>
-    <div class="new-paragraph" ng-click="insertNew('below');" ng-hide="!$last || viewOnly || asIframe ">
+    <!--<div class="new-paragraph" ng-click="insertNew('below');" ng-hide="!$last || viewOnly || asIframe ">
       <h4 class="plus-sign">&#43;</h4>
-    </div>
+    </div>-->
   </div>
   <div style="clear:both;height:10px"></div>
 </div>

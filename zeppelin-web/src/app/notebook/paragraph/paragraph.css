@@ -149,14 +149,14 @@ table.dataTable.table-condensed .sorting_desc:after {
   Paragraph Controls CSS
 */
 
-.paragraph .runControl {
+.paragraph-col .runControl {
   font-size: 1px;
   color: #AAAAAA;
   height:4px;
   margin: 0px 0px 0px 0px;
 }
 
-.paragraph .runControl .progress {
+.paragraph-col .runControl .progress {
   position: relative;
   width: 100%;
   height: 4px;
@@ -164,32 +164,27 @@ table.dataTable.table-condensed .sorting_desc:after {
   border-radius: 0;
 }
 
-.paragraph .control span {
-    margin-left: 4px;
+.paragraph-col .control span {
+    /*margin-left: 4px;*/
 }
 
-.paragraph .control {
-  background: rgba(255,255,255,0.85);
-  float: right;
-  color: #999;
-  margin-top: 1px;
-  margin-right: 5px;
-  position: absolute;
+.paragraph-col .control {
+  position: relative;
+  padding: 4px 0 8px 0;
+  margin: 1px 5px 0 0;
   clear: both;
-  right: 15px;
-  top: 16px;
-  text-align: right;
+  color: #999;
+  text-align: left;
   font-size: 12px;
-  padding: 4px;
 }
 
-.paragraph .control li {
+.paragraph-col .control li {
   font-size: 12px;
   margin-bottom: 4px;
   color: #333333;
 }
 
-.paragraph .control .tooltip {
+.paragraph-col .control .tooltip {
   z-index: 10003;
 }
 
@@ -527,4 +522,21 @@ table.table-striped {
   padding-right: 4px !important;
   padding-left: 4px !important;
   width: 20px;
+}
+
+
+.btn-move-up{
+  background: url("move-up.png") no-repeat center;
+}
+.btn-move-down{
+  background: url("move-down.png") no-repeat center;
+}
+.btn-add-above{
+  background: url("add-above.png") no-repeat center;
+}
+.btn-add-below{
+  background: url("add-below.png") no-repeat center;
+}
+.btn-remove-paragraph{
+  background: url("remove2.png") no-repeat center;
 }

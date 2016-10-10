@@ -60,6 +60,6 @@ angular.module('zeppelinWebApp').factory('notebookListDataFactory', function() {
       }
     }
   };
-  console.log('notes from server:',notes);
+  // console.log('notes from server:',notes);
   return notes;
 });

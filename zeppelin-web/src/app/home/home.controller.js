@@ -44,9 +44,9 @@ angular.module('zeppelinWebApp').controller('HomeCtrl', function($scope, noteboo
     node.hidden = !node.hidden;
   };
 
-  angular.element('#loginModal').on('hidden.bs.modal', function(e) {
-    $rootScope.$broadcast('initLoginValues');
-  });
+  // angular.element('#loginModal').on('hidden.bs.modal', function(e) {
+  //   $rootScope.$broadcast('initLoginValues');
+  // });
 
   /*
   ** $scope.$on functions below

@@ -1,29 +1,41 @@
-<div class="side-bar" ng-controller="SideBarCtrl as sideBar">
-  <div class="note-list-container" ng-class="{'active': listActive}">
-    <div class="header-bar">
-        <a href="" class="back">&lt;&nbsp;返回</a>
-        <a href="javascript:;" class="new-note" ng-show="!adding" ng-click="sideBar.showNewArea()">新建</a>
+<div ng-controller="SideBarCtrl as sideBar"
+     class="side-bar"
+     ng-class="{'list-in':listActive,'history-in':historyActive}">
+  <div class="scroll-panel">
+    <div class="header-bar side-head-bar">
+      <a href="" class="back">&lt;&nbsp;返回</a>
+      <a href="javascript:;" class="new-note" ng-show="!adding" ng-click="sideBar.showNewArea($event)">新建</a>
     </div>
     <div class="note-list">
-      <div class="new-note-container" ng-show="adding">
-        <input class="input-new">
-        <a href="javascript:;" class="btn-ok">确定</a>
+      <div class="new-note-container"
+           ng-class="{'validate-error':!!noteNameError}"
+           ng-show="adding">
+        <input class="input-new"
+               ng-click="$event.stopPropagation()"
+               ng-change="sideBar.handleNameChange()"
+               ng-model="notename"
+               ng-enter="sideBar.handleNameEnter()">
+        <a href="javascript:;" class="btn-ok" ng-click="sideBar.createNote($event)">确定</a>
+        <div class="error-area" ng-show="noteNameError">{{noteNameError}}</div>
       </div>
       <!--repeat start-->
       <div class="note-list-item"
-           ng-repeat="note in sideBar.notes.root.children | orderBy:sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
-           ng-class="{'active':sideBar.isActive(note.id),'locked':note.locked,'last-child':$last}">
+           ng-repeat="note in sideBar.notes.flatList | orderBy:sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
+           ng-class="{'active':sideBar.isActive(note.id),'locked':note.mask=='reader','last-child':$last}">
         <a ng-if="note.id"
            href="#/notebook/{{note.id}}"
            class="note-title text-ellipsis"
            title="{{note.name}}"><span class="value">{{note.name}}</span></a>
-        <a href="javascript:;" class="remove" title="删除" ng-click="sideBar.removeNote(note.id)"></a>
+        <a href="javascript:;"
+           class="remove"
+           title="删除"
+           ng-show="note.mask=='owner'||note.mask=='admin'"
+           ng-click="sideBar.removeNote(note.id)"></a>
       </div>
       <!--repeat end-->
     </div>
-  </div>
-  <div class="history-list-container" ng-class="{'active': historyActive}">
-    <div class="header-bar">
+
+    <div class="header-bar history-header-bar">
       <a href="javascript:;" class="history" ng-click="sideBar.toggleHistory()">查看提交历史<i class="triangle"></i></a>
     </div>
     <div class="history-list">
@@ -38,5 +50,4 @@
       <!--repeat end-->
     </div>
   </div>
-
 </div>

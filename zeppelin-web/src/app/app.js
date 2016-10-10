@@ -94,7 +94,7 @@
           });
         });
 
-  function auth() {
+  /*function auth() {
     var $http = angular.injector(['ng']).get('$http');
     var baseUrlSrv = angular.injector(['zeppelinWebApp']).get('baseUrlSrv');
     // withCredentials when running locally via grunt
@@ -113,10 +113,29 @@
     }, function(errorResponse) {
       // Handle error case
     });
+  }*/
+
+  function gerParam(name) {
+    var search = location.search ? location.search.substring(1):'';
+    var parts = search.split('&');
+    for(var i = parts.length-1;i>=0;i--){
+      if(parts[i].startsWith(name+'=')){
+        return parts[i].substring(name.length+1);
+      }
+    }
+    return '';
   }
 
   function bootstrapApplication() {
     zeppelinWebApp.run(function($rootScope, $location) {
+      //从url上获取信息
+      $rootScope.ticket = {
+        ticket: gerParam('ticket'),//'a2529786-2b00-47a8-9503-8e4b786f991e',
+        serverIndex: gerParam('serverIndex'),//1,
+        projectId: gerParam('projectId')//'project1'
+      };
+      $rootScope.prjName = decodeURIComponent(gerParam('projectName'));
+
       $rootScope.$on('$routeChangeStart', function(event, next, current) {
         if (!$rootScope.ticket && next.$$route && !next.$$route.publicAccess) {
           $location.path('/');
@@ -126,7 +145,8 @@
     angular.bootstrap(document, ['zeppelinWebApp']);
   }
 
+
   angular.element(document).ready(function() {
-    auth().then(bootstrapApplication);
+    bootstrapApplication();
   });
 }());
