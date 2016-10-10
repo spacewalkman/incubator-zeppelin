@@ -126,8 +126,7 @@ public class LoginRestApi {
         response = new JsonResponse(Response.Status.FORBIDDEN, "未授权的用户", "");
       }
     } else {//TODO:如果zeppelin缓存命中，则直接通过验证，这里需要增加超时清理机制
-      PrincipalCollection principalCollection = subject.getPrincipals();
-      UserProfile userProfile = (UserProfile) principalCollection.getPrimaryPrincipal();
+      UserProfile userProfile = (UserProfile) (subject.getPrincipal());
       response = buildOKResponse(userProfile);
     }
 

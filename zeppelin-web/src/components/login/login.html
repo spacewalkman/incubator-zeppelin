@@ -27,17 +27,17 @@ limitations under the License.
           <div class="alert alert-danger">{{loginParams.errorText}}</div>
         </div>
         <div class="form-group">
-          <label for="userName">User Name</label>
-          <input placeholder="User Name" type="text" class="form-control" id="userName"
-                 ng-keypress="loginParams.errorText = ''"
-                 ng-model="loginParams.userName"/>
-        </div>
-        <div class="form-group">
           <label for="ticket">Ticket</label>
-          <input placeholder="Ticket" type="text" class="form-control" id="ticket"
+          <input placeholder="a2529786-2b00-47a8-9503-8e4b786f991e" type="text" class="form-control" id="ticket"
                  ng-enter="login()"
                  ng-keypress="loginParams.errorText = ''"
                  ng-model="loginParams.ticket"/>
+        </div>
+        <div class="form-group">
+          <label for="serverindex">server index</label>
+          <input placeholder="1" type="text" class="form-control" id="serverindex"
+                 ng-keypress="loginParams.errorText = ''"
+                 ng-model="loginParams.serverindex"/>
         </div>
         <!--<div class="form-group">-->
           <!--<label for="group">Group</label>-->

@@ -23,6 +23,7 @@ import java.util.Map;
 /**
  * Zeppelin websocker massage template class.
  */
+//TODO:
 public class Message {
   /**
    * Representation of event type.
@@ -31,76 +32,76 @@ public class Message {
     GET_HOME_NOTE, // [c-s] load note for home screen
 
     GET_NOTE, // [c-s] client load note
-              // @param id note id
+    // @param id note id
 
     NOTE, // [s-c] note info
-          // @param note serlialized Note object
+    // @param note serlialized Note object
 
     NOTE_TOPIC, // [s-c] note bussiness topic
 
     NOTE_TAGS, // [s-c] note tags
 
     PARAGRAPH, // [s-c] paragraph info
-               // @param paragraph serialized paragraph object
+    // @param paragraph serialized paragraph object
 
     PROGRESS, // [s-c] progress update
-              // @param id paragraph id
-              // @param progress percentage progress
+    // @param id paragraph id
+    // @param progress percentage progress
 
     NEW_NOTE, // [c-s] create new notebook
     SET_NOTE_TOPIC, // [c-s] set note topic
-                    // @param id paragraph id
-                    // @param note's topic
+    // @param id paragraph id
+    // @param note's topic
     SET_NOTE_TAGS, // [c-s] set note tags
-                   // @param id note id
-                   // @param note's tags array
+    // @param id note id
+    // @param note's tags array
 
     DEL_NOTE, // [c-s] delete notebook
-              // @param id note id
+    // @param id note id
     CLONE_NOTE, // [c-s] clone new notebook
-                // @param id id of note to clone
-                // @param name name fpor the cloned note
+    // @param id id of note to clone
+    // @param name name fpor the cloned note
     IMPORT_NOTE,  // [c-s] import notebook
-                  // @param object notebook
+    // @param object notebook
     NOTE_UPDATE,
 
     RUN_PARAGRAPH, // [c-s] run paragraph
-                   // @param id paragraph id
-                  // @param paragraph paragraph content.ie. script
-                  // @param config paragraph config
-                  // @param params paragraph params
+    // @param id paragraph id
+    // @param paragraph paragraph content.ie. script
+    // @param config paragraph config
+    // @param params paragraph params
 
     COMMIT_PARAGRAPH, // [c-s] commit paragraph
-                      // @param id paragraph id
-                      // @param title paragraph title
-                      // @param paragraph paragraph content.ie. script
-                      // @param config paragraph config
-                      // @param params paragraph params
+    // @param id paragraph id
+    // @param title paragraph title
+    // @param paragraph paragraph content.ie. script
+    // @param config paragraph config
+    // @param params paragraph params
 
     CANCEL_PARAGRAPH, // [c-s] cancel paragraph run
-                      // @param id paragraph id
+    // @param id paragraph id
 
     MOVE_PARAGRAPH, // [c-s] move paragraph order
-                    // @param id paragraph id
-                    // @param index index the paragraph want to go
+    // @param id paragraph id
+    // @param index index the paragraph want to go
 
     INSERT_PARAGRAPH, // [c-s] create new paragraph below current paragraph
-                      // @param target index
+    // @param target index
 
     COMPLETION, // [c-s] ask completion candidates
-                // @param id
-                // @param buf current code
-                // @param cursor cursor position in code
+    // @param id
+    // @param buf current code
+    // @param cursor cursor position in code
 
     COMPLETION_LIST, // [s-c] send back completion candidates list
-                     // @param id
-                     // @param completions list of string
+    // @param id
+    // @param completions list of string
 
     LIST_NOTES, // [c-s] ask list of note
     RELOAD_NOTES_FROM_REPO, // [c-s] reload notes from repo
 
     NOTES_INFO, // [s-c] list of note infos
-                // @param notes serialized List<NoteInfo> object
+    // @param notes serialized List<NoteInfo> object
 
     PARAGRAPH_REMOVE,
     PARAGRAPH_CLEAR_OUTPUT,
@@ -120,17 +121,17 @@ public class Message {
 
     LIST_CONFIGURATIONS, // [c-s] ask all key/value pairs of configurations
     CONFIGURATIONS_INFO, // [s-c] all key/value pairs of configurations
-                  // @param settings serialized Map<String, String> object
+    // @param settings serialized Map<String, String> object
 
     CHECKPOINT_NOTEBOOK,    // [c-s] checkpoint notebook to storage repository
-                            // @param noteId
-                            // @param checkpointName
+    // @param noteId
+    // @param checkpointName
 
     LIST_REVISION_HISTORY,  // [c-s] list revision history of the notebook
-                            // @param noteId
+    // @param noteId
     NOTE_REVISION,          // [c-s] get certain revision of note
-                            // @param noteId
-                            // @param revisionId
+    // @param noteId
+    // @param revisionId
     NOTE_REVISION_SUBMIT,   // [c-s] 提交note一个指定的revision版本到组委会
 
     APP_APPEND_OUTPUT,      // [s-c] append output
@@ -142,25 +143,24 @@ public class Message {
     LIST_UPDATE_NOTEBOOK_JOBS, // [s-c] get job management informations
     UNSUBSCRIBE_UPDATE_NOTEBOOK_JOBS, // [c-s] unsubscribe job information for job management
     GET_INTERPRETER_BINDINGS, // [c-s] get interpreter bindings
-                              // @param noteID
+    // @param noteID
     SAVE_INTERPRETER_BINDINGS, // [c-s] save interpreter bindings
-                               // @param noteID
-                               // @param selectedSettingIds
+    // @param noteID
+    // @param selectedSettingIds
     INTERPRETER_BINDINGS, // [s-c] interpreter bindings
 
     REVISION_SUBMIT,//[s-c] submit note到组委会
     QUERY_SUBMIT_TIME,//[c-s] 查询参赛队对赛题已经提交的次数
     ACK_SUBMIT_TIME,//[s-c] 响应QUERY_SUBMIT_TIME查询请求，当前参赛队已经提交的次数
-    NO_CHANGE_FOUND //[s-c]当checkpoint时，由于sha1没有变化，即：没有diff，提示客户端
+    NO_CHANGE_FOUND, //[s-c]当checkpoint时，由于sha1没有变化，即：没有diff，提示客户端
+
+    UNAUTHORIED //[s-c] 未授权的用户
   }
 
   public OP op;
   public Map<String, Object> data = new HashMap<String, Object>();
   public String ticket = "anonymous";
-  public String principal = "anonymous";
-  public String group="default_team";//TODO:qy,default team name
-  public String roles = "";
-  public String projectId="";//算法大赛的题目或者众包项目的的id
+  public int serverIndex = -1;
 
   public Message(OP op) {
     this.op = op;
