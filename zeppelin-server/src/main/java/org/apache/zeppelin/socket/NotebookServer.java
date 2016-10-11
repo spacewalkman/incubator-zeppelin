@@ -106,7 +106,7 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(NotebookServer.class);
-  final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();
+  final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();//存储note与ws socket之间的映射关系
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
 
   private Notebook notebook() {
@@ -167,7 +167,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       //执行验证
       try {
-        subject = doOrGetCachedAuthentication(messagereceived.ticket, messagereceived.serverIndex);
+        subject = this.doOrGetCachedAuthentication(messagereceived.ticket, messagereceived.serverIndex);
       } catch (AuthenticationException ae) {
         LOG.debug("用户验证失败", ae);
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
@@ -348,9 +348,26 @@ public class NotebookServer extends WebSocketServlet implements
     return GsonUtil.toJson(m);
   }
 
+  protected String serializeNoteInfosWithOutPermissions(Message m) {
+    return GsonUtil.toJson(m);
+  }
+
+  /**
+   * 向前台传递含有permissionMaps和type字段的note
+   */
+  protected String serializeMessageIncludePermissionAndType(Message m) {
+    return GsonUtil.toJsonIncludePermissionAndType(m);
+  }
+
+  /**
+   * 建立ws与noteId之间的对应关系
+   *
+   * @param noteId note的id
+   * @param socket websocket连接
+   */
   private void addConnectionToNote(String noteId, NotebookSocket socket) {
     synchronized (noteSocketMap) {
-      removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.
+      removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.同一时刻只能一个socket只能打开一个note
       List<NotebookSocket> socketList = noteSocketMap.get(noteId);
       if (socketList == null) {
         socketList = new LinkedList<>();
@@ -424,7 +441,7 @@ public class NotebookServer extends WebSocketServlet implements
       LOG.debug("SEND >> " + m.op);
       for (NotebookSocket conn : socketLists) {
         try {
-          conn.send(serializeMessage(m));
+          conn.send(serializeMessage(m));//TODO:serializeMessage并不会序列化note的权限和内容
         } catch (IOException e) {
           LOG.error("socket error", e);
         }
@@ -531,7 +548,7 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   /**
-   * refresh notes from repo,and apply filtered by userAndRoles
+   * 根据需要重新加载noteInfos列表，根据subject的权限进行过滤
    */
   public List<Map<String, String>> generateNotebooksInfo(boolean isReload, Subject subject) {
     Notebook notebook = this.refreshNotes(isReload);
@@ -542,6 +559,8 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
     List<Map<String, String>> notesInfo = new LinkedList<>();
+
+    //TODO:不应该放到这里，应该放到broadcast里面，如果noteinfo或者是note带权限信息，那么，必须在broadcast的时候按照user重新生成一遍permission
     for (Note note : notes) {
       //返回该user对该note的读写和owner权限，每个用户对每个note只有一个mask值，用于前端控制显示可操作图标
       String mask = null;
@@ -564,7 +583,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       info.put("id", note.getId());
       info.put("name", note.getName());
-      info.put("mask", mask);//TODO:前台可以根据状态显示只读和可写图标
+      info.put("mask", mask);//TODO:前台可以根据状态显示只读和可写图标，多用户访问的时候会有问题
       notesInfo.add(info);
     }
 
@@ -611,6 +630,9 @@ public class NotebookServer extends WebSocketServlet implements
             .put("interpreterBindings", settingList));
   }
 
+  /**
+   * 广播noteinfos列表
+   */
   public void broadcastNoteList(Subject subject) {
     List<Map<String, String>> notesInfo = generateNotebooksInfo(true, subject);
     broadcastAll(new Message(OP.NOTES_INFO).put("notes", notesInfo));
@@ -649,17 +671,100 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     Note note = notebook.getNote(noteId);
+
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (note != null) {
       if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
         permissionError(conn, subject, "读取", note.getGroup(), note.getId());
         return;
       }
+
+      this.setNoteType(note, null);
+      //设置permissionsMap transient permission字段
+      this.setPermissionFlags(note, notebookAuthorization, subject);
+
       addConnectionToNote(note.getId(), conn);
-      conn.send(serializeMessage(new Message(OP.NOTE).put("note", note)));
+      conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", note)));
       sendAllAngularObjects(note, conn);
     } else {
-      conn.send(serializeMessage(new Message(OP.NOTE).put("note", null)));
+      conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", null)));
+    }
+  }
+
+  /**
+   * 设置revision note 的permission权限
+   *
+   * @param note 待设置权限的note
+   */
+  private void setPermissionFlagsForRevision(Note note) {
+    Map<String, String> permissionsMap = note.getPermissionsMap();
+    permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "reader");
+    permissionsMap.put(Note.COMMITTERABLE, "0");
+    permissionsMap.put(Note.EXECUTORABLE, "0");//TODO：历史不能执行，这是由于zeppelin的执行机制决定的，zeppelin的执行机制是使用notebook.get(id)返回的note，调用其runAll()方法，而revisionNote只是id相同，并不在notelist中，如果执行，执行的是latest的版本，不是revision对应的版本
+  }
+
+
+  /**
+   * 设置normal/template的note的permissionsMap字段，前台IDE需要的per-note的permission字段，permission为map，size为4，含有如下4个部分：reader&writer&owner/canCommit/canSubmit/canExecute
+   *
+   * @param note                  待设置权限的note
+   * @param notebookAuthorization note的授权manager
+   * @param subject               当前shiro subject
+   */
+  private void setPermissionFlags(Note note, NotebookAuthorizationAdaptor notebookAuthorization,
+                                  Subject subject) {
+    Map<String, String> permissionsMap = note.getPermissionsMap();
+
+    if (notebookAuthorization.isAdmin(subject)) {
+      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "owner");//admin等同owner
+    } else if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "owner");
+    } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "writer");
+    } else if (notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "reader");
+    } else {
+      //不应该执行到这里
+      throw new IllegalStateException("不应该执行到这里");
+    }
+
+
+    if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.COMMITTERABLE, "1");
+    } else {
+      permissionsMap.put(Note.COMMITTERABLE, "0");
+    }
+
+    if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.SUMITTERABLE, "1");
+    } else {
+      permissionsMap.put(Note.SUMITTERABLE, "0");
+    }
+
+    if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.EXECUTORABLE, "1");
+    } else {
+      permissionsMap.put(Note.EXECUTORABLE, "0");
+    }
+  }
+
+  /**
+   * 设置ide需要的前端的note type属性
+   *
+   * @param note 待设置type的note
+   * @param type 如果不为null，表明是指定了type类型；否则，通过note的group和projectId判断是否为template，或者是normal
+   */
+  private void setNoteType(Note note, final String type) {
+    if (type != null) {//只有在 revision时才出现
+      note.setType(type);
+      return;
+    }
+
+    note.setType(Note.NOTE_TYPE_NORMAL);//默认都是normal
+    if (note.getGroup() == null || note.getGroup().isEmpty()) {
+      if (note.getProjectId() != null && !note.getProjectId().isEmpty()) {
+        note.setType(Note.NOTE_TYPE_TEMPLATE);//projectId不为null，但是teamId为null的为模板，TODO：这里隐含限制，模板必须关联赛题
+      }
     }
   }
 
@@ -755,7 +860,14 @@ public class NotebookServer extends WebSocketServlet implements
 
     //TODO：遗留代码，在使用note-authorization.json作为authentication持久化机制的时候，会使用；
     //TODO： shiro jdbcRealm没有override该方法，如果note的creator有区别于其他组内成员的其他permission，则需要在ShiroNotebookAuthorization进行override控制
+    //owner(creator)有两种不同的
     addCreatorToNoteOwner(notebook, userProfile.getUserName(), note);
+
+    //设置note的permissionsMap和type
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
+    this.setNoteType(note, null);
+    //设置permissionsMap transient permission字段
+    this.setPermissionFlags(note, notebookAuthorization, subject);
 
     note.persist(userProfile.getUserName());
     addConnectionToNote(note.getId(), conn);
@@ -765,7 +877,7 @@ public class NotebookServer extends WebSocketServlet implements
     messageToWeb.ticket = message.ticket;
     messageToWeb.serverIndex = message.serverIndex;
 
-    conn.send(serializeMessage(messageToWeb));
+    conn.send(serializeMessageIncludePermissionAndType(messageToWeb));//序列化含有permissionsMap和type字段的note
     unicastNoteList(conn, subject, false);
   }
 
@@ -914,7 +1026,7 @@ public class NotebookServer extends WebSocketServlet implements
     Note newNote = notebook.cloneNote(noteId, name, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
 
     addConnectionToNote(newNote.getId(), conn);
-    conn.send(serializeMessage(new Message(OP.NEW_NOTE).put("note", newNote)));
+    conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NEW_NOTE).put("note", newNote)));
     broadcastNoteList(subject);
   }
 
@@ -1492,6 +1604,10 @@ public class NotebookServer extends WebSocketServlet implements
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Note revisionNote = notebook.getNoteByRevision(noteId, revisionId, userProfile.getUserName());
+
+    this.setNoteType(revisionNote, Note.NOTE_TYPE_REVISION);//只有从该方法入口进入的note.type才revision
+    this.setPermissionFlagsForRevision(revisionNote);
+
     conn.send(serializeMessage(new Message(OP.NOTE_REVISION)
             .put("noteId", noteId)
             .put("revisionId", revisionId)

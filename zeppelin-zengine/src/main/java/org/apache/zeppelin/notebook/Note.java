@@ -87,6 +87,52 @@ public class Note implements Serializable, ParagraphJobListener {
   private String topic;
   private Date lastUpdated;//max(lastUpdaed in paragraphs)
 
+  /**
+   * 当前note的种类，有三种：模板/历史/正常note
+   */
+  private String type;
+
+  /**
+   * note种类：模板
+   */
+  public static final String NOTE_TYPE_TEMPLATE = "template";
+
+  /**
+   * note种类：版本历史
+   */
+  public static final String NOTE_TYPE_REVISION = "revision";
+
+  /**
+   * 正常的note
+   */
+  public static final String NOTE_TYPE_NORMAL = "normal";
+
+  /**
+   * 当前用户对该note的读写owner/是否可提交/可执行权限
+   */
+  private Map<String, String> permissionsMap;
+
+  /**
+   * 用来permissionsMapkey，reader/writer/owner key
+   */
+  public static final String READ_WRITE_OWNER_KEY = "rwo";
+
+
+  /**
+   * 用来permissionsMapkey，committer key
+   */
+  public static final String COMMITTERABLE = "canCommit";
+
+  /**
+   * 用来permissionsMapkey，submitter key
+   */
+  public static final String SUMITTERABLE = "canSubmit";
+
+  /**
+   * 用来permissionsMapkey，executor key
+   */
+  public static final String EXECUTORABLE = "canExecute";
+
   private Map<String, List<AngularObject>> angularObjects = new HashMap<>();
 
   private transient InterpreterFactory factory;
@@ -865,5 +911,31 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public void setProjectId(String projectId) {
     this.projectId = projectId;
+  }
+
+  /**
+   * 当前note的种类，有三种：模板/历史/正常note
+   */
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  /**
+   * 当前用户对该note的读写owner/是否可提交/可执行权限
+   */
+  public Map<String, String> getPermissionsMap() {
+    if (permissionsMap == null) {
+      permissionsMap = new HashMap<>(4);
+    }
+
+    return permissionsMap;
+  }
+
+  public void setPermissionsMap(Map<String, String> permissionsMap) {
+    this.permissionsMap = permissionsMap;
   }
 }
