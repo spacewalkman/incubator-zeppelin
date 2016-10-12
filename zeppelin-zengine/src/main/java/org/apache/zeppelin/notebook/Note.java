@@ -110,13 +110,17 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * 当前用户对该note的读写owner/是否可提交/可执行权限
    */
-  private Map<String, String> permissionsMap;
+  private Map<String, Boolean> permissionsMap;
 
   /**
-   * 用来permissionsMapkey，reader/writer/owner key
+   * 用来permissionsMapkey，是否允许删除
    */
-  public static final String READ_WRITE_OWNER_KEY = "rwo";
+  public static final String DELETABLE = "canDelete";
 
+  /**
+   * 用来permissionsMapkey，是否允许写
+   */
+  public static final String WRITEABLE = "canWrite";
 
   /**
    * 用来permissionsMapkey，committer key
@@ -924,15 +928,27 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * 当前用户对该note的读写owner/是否可提交/可执行权限
    */
-  public Map<String, String> getPermissionsMap() {
+  public Map<String, Boolean> getPermissionsMap() {
     if (permissionsMap == null) {
-      permissionsMap = new HashMap<>(4);
+      permissionsMap = new HashMap<>(5);
     }
 
     return permissionsMap;
   }
 
-  public void setPermissionsMap(Map<String, String> permissionsMap) {
+  public void setPermissionsMap(Map<String, Boolean> permissionsMap) {
     this.permissionsMap = permissionsMap;
+  }
+
+  /**
+   * 是否是模板
+   * @return
+   */
+  public boolean isTemplate() {
+    if ((this.getGroup() == null || this.getGroup().isEmpty()) && (this.getProjectId() != null && this.getProjectId().isEmpty())) {
+      return true;
+    }
+
+    return false;
   }
 }
