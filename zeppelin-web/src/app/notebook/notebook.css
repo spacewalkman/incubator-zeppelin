@@ -262,9 +262,8 @@
 
 .commit-container {
   padding: 10px 20px 6px 20px;
-  font-weight: normal;
-  word-wrap: break-word;
-  white-space: initial;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 /* overwrite bootstrap css for version control button */
@@ -396,4 +395,32 @@
   background: linear-gradient(to bottom right, #5287ff , #615dff); /* 标准的语法（必须放在最后） */
   -webkit-box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
   box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
+}
+
+
+
+.commit-button-holder{
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+.commit-button-holder .dropdown-menu{
+  margin: 5px 0 0 0;
+}
+.commit-button-holder input{
+  height: 32px;
+  line-height: 32px;
+  width: 185px;
+}
+.commit-button-holder button{
+  height: 32px;
+  line-height: 32px;
+  padding: 0 10px;
+}
+
+.validate-error .error-area{
+  color: red;
+  padding: 6px 0;
+  line-height: 16px;
+  font-size: 12px;
 }

@@ -14,6 +14,20 @@ limitations under the License.
 
 <div id="{{paragraph.id}}_control" class="control" ng-show="!asIframe">
 
+  <span class="btn-group group-language">
+    <button type="button"
+            class="btn btn-default btn-xs dropdown-toggle"
+            data-toggle="dropdown">
+      <b>{{paragraph.interpreterMark}}</b> <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu pull-right" role="menu">
+      <li ng-repeat="interpreterBinding in interpreterBindings">
+        <a class="looknfeel-item"
+           ng-click="setParagraphInterpreter(paragraph.id,interpreterBinding)"><b>{{interpreterBinding}}</b></a>
+      </li>
+    </ul>
+  </span>
+
   <!-- Run / Cancel button -->
   <span class="labelBtn btn-group">
     <button type="button"
@@ -58,13 +72,6 @@ limitations under the License.
             ng-click="removeParagraph()"
             ng-hide="viewOnly || asIframe"
             tooltip-placement="bottom" tooltip="删除程序"><span class="ico-placeholder"></span></button>
-    <span>
-      {{paragraph.status}}
-    </span>
-
-    <span ng-if="paragraph.status=='RUNNING'">
-      {{getProgress()}}%
-    </span>
 <!--    <span class="icon-control-pause" style="cursor:pointer;color:#CD5C5C" tooltip-placement="top" tooltip="Cancel"
           ng-click="cancelParagraph()"
           ng-show="paragraph.status=='RUNNING' || paragraph.status=='PENDING'"></span>
@@ -133,4 +140,9 @@ limitations under the License.
       </ul>
     </span>-->
   </span>
+  <!-- 默认显示执行状态，执行时显示执行进度，编辑器获取焦点时显示实时保存提示 -->
+  <span class="paragraph-state-msg"> {{getStateMsg()}}</span>
+  <!--<span class="paragraph-state-msg"> {{paragraph.status}}</span>-->
+
+  <!--<span ng-if="paragraph.status=='RUNNING'">{{getProgress()}}%</span>-->
 </div>

@@ -87,15 +87,41 @@ limitations under the License.
                 tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
           <span class="setting-btn btn-note-submit"
                 type="button"
-                ng-click="togglePermissions()"
-                tooltip-placement="bottom">确认提交</span>
-          <span class="setting-btn btn-note-save"
-                type="button"
-                ng-click="togglePermissions()"
-                tooltip-placement="bottom">保存草稿</span>
+                ng-click="submitNotebook()"
+                tooltip-placement="bottom">提交评测</span>
+          <span class="commit-button-holder">
+            <span class="setting-btn btn-note-save"
+                  type="button"
+                  id="versionControlDropdown"
+                  ng-hide="viewOnly"
+                  data-toggle="dropdown"
+                  tooltip-placement="bottom">提交快照</span>
+            <ul class="dropdown-menu pull-right"
+                aria-labelledby="versionControlDropdown">
+              <li>
+                <div class="commit-container"
+                     ng-class="{'validate-error':!!commitMsgError}">
+                    <input type="text"
+                           dropdown-input
+                           placeholder="commit message"
+                           id="note.checkpoint.message"
+                           ng-enter="checkpointNotebook()"
+                           ng-change="checkpointMsgChanged()"
+                           ng-model="note.checkpoint.message"/>
+                    <button type="button"
+                            class="btn btn-default btn-xs"
+                            ng-hide="viewOnly"
+                            ng-click="checkpointNotebook($event)"
+                            style="margin-left: 4px;"
+                            tooltip-placement="bottom" tooltip="将当前版本提交为快照，可在提交历史中查看">提交</button>
+                    <div class="error-area"
+                         ng-show="commitMsgError">{{commitMsgError}}</div>
+                </div>
+              </li>
+            </ul>
+          </span>
 
         </div>
-
       </td>
     </tr>
   </table>

@@ -197,6 +197,12 @@
 .history-list .history-item{
   padding: 6px 0;
 }
+.history-list .history-item.active{
+  border-right-color: #3f6cff;
+}
+.history-list .history-item.active a{
+  color: #fff;
+}
 .history-list .history-item .note-title{
   display: block;
   line-height: 2em;

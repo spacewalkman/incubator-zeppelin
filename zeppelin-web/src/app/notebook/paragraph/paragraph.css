@@ -540,3 +540,19 @@ table.table-striped {
 .btn-remove-paragraph{
   background: url("remove2.png") no-repeat center;
 }
+
+.group-language .dropdown-menu{
+  right: auto;
+  left: 0;
+}
+.btn-group{
+  background: #fff;
+}
+.btn-group .btn{
+  color: #898989;
+}
+.paragraph-state-msg{
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 14px;
+}

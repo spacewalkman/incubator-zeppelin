@@ -42,8 +42,10 @@
       <!--repeat start-->
       <div class="history-item"
            ng-repeat="revision in noteRevisions | orderBy:'time':true"
-           ng-class="{'committed':revision.isSubmitted,'active':false}">
-        <a href="javascript:;" class="note-title text-ellipsis" title="{{revision.message}}">{{revision.message}}</a>
+           ng-class="{'committed':revision.isSubmitted,'active':sideBar.isActive(revision.noteId,revision.id)}">
+        <a href="#/notebook/{{revision.noteId}}?v={{revision.id}}"
+           class="note-title text-ellipsis"
+           title="{{revision.message}}">{{revision.message}}</a>
         <p class="commit-time">{{revision.time | date:'yyyy-MM-dd HH:mm:ss '}}</p>
         <p class="commiter"><span class="name">{{revision.committer}}</span></p>
       </div>
