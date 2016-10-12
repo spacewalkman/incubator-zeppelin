@@ -129,6 +129,9 @@ public class ZeppelinServer extends Application {
             notebookRepo, schedulerFactory, replFactory, notebookWsServer,
             notebookIndex, notebookAuthorization, credentials);
 
+    //初始化现有note与user之间的权限关系
+
+
     // to update notebook from application event from remote process.
     heliumApplicationFactory.setNotebook(notebook);
     // to update fire websocket event on application event.

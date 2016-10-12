@@ -38,6 +38,7 @@ import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.JobListenerFactory;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorizationAdaptor;
 import org.apache.zeppelin.notebook.NotebookEventListener;
@@ -79,6 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.servlet.http.HttpServletRequest;
@@ -106,7 +108,7 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(NotebookServer.class);
-  final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();//存储note与ws socket之间的映射关系
+  final Map<String, List<NotebookSocket>> noteSocketMap = new ConcurrentHashMap<>();//存储note与ws socket之间的映射关系
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
 
   final Map<NotebookSocket, Subject> socketSubjectMap = new HashMap<>();//存储socket对应了哪个用户的
@@ -142,18 +144,24 @@ public class NotebookServer extends WebSocketServlet implements
     connectedSockets.add(conn);
   }
 
+  /**
+   * 处理websocket发过来的消息，进行[s-c]和[c-s]双向通信
+   *
+   * @param conn webscoket connection
+   * @param msg  json格式的消息
+   */
   @Override
   public void onMessage(NotebookSocket conn, String msg) {
     Notebook notebook = notebook();
     try {
       Message messagereceived = deserializeMessage(msg);
-      LOG.debug("接收到消息OP << " + messagereceived.op);
-      LOG.debug("接收到ticket << " + messagereceived.ticket);
-      LOG.debug("接收到serverIndex << " + messagereceived.serverIndex);
-
       if (LOG.isTraceEnabled()) {
         LOG.trace("接收到消息 message = " + messagereceived);
       }
+
+      LOG.debug("接收到消息OP << " + messagereceived.op);
+      LOG.debug("接收到ticket << " + messagereceived.ticket);
+      LOG.debug("接收到serverIndex << " + messagereceived.serverIndex);
 
       if (messagereceived.ticket == null || messagereceived.ticket.isEmpty()) {
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
@@ -180,6 +188,9 @@ public class NotebookServer extends WebSocketServlet implements
         return;
       }
 
+      //建立NotebookSocket与Subject之间的关系，即：识别每个websocket是哪个用户的连接，以便于在发送note和noteinfos时，带上permission信息
+      socketSubjectMap.put(conn, subject);
+
       /** Lets be elegant here */
       switch (messagereceived.op) {
         case LIST_NOTES://显示note列表
@@ -187,7 +198,6 @@ public class NotebookServer extends WebSocketServlet implements
           break;
         case RELOAD_NOTES_FROM_REPO://点击reload noteinfos按钮
           unicastNoteList(conn, subject, true);
-          //broadcastReloadedNoteList(subject);
           break;
         case GET_HOME_NOTE://TODO:没有起作用
           sendHomeNote(conn, subject, notebook);
@@ -252,10 +262,10 @@ public class NotebookServer extends WebSocketServlet implements
           checkpointNotebook(conn, subject, notebook, messagereceived);
           break;
         case LIST_REVISION_HISTORY://显示revision history
-          listRevisionHistory(conn, notebook, messagereceived);
+          listRevisionHistory(conn, subject, notebook, messagereceived);
           break;
         case NOTE_REVISION://获取指定revision的note历史
-          getNoteByRevision(conn, notebook, messagereceived);
+          getNoteByRevision(conn, subject, notebook, messagereceived);
           break;
         case NOTE_REVISION_SUBMIT://提交到组委会
           submitNotebook(conn, subject, notebook, messagereceived);
@@ -338,6 +348,7 @@ public class NotebookServer extends WebSocketServlet implements
     LOG.info("Closed connection to {} : {}. ({}) {}", conn.getRequest().getRemoteAddr(), conn.getRequest().getRemotePort(), code, reason);
     this.removeConnectionFromAllNote(conn);
     connectedSockets.remove(conn);
+    socketSubjectMap.remove(conn);
   }
 
   protected Message deserializeMessage(String msg) {
@@ -349,7 +360,7 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   protected String serializeNoteInfosWithOutPermissions(Message m) {
-    return GsonUtil.toJson(m);
+    return GsonUtil.toJsonIncludePermissionAndType(m);
   }
 
   /**
@@ -366,52 +377,42 @@ public class NotebookServer extends WebSocketServlet implements
    * @param socket websocket连接
    */
   private void addConnectionToNote(String noteId, NotebookSocket socket) {
-    synchronized (noteSocketMap) {
-      removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.同一时刻一个socket只能打开一个note
-      List<NotebookSocket> socketList = noteSocketMap.get(noteId);
-      if (socketList == null) {
-        socketList = new LinkedList<>();
-        noteSocketMap.put(noteId, socketList);
-      }
-      if (!socketList.contains(socket)) {
-        socketList.add(socket);
-      }
+    removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.同一时刻一个socket只能打开一个note
+    List<NotebookSocket> socketList = noteSocketMap.get(noteId);
+    if (socketList == null) {
+      socketList = new LinkedList<>();
+      noteSocketMap.put(noteId, socketList);
+    }
+    if (!socketList.contains(socket)) {
+      socketList.add(socket);
     }
   }
 
   private void removeConnectionFromNote(String noteId, NotebookSocket socket) {
-    synchronized (noteSocketMap) {
-      List<NotebookSocket> socketList = noteSocketMap.get(noteId);
-      if (socketList != null) {
-        socketList.remove(socket);
-      }
+    List<NotebookSocket> socketList = noteSocketMap.get(noteId);
+    if (socketList != null) {
+      socketList.remove(socket);
     }
   }
 
   private void removeNote(String noteId) {
-    synchronized (noteSocketMap) {
-      noteSocketMap.remove(noteId);
-    }
+    noteSocketMap.remove(noteId);
   }
 
   private void removeConnectionFromAllNote(NotebookSocket socket) {
-    synchronized (noteSocketMap) {
-      Set<String> keys = noteSocketMap.keySet();
-      for (String noteId : keys) {
-        removeConnectionFromNote(noteId, socket);
-      }
+    Set<String> keys = noteSocketMap.keySet();
+    for (String noteId : keys) {
+      removeConnectionFromNote(noteId, socket);
     }
   }
 
   private String getOpenNoteId(NotebookSocket socket) {
     String id = null;
-    synchronized (noteSocketMap) {
-      Set<String> keys = noteSocketMap.keySet();
-      for (String noteId : keys) {
-        List<NotebookSocket> sockets = noteSocketMap.get(noteId);
-        if (sockets.contains(socket)) {
-          id = noteId;
-        }
+    Set<String> keys = noteSocketMap.keySet();
+    for (String noteId : keys) {
+      List<NotebookSocket> sockets = noteSocketMap.get(noteId);
+      if (sockets.contains(socket)) {
+        id = noteId;
       }
     }
 
@@ -433,44 +434,30 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private void broadcast(String noteId, Message m) {
-    synchronized (noteSocketMap) {
-      List<NotebookSocket> socketLists = noteSocketMap.get(noteId);
-      if (socketLists == null || socketLists.size() == 0) {
-        return;
-      }
-      LOG.debug("SEND >> " + m.op);
-      for (NotebookSocket conn : socketLists) {
-        try {
-          conn.send(serializeMessage(m));//TODO:serializeMessage并不会序列化note的权限和内容
-        } catch (IOException e) {
-          LOG.error("socket error", e);
-        }
+    List<NotebookSocket> socketLists = noteSocketMap.get(noteId);
+    if (socketLists == null || socketLists.size() == 0) {
+      return;
+    }
+    LOG.debug("SEND >> " + m.op);
+    for (NotebookSocket conn : socketLists) {
+      try {
+        conn.send(serializeMessage(m));//TODO:serializeMessage并不会序列化note的权限和内容
+      } catch (IOException e) {
+        LOG.error("socket error", e);
       }
     }
   }
 
   private void broadcastExcept(String noteId, Message m, NotebookSocket exclude) {
-    synchronized (noteSocketMap) {
-      List<NotebookSocket> socketLists = noteSocketMap.get(noteId);
-      if (socketLists == null || socketLists.size() == 0) {
-        return;
-      }
-      LOG.debug("SEND >> " + m.op);
-      for (NotebookSocket conn : socketLists) {
-        if (exclude.equals(conn)) {
-          continue;
-        }
-        try {
-          conn.send(serializeMessage(m));
-        } catch (IOException e) {
-          LOG.error("socket error", e);
-        }
-      }
+    List<NotebookSocket> socketLists = noteSocketMap.get(noteId);
+    if (socketLists == null || socketLists.size() == 0) {
+      return;
     }
-  }
-
-  private void broadcastAll(Message m) {
-    for (NotebookSocket conn : connectedSockets) {
+    LOG.debug("SEND >> " + m.op);
+    for (NotebookSocket conn : socketLists) {
+      if (exclude.equals(conn)) {
+        continue;
+      }
       try {
         conn.send(serializeMessage(m));
       } catch (IOException e) {
@@ -479,9 +466,22 @@ public class NotebookServer extends WebSocketServlet implements
     }
   }
 
+  /**
+   * 发送一般的纯文本消息
+   */
   private void unicast(Message m, NotebookSocket conn) {
+    unicast(m, conn, false);
+  }
+
+  /**
+   * 发送noteInfo或者note
+   * 根据isIncludePermission参数是否序列化permissionsMap和type字段
+   *
+   * @param isIncludePermission true:json序列化的时候序列化permissionsMap和type字段；false,不序列化
+   */
+  private void unicast(Message m, NotebookSocket conn, boolean isIncludePermission) {
     try {
-      conn.send(serializeMessage(m));
+      conn.send(isIncludePermission ? serializeNoteInfosWithOutPermissions(m) : serializeMessage(m));
     } catch (IOException e) {
       LOG.error("socket error", e);
     }
@@ -548,46 +548,89 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   /**
-   * 根据需要重新加载noteInfos列表，根据subject的权限进行过滤
+   * 按照当前的subject过滤Note，并设置noteinfo的permissionsMap字段
+   *
+   * @param notebookAuthorization note的授权信息
+   * @param conf                  zeppelin配置信息，用来跳过指定的homescreen note
+   * @param notes                 notebook已经加载的note列表
+   * @param subject               当前shiro subject
+   * @return 过滤后的noteinfo，并且设置了权限字段的noteinfo，便于前端做note级别的按钮控制
    */
-  public List<Map<String, String>> generateNotebooksInfo(boolean isReload, Subject subject) {
-    Notebook notebook = this.refreshNotes(isReload);
-    List<Note> notes = notebook.getAllNotes();
-    ZeppelinConfiguration conf = notebook.getConf();
+  private List<NoteInfo> generateNotebooksInfo(
+          NotebookAuthorizationAdaptor notebookAuthorization,
+          ZeppelinConfiguration conf,
+          List<Note> notes,
+          Subject subject) {
     String homescreenNotebookId = conf.getString(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
     boolean hideHomeScreenNotebookFromList = conf.getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN_HIDE);
-    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
-    List<Map<String, String>> notesInfo = new LinkedList<>();
+    //刷新subject与note之间的权限映射关系
+    List<NoteInfo> noteInfos = new LinkedList<>();
+    if (notebookAuthorization.isAdmin(subject)) {
+      for (Note note : notes) {
+        if (hideHomeScreenNotebookFromList && note.getId().equals(homescreenNotebookId)) {
+          continue;
+        }
 
-    //TODO:不应该放到这里，应该放到broadcast里面，如果noteinfo或者是note带权限信息，那么，必须在broadcast的时候按照user重新生成一遍permission
-    for (Note note : notes) {
-      //返回该user对该note的读写和owner权限，每个用户对每个note只有一个mask值，用于前端控制显示可操作图标
-      String mask = null;
-      if (notebookAuthorization.isAdmin(subject)) {
-        mask = "admin";
-      } else if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
-        mask = "owner";//如果不是组内成员，但是是组内note的reader吗？
-      } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-        mask = "writer";
-      } else if (notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
-        mask = "reader";
-      } else {
-        continue;
+        NoteInfo noteInfo = new NoteInfo(note);
+
+        //TODO:超级管理员修改用户数据，是否合适？
+        noteInfo.addPermission("canWrite", true);
+        noteInfo.addPermission("canDelete", true);
+        noteInfo.addPermission("canExecute", true);
+        noteInfo.addPermission("canCommit", true);
+        noteInfo.addPermission("canSubmit", true);
+
+        noteInfos.add(noteInfo);
       }
 
-      Map<String, String> info = new HashMap<>(3);
+      return noteInfos;
+    }
+
+    //非admin
+    for (Note note : notes) {
       if (hideHomeScreenNotebookFromList && note.getId().equals(homescreenNotebookId)) {
         continue;
       }
+      //返回该user对该note的读写和owner权限，每个用户对每个note只有一个mask值，用于前端控制显示可操作图标
+      if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
+        continue;
+      }
 
-      info.put("id", note.getId());
-      info.put("name", note.getName());
-      info.put("mask", mask);//TODO:前台可以根据状态显示只读和可写图标，多用户访问的时候会有问题
-      notesInfo.add(info);
+      NoteInfo noteInfo = new NoteInfo(note);
+      if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
+        noteInfo.addPermission("canDelete", true);
+        noteInfo.addPermission("canWrite", true);
+      } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
+        noteInfo.addPermission("canDelete", false);
+        noteInfo.addPermission("canWrite", true);
+      }
+
+      if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
+        noteInfo.addPermission("canExecute", true);
+      }
+
+      if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
+        noteInfo.addPermission("canCommit", true);//TODO:不一定都能commit
+      }
+
+      if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
+        noteInfo.addPermission("canSubmit", true);
+      }
+
+      noteInfos.add(noteInfo);
     }
 
-    return notesInfo;
+    return noteInfos;
+  }
+
+
+  /**
+   * 根据需要重新加载noteInfos列表，根据subject的权限进行过滤
+   */
+  private List<Note> reloadNotes(boolean isReload) {
+    Notebook notebook = this.refreshNotes(isReload);
+    return notebook.getAllNotes();
   }
 
   /**
@@ -617,8 +660,23 @@ public class NotebookServer extends WebSocketServlet implements
     return notebook;
   }
 
+  /**
+   * 广播note，按照各个subject的permission广播出去
+   */
   public void broadcastNote(Note note) {
-    broadcast(note.getId(), new Message(OP.NOTE).put("note", note));
+    NotebookAuthorizationAdaptor notebookAuthorization = this.notebook().getNotebookAuthorization();
+
+    List<NotebookSocket> socketLists = noteSocketMap.get(note.getId());
+    if (socketLists == null || socketLists.size() == 0) {
+      return;
+    }
+
+    for (NotebookSocket conn : socketLists) {
+      Subject subject = this.socketSubjectMap.get(conn);
+      this.setNotePermissionsMap(note, notebookAuthorization, subject);
+
+      unicast(new Message(OP.NOTE).put("note", note), conn, true);
+    }
   }
 
   /**
@@ -633,14 +691,35 @@ public class NotebookServer extends WebSocketServlet implements
   /**
    * 广播noteinfos列表
    */
-  public void broadcastNoteList(Subject subject) {
-    List<Map<String, String>> notesInfo = generateNotebooksInfo(true, subject);
-    broadcastAll(new Message(OP.NOTES_INFO).put("notes", notesInfo));
+  public void broadcastNoteList() {
+    Notebook notebook = this.refreshNotes(true);
+    List<Note> notes = notebook.getAllNotes();
+
+    NotebookAuthorizationAdaptor notebookAuthorization = this.notebook().getNotebookAuthorization();
+    for (NotebookSocket conn : socketSubjectMap.keySet()) {
+      Subject subject = this.socketSubjectMap.get(conn);
+      List<NoteInfo> noteInfos = this.generateNotebooksInfo(notebookAuthorization, notebook.getConf(), notes, subject);
+
+      UserProfile userProfile = (UserProfile) (subject.getPrincipal());
+      Message message = new Message(OP.NOTES_INFO);
+      message.serverIndex = userProfile.getServerIndex();
+      message.ticket = userProfile.getTicket();
+      unicast(message.put("notes", noteInfos), conn, true);//带权限noteinfo json
+    }
   }
 
+  //TODO:什么时候需要广播，什么时候需要单播
   public void unicastNoteList(NotebookSocket conn, Subject subject, boolean isReload) {
-    List<Map<String, String>> notesInfo = generateNotebooksInfo(isReload, subject);
-    unicast(new Message(OP.NOTES_INFO).put("notes", notesInfo), conn);
+    Notebook notebook = this.refreshNotes(isReload);
+    List<Note> notes = notebook.getAllNotes();
+    List<NoteInfo> noteInfos = this.generateNotebooksInfo(notebook.getNotebookAuthorization(), notebook.getConf(), notes, subject);
+
+    UserProfile userProfile = (UserProfile) (subject.getPrincipal());
+    Message message = new Message(OP.NOTES_INFO);
+    message.serverIndex = userProfile.getServerIndex();
+    message.ticket = userProfile.getTicket();
+
+    unicast(message.put("notes", noteInfos), conn, true);
   }
 
   /**
@@ -679,7 +758,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       this.setNoteType(note, null);
       //设置permissionsMap transient permission字段
-      this.setPermissionFlags(note, notebookAuthorization, subject);
+      this.setNotePermissionsMap(note, notebookAuthorization, subject);
 
       this.addConnectionToNote(note.getId(), conn);//note与connection之间是1：N的关系
       conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", note)));
@@ -690,59 +769,37 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   /**
-   * 设置revision note 的permission权限
-   *
-   * @param note 待设置权限的note
-   */
-  private void setPermissionFlagsForRevision(Note note) {
-    Map<String, String> permissionsMap = note.getPermissionsMap();
-    permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "reader");
-    permissionsMap.put(Note.COMMITTERABLE, "0");
-    permissionsMap.put(Note.EXECUTORABLE, "0");//TODO：历史不能执行，这是由于zeppelin的执行机制决定的，zeppelin的执行机制是使用notebook.get(id)返回的note，调用其runAll()方法，而revisionNote只是id相同，并不在notelist中，如果执行，执行的是latest的版本，不是revision对应的版本
-  }
-
-
-  /**
    * 设置normal/template的note的permissionsMap字段，前台IDE需要的per-note的permission字段，permission为map，size为4，含有如下4个部分：reader&writer&owner/canCommit/canSubmit/canExecute
    *
    * @param note                  待设置权限的note
    * @param notebookAuthorization note的授权manager
    * @param subject               当前shiro subject
    */
-  private void setPermissionFlags(Note note, NotebookAuthorizationAdaptor notebookAuthorization,
-                                  Subject subject) {
-    Map<String, String> permissionsMap = note.getPermissionsMap();
+  private void setNotePermissionsMap(Note note, NotebookAuthorizationAdaptor notebookAuthorization,
+                                     Subject subject) {
+    Map<String, Boolean> permissionsMap = note.getPermissionsMap();
+    permissionsMap.clear();
 
-    if (notebookAuthorization.isAdmin(subject)) {
-      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "owner");//admin等同owner
+    if (notebookAuthorization.isAdmin(subject)) {//admin等同owner
+      permissionsMap.put(Note.DELETABLE, true);
+      permissionsMap.put(Note.WRITEABLE, true);
     } else if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "owner");
+      permissionsMap.put(Note.DELETABLE, true);
+      permissionsMap.put(Note.WRITEABLE, true);
     } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "writer");
-    } else if (notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.READ_WRITE_OWNER_KEY, "reader");
-    } else {
-      //不应该执行到这里
-      throw new IllegalStateException("不应该执行到这里");
-    }
-
-
-    if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.COMMITTERABLE, "1");
-    } else {
-      permissionsMap.put(Note.COMMITTERABLE, "0");
-    }
-
-    if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.SUMITTERABLE, "1");
-    } else {
-      permissionsMap.put(Note.SUMITTERABLE, "0");
+      permissionsMap.put(Note.WRITEABLE, true);
     }
 
     if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.EXECUTORABLE, "1");
-    } else {
-      permissionsMap.put(Note.EXECUTORABLE, "0");
+      permissionsMap.put(Note.EXECUTORABLE, true);
+    }
+
+    if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.COMMITTERABLE, true);
+    }
+
+    if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
+      permissionsMap.put(Note.SUMITTERABLE, true);
     }
   }
 
@@ -866,7 +923,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     this.setNoteType(note, null);
     //设置permissionsMap transient permission字段
-    this.setPermissionFlags(note, notebookAuthorization, subject);
+    this.setNotePermissionsMap(note, notebookAuthorization, subject);
 
     note.persist(userProfile.getUserName());
     addConnectionToNote(note.getId(), conn);
@@ -877,7 +934,7 @@ public class NotebookServer extends WebSocketServlet implements
     messageToWeb.serverIndex = message.serverIndex;
 
     conn.send(serializeMessageIncludePermissionAndType(messageToWeb));//序列化含有permissionsMap和type字段的note
-    unicastNoteList(conn, subject, false);
+    broadcastNoteList();
   }
 
   /**
@@ -908,9 +965,6 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     note.setTopic(topic);
-
-//    Subject shiroSubject = buildNewSubject(message.principal, ZeppelinConfiguration.create().getString(ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
-//    AuthenticationInfo subject = new AuthenticationInfo(message.principal);
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     note.persist(userProfile.getUserName());
@@ -1024,9 +1078,9 @@ public class NotebookServer extends WebSocketServlet implements
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Note newNote = notebook.cloneNote(noteId, name, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
 
-    addConnectionToNote(newNote.getId(), conn);
+    this.addConnectionToNote(newNote.getId(), conn);
     conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NEW_NOTE).put("note", newNote)));
-    broadcastNoteList(subject);
+    broadcastNoteList();
   }
 
   /**
@@ -1045,7 +1099,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       note.persist(userProfile.getUserName());
       broadcastNote(note);
-      broadcastNoteList(subject);
+      broadcastNoteList();
     }
     return note;
   }
@@ -1571,10 +1625,9 @@ public class NotebookServer extends WebSocketServlet implements
     conn.send(serializeMessage(new Message(OP.ACK_SUBMIT_TIME).put("info", submitTimes)));//TODO：前端需要处理这个OP=ACK_SUBMIT_TIME，并且binding submitLeftOver，显示指定时间内还剩余提交次数
   }
 
-  private void listRevisionHistory(NotebookSocket conn, Notebook notebook,
+  private void listRevisionHistory(NotebookSocket conn, Subject subject, Notebook notebook,
                                    Message fromMessage) throws IOException {
     String noteId = (String) fromMessage.get("noteId");
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     List<Revision> revisions = notebook.listRevisionHistory(noteId, userProfile.getUserName());
 
@@ -1582,17 +1635,18 @@ public class NotebookServer extends WebSocketServlet implements
             .put("revisionList", revisions)));
   }
 
-  private void getNoteByRevision(NotebookSocket conn, Notebook notebook, Message fromMessage)
+  private void getNoteByRevision(NotebookSocket conn, Subject subject, Notebook notebook,
+                                 Message fromMessage)
           throws IOException {
     String noteId = (String) fromMessage.get("noteId");
     String revisionId = (String) fromMessage.get("revisionId");
-    String group = (String) fromMessage.get("group");
+
+    UserProfile userProfile = (UserProfile) (subject.getPrincipal());
+    String group = userProfile.getTeam();
 
     if (group == null || group.isEmpty()) {
       throw new IllegalArgumentException("group is null");
     }
-
-    Subject subject = TicketContainer.instance.getCachedSubject(fromMessage.ticket);
 
     //是否有commit权限
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
@@ -1601,13 +1655,12 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Note revisionNote = notebook.getNoteByRevision(noteId, revisionId, userProfile.getUserName());
 
     this.setNoteType(revisionNote, Note.NOTE_TYPE_REVISION);//只有从该方法入口进入的note.type才revision
-    this.setPermissionFlagsForRevision(revisionNote);
+    this.setNotePermissionsMap(revisionNote, notebookAuthorization, subject);
 
-    conn.send(serializeMessage(new Message(OP.NOTE_REVISION)
+    conn.send(serializeNoteInfosWithOutPermissions(new Message(OP.NOTE_REVISION)
             .put("noteId", noteId)
             .put("revisionId", revisionId)
             .put("data", revisionNote)));

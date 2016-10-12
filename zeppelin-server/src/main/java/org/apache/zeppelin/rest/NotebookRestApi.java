@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,7 +202,7 @@ public class NotebookRestApi {
   @Path("/")
   @ZeppelinApi
   public Response getNotebookList() throws IOException {
-    List<Map<String, String>> notesInfo = notebookServer.generateNotebooksInfo(false, SecurityUtils.getSubject());
+    List<Map<String, String>> notesInfo = new LinkedList<>();  //notebookServer.generateNotebooksInfo(false);//TODO:如何识别身份，进行note过滤
     return new JsonResponse<>(Status.OK, "", notesInfo).build();
   }
 
@@ -281,7 +282,7 @@ public class NotebookRestApi {
 
     note.persist(request.getPrincipal());
     notebookServer.broadcastNote(note);
-    notebookServer.broadcastNoteList(SecurityUtils.getSubject());//TODO:(qy) when create note using REST, could cause note filter by current user failed
+    notebookServer.broadcastNoteList();
     return new JsonResponse<>(Status.CREATED, "", note.getId()).build();
   }
 
@@ -317,7 +318,7 @@ public class NotebookRestApi {
       }
     }
 
-    notebookServer.broadcastNoteList(SecurityUtils.getSubject());
+    notebookServer.broadcastNoteList();
     return new JsonResponse<>(Status.OK, "").build();
   }
 
@@ -343,7 +344,7 @@ public class NotebookRestApi {
     UserProfile userProfile = getCachedUserProfile(request);
     Note newNote = notebook.cloneNote(notebookId, newNoteName, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());//TODO:rest 安全
     notebookServer.broadcastNote(newNote);
-    notebookServer.broadcastNoteList(SecurityUtils.getSubject());
+    notebookServer.broadcastNoteList();
     return new JsonResponse<>(Status.CREATED, "", newNote.getId()).build();
   }
 
