@@ -34,7 +34,7 @@ public class NotebookSocket extends WebSocketAdapter {
   private String protocol;
 
   public NotebookSocket(HttpServletRequest req, String protocol,
-      NotebookSocketListener listener) {
+                        NotebookSocketListener listener) {
     this.listener = listener;
     this.request = req;
     this.protocol = protocol;
@@ -69,4 +69,55 @@ public class NotebookSocket extends WebSocketAdapter {
     connection.getRemote().sendString(serializeMessage);
   }
 
+//  /**
+//   * 判断socket同一个的逻辑：判断protocal + remote的ip + remote端口
+//   */
+//  @Override
+//  public boolean equals(Object obj) {
+//    if (obj == null) {
+//      return false;
+//    }
+//
+//    if (!(obj instanceof NotebookSocket)) {
+//      return false;
+//    }
+//
+//    NotebookSocket other = (NotebookSocket) obj;
+//    if (other.getProtocol() == null || other.getProtocol().isEmpty()) {
+//      if (this.getProtocol() != null || !this.getProtocol().isEmpty()) {
+//        return false;
+//      }
+//    }
+//
+//    if (this.getProtocol() == null || this.getProtocol().isEmpty()) {
+//      if (other.getProtocol() != null || !other.getProtocol().isEmpty()) {
+//        return false;
+//      }
+//    }
+//
+//    if (this.getProtocol() != null && other.getProtocol() != null) {
+//      if (!this.getProtocol().equals(other.getProtocol())) {
+//        return false;
+//      }
+//    }
+//
+//    String remoteAddr = this.getRequest().getRemoteAddr();
+//    String remoteAddrOther = other.getRequest().getRemoteAddr();
+//    if ((remoteAddr == null && remoteAddrOther != null) || (remoteAddr != null && remoteAddrOther == null)) {
+//      return false;
+//    }
+//    if (!remoteAddr.equals(remoteAddrOther)) {
+//      return false;
+//    }
+//
+//    int remotePort = this.getRequest().getRemotePort();
+//    int remotePortOther = other.getRequest().getRemotePort();
+//    return remotePort == remotePortOther;
+//  }
+//
+//
+//  @Override
+//  public int hashCode() {
+//    return this.getProtocol().hashCode() + this.getRequest().getRemoteAddr().hashCode() + this.getRequest().getRemotePort();
+//  }
 }

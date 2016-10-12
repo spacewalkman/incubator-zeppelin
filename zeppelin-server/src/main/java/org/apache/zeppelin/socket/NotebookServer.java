@@ -109,6 +109,8 @@ public class NotebookServer extends WebSocketServlet implements
   final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();//存储note与ws socket之间的映射关系
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
 
+  final Map<NotebookSocket, Subject> socketSubjectMap = new HashMap<>();//存储socket对应了哪个用户的
+
   private Notebook notebook() {
     return ZeppelinServer.notebook;
   }
@@ -118,6 +120,7 @@ public class NotebookServer extends WebSocketServlet implements
     factory.setCreator(new NotebookWebSocketCreator(this));
   }
 
+  //TODO:这里可以用来限制来源的ip是否在允许的范围之内
   public boolean checkOrigin(HttpServletRequest request, String origin) {
     try {
       return org.apache.zeppelin.utils.SecurityUtils.isValidOrigin(origin, ZeppelinConfiguration.create());
@@ -135,8 +138,7 @@ public class NotebookServer extends WebSocketServlet implements
 
   @Override
   public void onOpen(NotebookSocket conn) {
-    LOG.info("New connection from {} : {}", conn.getRequest().getRemoteAddr(),
-            conn.getRequest().getRemotePort());
+    LOG.info("New connection from {} : {}", conn.getRequest().getRemoteAddr(), conn.getRequest().getRemotePort());
     connectedSockets.add(conn);
   }
 
@@ -145,12 +147,12 @@ public class NotebookServer extends WebSocketServlet implements
     Notebook notebook = notebook();
     try {
       Message messagereceived = deserializeMessage(msg);
-      LOG.debug("RECEIVE << " + messagereceived.op);
-      LOG.debug("RECEIVE TICKET << " + messagereceived.ticket);
-      LOG.debug("RECEIVE GROUP << " + messagereceived.serverIndex);
+      LOG.debug("接收到消息OP << " + messagereceived.op);
+      LOG.debug("接收到ticket << " + messagereceived.ticket);
+      LOG.debug("接收到serverIndex << " + messagereceived.serverIndex);
 
       if (LOG.isTraceEnabled()) {
-        LOG.trace("RECEIVE MSG = " + messagereceived);
+        LOG.trace("接收到消息 message = " + messagereceived);
       }
 
       if (messagereceived.ticket == null || messagereceived.ticket.isEmpty()) {
@@ -164,7 +166,6 @@ public class NotebookServer extends WebSocketServlet implements
       }
 
       Subject subject = null;
-
       //执行验证
       try {
         subject = this.doOrGetCachedAuthentication(messagereceived.ticket, messagereceived.serverIndex);
@@ -174,42 +175,42 @@ public class NotebookServer extends WebSocketServlet implements
         return;
       }
 
-      if (subject == null) {//datasource创建失败之后
+      if (subject == null) {//只会在发生datasource创建失败之后
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
         return;
       }
 
       /** Lets be elegant here */
       switch (messagereceived.op) {
-        case LIST_NOTES:
+        case LIST_NOTES://显示note列表
           unicastNoteList(conn, subject, true);
           break;
-        case RELOAD_NOTES_FROM_REPO:
+        case RELOAD_NOTES_FROM_REPO://点击reload noteinfos按钮
           unicastNoteList(conn, subject, true);
           //broadcastReloadedNoteList(subject);
           break;
-        case GET_HOME_NOTE:
+        case GET_HOME_NOTE://TODO:没有起作用
           sendHomeNote(conn, subject, notebook);
           break;
-        case GET_NOTE:
+        case GET_NOTE://点击一个noteinfo列表一行之后，加载note到IDE
           sendNote(conn, subject, notebook, messagereceived);
           break;
-        case NEW_NOTE:
+        case NEW_NOTE://新建一个note
           createNote(conn, subject, notebook, messagereceived);
           break;
-        case DEL_NOTE:
+        case DEL_NOTE://删除note
           removeNote(conn, subject, notebook, messagereceived);
           break;
-        case CLONE_NOTE:
+        case CLONE_NOTE://复制note，如复制模板，或者复制其他人的note
           cloneNote(conn, subject, notebook, messagereceived);
           break;
-        case IMPORT_NOTE:
+        case IMPORT_NOTE://导入json格式的note
           importNote(conn, subject, notebook, messagereceived);
           break;
-        case COMMIT_PARAGRAPH:
+        case COMMIT_PARAGRAPH://paragraph内容更新之后，提交（2个时机：每隔10s自动提交/失去focus时）
           updateParagraph(conn, subject, notebook, messagereceived);
           break;
-        case RUN_PARAGRAPH:
+        case RUN_PARAGRAPH://点击单个paragraph上的run按钮
           runParagraph(conn, subject, notebook, messagereceived);
           break;
         case CANCEL_PARAGRAPH:
@@ -227,7 +228,7 @@ public class NotebookServer extends WebSocketServlet implements
         case PARAGRAPH_CLEAR_OUTPUT:
           clearParagraphOutput(conn, subject, notebook, messagereceived);
           break;
-        case NOTE_UPDATE:
+        case NOTE_UPDATE://set note级别的属性，例如修改title、config等
           updateNote(conn, subject, notebook, messagereceived);
           break;
         case COMPLETION:
@@ -244,16 +245,16 @@ public class NotebookServer extends WebSocketServlet implements
         case ANGULAR_OBJECT_CLIENT_UNBIND:
           angularObjectClientUnbind(conn, subject, notebook, messagereceived);
           break;
-        case LIST_CONFIGURATIONS:
+        case LIST_CONFIGURATIONS://TODO:是否要禁止发送
           sendAllConfigurations(conn, subject, notebook);
           break;
         case CHECKPOINT_NOTEBOOK:
           checkpointNotebook(conn, subject, notebook, messagereceived);
           break;
-        case LIST_REVISION_HISTORY:
+        case LIST_REVISION_HISTORY://显示revision history
           listRevisionHistory(conn, notebook, messagereceived);
           break;
-        case NOTE_REVISION:
+        case NOTE_REVISION://获取指定revision的note历史
           getNoteByRevision(conn, notebook, messagereceived);
           break;
         case NOTE_REVISION_SUBMIT://提交到组委会
@@ -268,17 +269,17 @@ public class NotebookServer extends WebSocketServlet implements
         case UNSUBSCRIBE_UPDATE_NOTEBOOK_JOBS:
           unsubscribeNotebookJobInfo(conn);
           break;
-        case GET_INTERPRETER_BINDINGS:
+        case GET_INTERPRETER_BINDINGS://打开note时，获取note启用了哪些interpreter
           getInterpreterBindings(conn, messagereceived);
           break;
-        case SAVE_INTERPRETER_BINDINGS:
+        case SAVE_INTERPRETER_BINDINGS://启/禁用某些interpreter之后，save
           saveInterpreterBindings(conn, messagereceived);
           break;
         default:
           break;
       }
     } catch (Exception e) {
-      LOG.error("Can't handle message", e);
+      LOG.error("消息格式不可识别", e);
     }
   }
 
@@ -322,9 +323,9 @@ public class NotebookServer extends WebSocketServlet implements
 
       notebookAuthorization.addGroup(userProfile.getTeam());//创建组
       if (userProfile.isLeader()) {
-        notebookAuthorization.addGroupLeader(userProfile.getTeam(), userProfile.getUserName());//创建组长
+        notebookAuthorization.addGroupLeader(userProfile.getTeam(), userProfile.getUserName());//创建组长，处理了重复创建问题
       } else {
-        notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员
+        notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员，处理了重复创建问题
       }
     }
 
@@ -334,9 +335,8 @@ public class NotebookServer extends WebSocketServlet implements
 
   @Override
   public void onClose(NotebookSocket conn, int code, String reason) {
-    LOG.info("Closed connection to {} : {}. ({}) {}", conn.getRequest()
-            .getRemoteAddr(), conn.getRequest().getRemotePort(), code, reason);
-    removeConnectionFromAllNote(conn);
+    LOG.info("Closed connection to {} : {}. ({}) {}", conn.getRequest().getRemoteAddr(), conn.getRequest().getRemotePort(), code, reason);
+    this.removeConnectionFromAllNote(conn);
     connectedSockets.remove(conn);
   }
 
@@ -367,7 +367,7 @@ public class NotebookServer extends WebSocketServlet implements
    */
   private void addConnectionToNote(String noteId, NotebookSocket socket) {
     synchronized (noteSocketMap) {
-      removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.同一时刻只能一个socket只能打开一个note
+      removeConnectionFromAllNote(socket); // make sure a socket relates only a single note.同一时刻一个socket只能打开一个note
       List<NotebookSocket> socketList = noteSocketMap.get(noteId);
       if (socketList == null) {
         socketList = new LinkedList<>();
@@ -661,7 +661,6 @@ public class NotebookServer extends WebSocketServlet implements
   private void sendNote(NotebookSocket conn, Subject subject, Notebook notebook,
                         Message fromMessage) throws IOException {
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-
     LOG.info("New operation from {} : {} : {} : {} :  {}", conn.getRequest().getRemoteAddr(),
             conn.getRequest().getRemotePort(), userProfile.getUserName(), fromMessage.op, fromMessage.get("id"));
 
@@ -671,7 +670,6 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     Note note = notebook.getNote(noteId);
-
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (note != null) {
       if (!notebookAuthorization.isReader(subject, note.getGroup(), note.getId())) {
@@ -683,9 +681,9 @@ public class NotebookServer extends WebSocketServlet implements
       //设置permissionsMap transient permission字段
       this.setPermissionFlags(note, notebookAuthorization, subject);
 
-      addConnectionToNote(note.getId(), conn);
+      this.addConnectionToNote(note.getId(), conn);//note与connection之间是1：N的关系
       conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", note)));
-      sendAllAngularObjects(note, conn);
+      this.sendAllAngularObjects(note, conn);
     } else {
       conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", null)));
     }
@@ -792,6 +790,7 @@ public class NotebookServer extends WebSocketServlet implements
     }
   }
 
+  //TODO:setMagic %md IDE会通过update message传递过来
   private void updateNote(NotebookSocket conn, Subject subject,
                           Notebook notebook, Message fromMessage)
           throws SchedulerException, IOException {

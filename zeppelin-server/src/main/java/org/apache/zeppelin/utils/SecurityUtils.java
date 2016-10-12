@@ -42,8 +42,11 @@ public class SecurityUtils {
     org.apache.shiro.SecurityUtils.setSecurityManager(securityManager);
   }
 
+  /**
+   * 限制指定ip的用户登录
+   */
   public static Boolean isValidOrigin(String sourceHost, ZeppelinConfiguration conf)
-      throws UnknownHostException, URISyntaxException {
+          throws UnknownHostException, URISyntaxException {
     if (sourceHost == null || sourceHost.isEmpty()) {
       return false;
     }
@@ -54,9 +57,9 @@ public class SecurityUtils {
     String currentHost = InetAddress.getLocalHost().getHostName().toLowerCase();
 
     return conf.getAllowedOrigins().contains("*") ||
-        currentHost.equals(sourceUriHost) ||
-        "localhost".equals(sourceUriHost) ||
-        conf.getAllowedOrigins().contains(sourceHost);
+            currentHost.equals(sourceUriHost) ||
+            "localhost".equals(sourceUriHost) ||
+            conf.getAllowedOrigins().contains(sourceHost);
   }
 
   /**
