@@ -133,7 +133,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       });
     },
 
-    commitParagraph: function(paragraphId, paragraphTitle, paragraphData, paragraphConfig, paragraphParams) {
+    commitParagraph: function(paragraphId, paragraphTitle, paragraphData, paragraphConfig, paragraphParams,interpreterMark) {
       websocketEvents.sendNewEvent({
         op: 'COMMIT_PARAGRAPH',
         data: {
@@ -141,7 +141,8 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
           title: paragraphTitle,
           paragraph: paragraphData,
           config: paragraphConfig,
-          params: paragraphParams
+          params: paragraphParams,
+          interpreterMark:interpreterMark
         }
       });
     },

@@ -60,7 +60,11 @@ angular.module('zeppelinWebApp')
       loadNotes();
     }
 
-    function isActive(noteId) {
+    function isActive(noteId,versionId) {
+      var currentVersion = $location.search().v;
+      if(currentVersion || versionId){
+        return  currentVersion == versionId && $routeParams.noteId === noteId;
+      }
       return ($routeParams.noteId === noteId);
     }
 
@@ -77,7 +81,17 @@ angular.module('zeppelinWebApp')
       $scope.historyActive = !$scope.historyActive;
     }
     function removeNote(noteId) {
-      console.log('TODO:remove note!')
+      BootstrapDialog.confirm({
+        closable: true,
+        title: '',
+        message: '是否确定删除算法?',
+        callback: function (result) {
+          if (result) {
+            websocketMsgSrv.deleteNotebook(noteId);
+            $location.path('/');
+          }
+        }
+      });
     }
     function createNote(event) {
       if(validateNoteName()){
