@@ -100,8 +100,7 @@ public class Message {
     LIST_NOTES, // [c-s] ask list of note
     RELOAD_NOTES_FROM_REPO, // [c-s] reload notes from repo
 
-    NOTES_INFO, // [s-c] list of note infos
-    // @param notes serialized List<NoteInfo> object
+    NOTES_INFO, // [s-c] 用户登录时首次加载时的，noteinfos带权限信息
 
     PARAGRAPH_REMOVE,
     PARAGRAPH_CLEAR_OUTPUT,
