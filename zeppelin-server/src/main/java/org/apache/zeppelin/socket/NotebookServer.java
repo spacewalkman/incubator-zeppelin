@@ -575,11 +575,11 @@ public class NotebookServer extends WebSocketServlet implements
         NoteInfo noteInfo = new NoteInfo(note);
 
         //TODO:超级管理员修改用户数据，是否合适？
-        noteInfo.addPermission("canWrite", true);
-        noteInfo.addPermission("canDelete", true);
-        noteInfo.addPermission("canExecute", true);
-        noteInfo.addPermission("canCommit", true);
-        noteInfo.addPermission("canSubmit", true);
+        noteInfo.addPermission(Note.DELETABLE, true);
+        noteInfo.addPermission(Note.WRITEABLE, true);
+        noteInfo.addPermission(Note.EXECUTORABLE, true);
+        noteInfo.addPermission(Note.COMMITTERABLE, true);
+        noteInfo.addPermission(Note.SUMITTERABLE, true);
 
         noteInfos.add(noteInfo);
       }
@@ -599,23 +599,22 @@ public class NotebookServer extends WebSocketServlet implements
 
       NoteInfo noteInfo = new NoteInfo(note);
       if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
-        noteInfo.addPermission("canDelete", true);
-        noteInfo.addPermission("canWrite", true);
+        noteInfo.addPermission(Note.DELETABLE, true);
+        noteInfo.addPermission(Note.WRITEABLE, true);
       } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-        noteInfo.addPermission("canDelete", false);
-        noteInfo.addPermission("canWrite", true);
+        noteInfo.addPermission(Note.WRITEABLE, true);
       }
 
       if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
-        noteInfo.addPermission("canExecute", true);
+        noteInfo.addPermission(Note.EXECUTORABLE, true);
       }
 
       if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
-        noteInfo.addPermission("canCommit", true);//TODO:不一定都能commit
+        noteInfo.addPermission(Note.COMMITTERABLE, true);//TODO:不一定都能commit
       }
 
       if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
-        noteInfo.addPermission("canSubmit", true);
+        noteInfo.addPermission(Note.SUMITTERABLE, true);
       }
 
       noteInfos.add(noteInfo);
