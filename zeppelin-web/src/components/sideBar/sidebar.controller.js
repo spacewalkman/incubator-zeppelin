@@ -56,8 +56,19 @@ angular.module('zeppelinWebApp')
         });
       });
 
-      getZeppelinVersion();
+      // getZeppelinVersion();
       loadNotes();
+
+      //如果是加载的历史版本，切换选中状态
+      setPageviewState();
+    }
+
+    function setPageviewState() {
+      var currentVersion = $location.search().v;
+      if(currentVersion){
+        $scope.listActive = false;
+        $scope.historyActive = true;
+      }
     }
 
     function isActive(noteId,versionId) {
@@ -127,7 +138,6 @@ angular.module('zeppelinWebApp')
     });
     //这里显示revision历史
     $scope.$on('listRevisionHistory', function(event, data) {
-      console.log('We got the revisions %o', data);
       $scope.noteRevisions = data.revisionList;
     });
   });
