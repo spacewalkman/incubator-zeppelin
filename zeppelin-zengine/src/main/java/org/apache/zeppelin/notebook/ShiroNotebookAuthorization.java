@@ -167,7 +167,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   }
 
   /**
-   * 为用户添加"队长"角色
+   * 为用户添加"队长"角色，处理了重复创建问题
    *
    * @param groupId  队id
    * @param userName 用户名

@@ -165,6 +165,12 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return getRequiredReplName(text);
   }
 
+  /**
+   * 获取首行的百分号开头的字符串
+   *
+   * @param text paragrapph的正文
+   * @return %之后的字符串
+   */
   public static String getRequiredReplName(String text) {
     if (text == null) {
       return null;
@@ -289,7 +295,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       return true;
     }
 
-    for (String u: intpUsers) {
+    for (String u : intpUsers) {
       if (user.trim().equals(u.trim())) {
         return true;
       }
@@ -300,7 +306,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   @Override
   protected Object jobRun() throws Throwable {
     String replName = getRequiredReplName();
-    Interpreter repl = getRepl(replName);
+    Interpreter repl = getRepl(replName);//根据字符串interpreter名称，来创建interpreter实例
     logger.info("run paragraph {} using {} " + repl, getId(), replName);
     if (repl == null) {
       logger.error("Can not find interpreter name " + repl);
@@ -474,22 +480,22 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     Credentials credentials = note.getCredentials();
     if (authenticationInfo != null) {
       UserCredentials userCredentials = credentials.getUserCredentials(
-          authenticationInfo.getUser());
+              authenticationInfo.getUser());
       authenticationInfo.setUserCredentials(userCredentials);//TODO:将授权信息传递到remote interpreter中
     }
 
     InterpreterContext interpreterContext = new InterpreterContext(
-        note.getId(),
-        getId(),
-        this.getTitle(),
-        this.getText(),
-        this.authenticationInfo,
-        this.getConfig(),
-        this.settings,
-        registry,
-        resourcePool,
-        runners,
-        output);
+            note.getId(),
+            getId(),
+            this.getTitle(),
+            this.getText(),
+            this.authenticationInfo,
+            this.getConfig(),
+            this.settings,
+            registry,
+            resourcePool,
+            runners,
+            output);
     return interpreterContext;
   }
 
