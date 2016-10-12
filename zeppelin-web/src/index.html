@@ -38,7 +38,7 @@ limitations under the License.
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
     <link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.css" />
-    <link rel="stylesheet" href="bower_components/perfect-scrollbar/src/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="bower_components/perfect-scrollbar/css/perfect-scrollbar.min.css" />
     <link rel="stylesheet" href="bower_components/ng-sortable/dist/ng-sortable.css" />
     <link rel="stylesheet" href="bower_components/angular-xeditable/dist/css/xeditable.css" />
     <link rel="stylesheet" href="bower_components/highlightjs/styles/github.css" />
@@ -93,12 +93,6 @@ limitations under the License.
     <div ng-controller="NotenameCtrl as notenamectrl">
       <div id="note-modal-container" ng-include src="'components/noteName-create/note-name-dialog.html'"></div>
     </div>
-    <div ng-controller="NoteImportCtrl as noteimportctrl">
-      <div id="note-import-container" ng-include src="'components/noteName-import/note-import-dialog.html'"></div>
-    </div>
-    <div ng-controller="LoginCtrl as noteimportctrl">
-      <div id="login-container" ng-include src="'components/login/login.html'"></div>
-    </div>
     <!-- build:js(.) scripts/oldieshim.js -->
     <!--[if lt IE 9]>
     <script src="bower_components/es5-shim/es5-shim.js"></script>
@@ -136,7 +130,7 @@ limitations under the License.
     <script src="bower_components/nvd3/build/nv.d3.js"></script>
     <script src="bower_components/jquery-ui/jquery-ui.js"></script>
     <script src="bower_components/angular-dragdrop/src/angular-dragdrop.js"></script>
-    <script src="bower_components/perfect-scrollbar/src/perfect-scrollbar.js"></script>
+    <script src="bower_components/perfect-scrollbar/js/perfect-scrollbar.jquery.min.js"></script>
     <script src="bower_components/ng-sortable/dist/ng-sortable.js"></script>
     <script src="bower_components/angular-elastic/elastic.js"></script>
     <script src="bower_components/angular-elastic-input/dist/angular-elastic-input.min.js"></script>
@@ -170,12 +164,10 @@ limitations under the License.
     <script src="app/notebook/paragraph/paragraph.controller.js"></script>
     <script src="app/search/result-list.controller.js"></script>
     <script src="components/arrayOrderingSrv/arrayOrdering.service.js"></script>
-    <!--<script src="components/navbar/navbar.controller.js"></script>-->
     <script src="components/ngescape/ngescape.directive.js"></script>
     <script src="components/interpreter/interpreter.directive.js"></script>
     <script src="components/expandCollapse/expandCollapse.directive.js"></script>
     <script src="components/noteName-create/notename.controller.js"></script>
-    <script src="components/noteName-import/notenameImport.controller.js"></script>
     <script src="components/popover-html-unsafe/popover-html-unsafe.directive.js"></script>
     <script src="components/ngenter/ngenter.directive.js"></script>
     <script src="components/dropdowninput/dropdowninput.directive.js"></script>
@@ -188,7 +180,6 @@ limitations under the License.
     <script src="components/browser-detect/browserDetect.service.js"></script>
     <script src="components/saveAs/saveAs.service.js"></script>
     <script src="components/searchService/search.service.js"></script>
-    <script src="components/login/login.controller.js"></script>
     <script src="components/elasticInputCtrl/elasticInput.controller.js"></script>
     <script src="components/sideBar/sidebar.controller.js"></script>
     <!-- endbuild -->

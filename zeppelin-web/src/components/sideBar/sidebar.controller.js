@@ -15,7 +15,7 @@
 'use strict';
 
 angular.module('zeppelinWebApp')
-  .controller('SideBarCtrl', function($scope, $rootScope, $http, $routeParams,
+  .controller('SideBarCtrl', function($scope, $rootScope, $http, $routeParams,$timeout,
                                   $location, notebookListDataFactory, baseUrlSrv, websocketMsgSrv, arrayOrderingSrv) {
 
     var vm = this;
@@ -26,6 +26,9 @@ angular.module('zeppelinWebApp')
     vm.showNewArea = showNewArea;
     vm.toggleHistory = toggleHistory;
     vm.removeNote = removeNote;
+    vm.createNote = createNote;
+    vm.handleNameEnter = createNote;
+    vm.handleNameChange = validateNoteName;
 
     $scope.listActive = true;
     $scope.historyActive = false;
@@ -45,10 +48,12 @@ angular.module('zeppelinWebApp')
     }
 
     function initController() {
-      angular.element('.note-list,history-list').perfectScrollbar({suppressScrollX: true});
+      angular.element('.scroll-panel').perfectScrollbar();
 
-      angular.element(document).click(function() {
-        $scope.adding = false;
+      angular.element(document).click(function(e) {
+        $scope.$apply(function() {
+          $scope.adding = false;
+        });
       });
 
       getZeppelinVersion();
@@ -62,8 +67,10 @@ angular.module('zeppelinWebApp')
     function loadNotes() {
       websocketMsgSrv.getNotebookList();
     }
-    function showNewArea() {
+    function showNewArea(event) {
       $scope.adding = true;
+      focusNoteInput();
+      event.stopPropagation();
     }
     function toggleHistory() {
       $scope.listActive = !$scope.listActive;
@@ -71,6 +78,27 @@ angular.module('zeppelinWebApp')
     }
     function removeNote(noteId) {
       console.log('TODO:remove note!')
+    }
+    function createNote(event) {
+      if(validateNoteName()){
+        websocketMsgSrv.createNotebook($scope.notename);
+      }
+    }
+    function validateNoteName() {
+      if(!$scope.notename){
+        event && event.stopPropagation();
+        $scope.noteNameError = '算法名称必须填写！';
+        focusNoteInput();
+        return false;
+      }else{
+        $scope.noteNameError = '';
+        return true;
+      }
+    }
+    function focusNoteInput() {
+      $timeout(function () {
+        angular.element('.input-new').focus();
+      },300);
     }
     /*
      ** $scope.$on functions below

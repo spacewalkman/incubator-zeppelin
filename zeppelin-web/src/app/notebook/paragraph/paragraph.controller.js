@@ -117,7 +117,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     }
 
     getApplicationStates();
-    getSuggestions();
+    // getSuggestions();
 
     var activeApp =  _.get($scope.paragraph.config, 'helium.activeApp');
     if (activeApp) {
