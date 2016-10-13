@@ -15,8 +15,9 @@
 'use strict';
 
 angular.module('zeppelinWebApp')
-  .controller('SideBarCtrl', function($scope, $rootScope, $http, $routeParams,$timeout,
-                                  $location, notebookListDataFactory, baseUrlSrv, websocketMsgSrv, arrayOrderingSrv) {
+  .controller('SideBarCtrl', function($scope, $rootScope, $http, $routeParams, $timeout, $location,
+                                      notebookListDataFactory, baseUrlSrv, websocketMsgSrv, arrayOrderingSrv,
+                                      noteRevisionJudgement, notePermission, noteNameService) {
 
     var vm = this;
     vm.arrayOrderingSrv = arrayOrderingSrv;
@@ -29,6 +30,8 @@ angular.module('zeppelinWebApp')
     vm.createNote = createNote;
     vm.handleNameEnter = createNote;
     vm.handleNameChange = validateNoteName;
+    vm.removeable = removeable;
+    vm.readOnly = readOnly;
 
     $scope.listActive = true;
     $scope.historyActive = false;
@@ -37,15 +40,15 @@ angular.module('zeppelinWebApp')
 
     initController();
 
-    function getZeppelinVersion() {
-      $http.get(baseUrlSrv.getRestApiBase() + '/version').success(
-        function(data, status, headers, config) {
-          $rootScope.zeppelinVersion = data.body;
-        }).error(
-        function(data, status, headers, config) {
-          console.log('Error %o %o', status, data.message);
-        });
-    }
+    // function getZeppelinVersion() {
+    //   $http.get(baseUrlSrv.getRestApiBase() + '/version').success(
+    //     function(data, status, headers, config) {
+    //       $rootScope.zeppelinVersion = data.body;
+    //     }).error(
+    //     function(data, status, headers, config) {
+    //       console.log('Error %o %o', status, data.message);
+    //     });
+    // }
 
     function initController() {
       angular.element('.scroll-panel').perfectScrollbar();
@@ -64,17 +67,16 @@ angular.module('zeppelinWebApp')
     }
 
     function setPageviewState() {
-      var currentVersion = $location.search().v;
-      if(currentVersion){
+      if (noteRevisionJudgement.isHistory()) {
         $scope.listActive = false;
         $scope.historyActive = true;
       }
     }
 
-    function isActive(noteId,versionId) {
+    function isActive(noteId, versionId) {
       var currentVersion = $location.search().v;
-      if(currentVersion || versionId){
-        return  currentVersion == versionId && $routeParams.noteId === noteId;
+      if (currentVersion || versionId) {
+        return currentVersion === versionId && $routeParams.noteId === noteId;
       }
       return ($routeParams.noteId === noteId);
     }
@@ -82,49 +84,70 @@ angular.module('zeppelinWebApp')
     function loadNotes() {
       websocketMsgSrv.getNotebookList();
     }
+
     function showNewArea(event) {
       $scope.adding = true;
       focusNoteInput();
       event.stopPropagation();
     }
+
     function toggleHistory() {
       $scope.listActive = !$scope.listActive;
       $scope.historyActive = !$scope.historyActive;
     }
+
     function removeNote(noteId) {
       BootstrapDialog.confirm({
         closable: true,
         title: '',
         message: '是否确定删除算法?',
-        callback: function (result) {
+        callback: function(result) {
           if (result) {
             websocketMsgSrv.deleteNotebook(noteId);
-            $location.path('/');
+            //如果删除的是当前选中项，则跳转到根目录
+            if (isActive(noteId)) {
+              $location.path('/');
+            }
           }
         }
       });
     }
+
     function createNote(event) {
-      if(validateNoteName()){
+      if (validateNoteName()) {
         websocketMsgSrv.createNotebook($scope.notename);
+        $scope.notename = '';
+        $scope.adding = false;
+
       }
     }
+
     function validateNoteName() {
-      if(!$scope.notename){
+      var msg = noteNameService.validate($scope.notename);
+      $scope.noteNameError = msg;
+      if (msg) {
         event && event.stopPropagation();
-        $scope.noteNameError = '算法名称必须填写！';
         focusNoteInput();
         return false;
-      }else{
-        $scope.noteNameError = '';
+      } else {
         return true;
       }
     }
+
     function focusNoteInput() {
-      $timeout(function () {
+      $timeout(function() {
         angular.element('.input-new').focus();
-      },300);
+      }, 300);
     }
+
+    function removeable(note) {
+      return notePermission.countPermission(note).remove;
+    }
+
+    function readOnly(note) {
+      return !notePermission.countPermission(note).write;
+    }
+
     /*
      ** $scope.$on functions below
      */

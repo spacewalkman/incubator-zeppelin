@@ -17,110 +17,111 @@
 'use strict';
 (function() {
   var zeppelinWebApp = angular.module('zeppelinWebApp', [
-          'ngCookies',
-          'ngAnimate',
-          'ngRoute',
-          'ngSanitize',
-          'angular-websocket',
-          'ui.ace',
-          'ui.bootstrap',
-          'as.sortable',
-          'ngTouch',
-          'ngDragDrop',
-          'angular.filter',
-          'monospaced.elastic',
-          'puElasticInput',
-          'xeditable',
-          'ngToast',
-          'focus-if',
-          'ngResource',
-          'esri.map'
-      ])
-        .filter('breakFilter', function() {
-          return function(text) {
-            if (!!text) {
-              return text.replace(/\n/g, '<br />');
-            }
-          };
+    'ngCookies',
+    'ngAnimate',
+    'ngRoute',
+    'ngSanitize',
+    'angular-websocket',
+    'ui.ace',
+    'ui.bootstrap',
+    'as.sortable',
+    'ngTouch',
+    'ngDragDrop',
+    'angular.filter',
+    'monospaced.elastic',
+    'puElasticInput',
+    'xeditable',
+    'ngToast',
+    'focus-if',
+    'ngResource',
+    'esri.map'
+  ])
+    .filter('breakFilter', function() {
+      return function(text) {
+        if (!!text) {
+          return text.replace(/\n/g, '<br />');
+        }
+      };
+    })
+    .config(function($httpProvider, $routeProvider, ngToastProvider) {
+      // withCredentials when running locally via grunt
+      $httpProvider.defaults.withCredentials = true;
+
+      $routeProvider
+        .when('/', {
+          templateUrl: 'app/home/home.html'
         })
-        .config(function($httpProvider, $routeProvider, ngToastProvider) {
-          // withCredentials when running locally via grunt
-          $httpProvider.defaults.withCredentials = true;
-
-          $routeProvider
-            .when('/', {
-              templateUrl: 'app/home/home.html'
-            })
-            .when('/notebook/:noteId', {
-              templateUrl: 'app/notebook/notebook.html',
-              controller: 'NotebookCtrl'
-            })
-            .when('/notebook/:noteId/paragraph?=:paragraphId', {
-              templateUrl: 'app/notebook/notebook.html',
-              controller: 'NotebookCtrl'
-            })
-            .when('/notebook/:noteId/paragraph/:paragraphId?', {
-              templateUrl: 'app/notebook/notebook.html',
-              controller: 'NotebookCtrl'
-            })
-            .when('/jobmanager', {
-              templateUrl: 'app/jobmanager/jobmanager.html',
-              controller: 'JobmanagerCtrl'
-            })
-            .when('/interpreter', {
-              templateUrl: 'app/interpreter/interpreter.html',
-              controller: 'InterpreterCtrl'
-            })
-            .when('/credential', {
-              templateUrl: 'app/credential/credential.html',
-              controller: 'CredentialCtrl'
-            })
-            .when('/configuration', {
-              templateUrl: 'app/configuration/configuration.html',
-              controller: 'ConfigurationCtrl'
-            })
-            .when('/search/:searchTerm', {
-              templateUrl: 'app/search/result-list.html',
-              controller: 'SearchResultCtrl'
-            })
-            .otherwise({
-              redirectTo: '/'
-            });
-
-          ngToastProvider.configure({
-            dismissButton: true,
-            dismissOnClick: false,
-            timeout: 6000
-          });
+        .when('/notebook/:noteId', {
+          templateUrl: 'app/notebook/notebook.html',
+          controller: 'NotebookCtrl'
+        })
+        .when('/notebook/:noteId/paragraph?=:paragraphId', {
+          templateUrl: 'app/notebook/notebook.html',
+          controller: 'NotebookCtrl'
+        })
+        .when('/notebook/:noteId/paragraph/:paragraphId?', {
+          templateUrl: 'app/notebook/notebook.html',
+          controller: 'NotebookCtrl'
+        })
+        .when('/jobmanager', {
+          templateUrl: 'app/jobmanager/jobmanager.html',
+          controller: 'JobmanagerCtrl'
+        })
+        .when('/interpreter', {
+          templateUrl: 'app/interpreter/interpreter.html',
+          controller: 'InterpreterCtrl'
+        })
+        .when('/credential', {
+          templateUrl: 'app/credential/credential.html',
+          controller: 'CredentialCtrl'
+        })
+        .when('/configuration', {
+          templateUrl: 'app/configuration/configuration.html',
+          controller: 'ConfigurationCtrl'
+        })
+        .when('/search/:searchTerm', {
+          templateUrl: 'app/search/result-list.html',
+          controller: 'SearchResultCtrl'
+        })
+        .otherwise({
+          redirectTo: '/'
         });
 
-  /*function auth() {
-    var $http = angular.injector(['ng']).get('$http');
-    var baseUrlSrv = angular.injector(['zeppelinWebApp']).get('baseUrlSrv');
-    // withCredentials when running locally via grunt
-    $http.defaults.withCredentials = true;
-    jQuery.ajaxSetup({
-      dataType: 'json',
-      xhrFields: {
-        withCredentials: true
-      },
-      crossDomain: true
-    });
-    return $http.get(baseUrlSrv.getRestApiBase() + '/security/ticket').then(function(response) {
-      zeppelinWebApp.run(function($rootScope) {
-        $rootScope.ticket = angular.fromJson(response.data).body;
+      ngToastProvider.configure({
+        dismissButton: true,
+        dismissOnClick: false,
+        timeout: 6000,
+        horizontalPosition: 'center'
       });
-    }, function(errorResponse) {
-      // Handle error case
     });
-  }*/
+
+  /*function auth() {
+   var $http = angular.injector(['ng']).get('$http');
+   var baseUrlSrv = angular.injector(['zeppelinWebApp']).get('baseUrlSrv');
+   // withCredentials when running locally via grunt
+   $http.defaults.withCredentials = true;
+   jQuery.ajaxSetup({
+   dataType: 'json',
+   xhrFields: {
+   withCredentials: true
+   },
+   crossDomain: true
+   });
+   return $http.get(baseUrlSrv.getRestApiBase() + '/security/ticket').then(function(response) {
+   zeppelinWebApp.run(function($rootScope) {
+   $rootScope.ticket = angular.fromJson(response.data).body;
+   });
+   }, function(errorResponse) {
+   // Handle error case
+   });
+   }*/
 
   function gerParam(name) {
-    var search = location.search ? location.search.substring(1):'';
+    var search = location.search ? location.search.substring(1) : '';
     var parts = search.split('&');
-    for(var i = parts.length-1;i>=0;i--){
-      if(parts[i].startsWith(name+'=')){
-        return parts[i].substring(name.length+1);
+    for (var i = parts.length - 1; i >= 0; i--) {
+      if (parts[i].startsWith(name + '=')) {
+        return parts[i].substring(name.length + 1);
       }
     }
     return '';
@@ -144,7 +145,6 @@
     });
     angular.bootstrap(document, ['zeppelinWebApp']);
   }
-
 
   angular.element(document).ready(function() {
     bootstrapApplication();

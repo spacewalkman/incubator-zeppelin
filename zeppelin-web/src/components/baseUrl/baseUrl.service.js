@@ -44,7 +44,7 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', function() {
       '/api';
   };
 
-  this.setHost = function (host) {
+  this.setHost = function(host) {
     socketHost = host;
   };
 
@@ -55,6 +55,4 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', function() {
   var socketHost = '172.24.6.20';
 
   //TODO:load socketHost from server or glob var or url
-
-
 });

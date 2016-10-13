@@ -17,18 +17,19 @@ limitations under the License.
       <td class="left">
         <div ng-controller="ElasticInputCtrl as input">
           <input type="text" pu-elastic-input class="form-control2" placeholder="{{noteName(note)}}"
-                 style="min-width: 0px; max-width: 95%;"
-                 ng-if="input.showEditor" ng-model="note.name"
+                 style="min-width: 0; max-width: 95%;"
+                 ng-if="note.permission.write && input.showEditor" ng-model="note.name"
                  ng-blur="sendNewName();input.showEditor = false;"
                  ng-enter="sendNewName();input.showEditor = false;"
                  ng-escape="note.name = oldName; input.showEditor = false" focus-if="input.showEditor"/>
           <p class="form-control-static2"
-             ng-show="!input.showEditor">
+             ng-hide="input.showEditor">
             <span class="value text-ellipsis"
                   title="{{noteName(note)}}"
                   ng-click="input.showEditor = true; oldName = note.name">{{noteName(note)}}</span>
             <span class="to-edit-events-btn"
                   type="button"
+                  ng-if="note.permission.write && !input.showEditor"
                   ng-click="input.showEditor = true; oldName = note.name"
                   tooltip-placement="bottom" tooltip="修改名称"></span>
           </p>
@@ -42,12 +43,14 @@ limitations under the License.
             <button type="button"
                     class="btn btn-default btn-xs btn-execute-all"
                     ng-class="{'disabled':isNoteRunning()}"
+                    ng-if="note.permission.exec"
                     ng-click="runNote()"
                     tooltip-placement="bottom" tooltip="执行所有代码"><span class="ico-placeholder"></span></button>
             <button type="button"
                     class="btn btn-default btn-xs"
                     ng-class="{'btn-size-fullscreen':editorToggled,'btn-size-actual':!editorToggled}"
                     ng-click="toggleAllEditor()"
+                    ng-if="note.permission.write"
                     ng-hide="viewOnly"
                     tooltip-placement="bottom" tooltip="显示/隐藏代码"><span class="ico-placeholder"></span></button>
             <button type="button"
@@ -55,15 +58,18 @@ limitations under the License.
                     ng-class="{'btn-note-output':tableToggled,'btn-note-only':!tableToggled}"
                     ng-click="toggleAllTable()"
                     ng-hide="viewOnly"
+                    ng-if="note.permission.write"
                     tooltip-placement="bottom" tooltip="显示/隐藏输出结果"><span class="ico-placeholder"></span></button>
             <button type="button"
                     class="btn btn-default btn-xs btn-clear-output"
                     ng-class="{'disabled':isNoteRunning()}"
                     ng-click="clearAllParagraphOutput()"
+                    ng-if="note.permission.exec"
                     ng-hide="viewOnly"
                     tooltip-placement="bottom" tooltip="清除输出结果"><span class="ico-placeholder"></span></button>
           </span>
-          <span class="btn-group">
+          <span class="btn-group"
+                ng-if="note.permission.write">
             <button type="button"
                     class="btn btn-default btn-xs dropdown-toggle"
                     data-toggle="dropdown">
@@ -80,16 +86,31 @@ limitations under the License.
                 type="button"
                 data-toggle="modal"
                 data-target="#shortcutModal"
+                ng-hide="viewOnly"
                 tooltip-placement="bottom" tooltip="快捷键列表"><span class="ico-placeholder"></span></span>
           <span class="setting-btn btn-help"
                 type="button"
                 ng-click="console.error('fix me!!!')"
+                ng-hide="viewOnly"
                 tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
+
+          <span type="button"
+                class="setting-btn"
+                tooltip-placement="bottom" tooltip="克隆算法"
+                ng-hide="viewOnly"
+                data-toggle="modal" data-target="#noteNameModal" data-clone="true">
+            <i class="fa fa-copy"></i>
+          </span>
+
           <span class="setting-btn btn-note-submit"
                 type="button"
+                ng-hide="viewOnly"
+                ng-if="note.permission.submit"
                 ng-click="submitNotebook()"
                 tooltip-placement="bottom">提交评测</span>
-          <span class="commit-button-holder">
+
+          <span class="commit-button-holder"
+                ng-if="note.permission.commit">
             <span class="setting-btn btn-note-save"
                   type="button"
                   id="versionControlDropdown"

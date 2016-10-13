@@ -15,14 +15,17 @@
 'use strict';
 
 angular.module('zeppelinWebApp').controller('NotenameCtrl', function($scope, notebookListDataFactory,
-                                                                      $routeParams, websocketMsgSrv) {
+                                                                     $routeParams, websocketMsgSrv, noteNameService) {
   var vm = this;
   vm.clone = false;
   vm.notes = notebookListDataFactory;
   vm.websocketMsgSrv = websocketMsgSrv;
   $scope.note = {};
 
-  vm.createNote = function() {
+  vm.createNote = function(event) {
+    if (!vm.validateNoteName(event)) {
+      return;
+    }
     if (!vm.clone) {
       vm.websocketMsgSrv.createNotebook($scope.note.notename);
     } else {
@@ -30,8 +33,21 @@ angular.module('zeppelinWebApp').controller('NotenameCtrl', function($scope, not
       vm.websocketMsgSrv.cloneNotebook(noteId, $scope.note.notename);
     }
   };
+  vm.validateNoteName = function(event) {
+    var msg = noteNameService.validate($scope.note.notename);
+    $scope.noteNameValidateMsg = msg;
+    if (msg) {
+      event && event.stopPropagation();
+      return false;
+    } else {
+      return true;
+    }
+  };
 
   vm.handleNameEnter = function() {
+    if (!vm.validateNoteName()) {
+      return;
+    }
     angular.element('#noteNameModal').modal('toggle');
     vm.createNote();
   };

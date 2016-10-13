@@ -14,14 +14,14 @@
                ng-click="$event.stopPropagation()"
                ng-change="sideBar.handleNameChange()"
                ng-model="notename"
-               ng-enter="sideBar.handleNameEnter()">
+               ng-enter="sideBar.handleNameEnter()"/>
         <a href="javascript:;" class="btn-ok" ng-click="sideBar.createNote($event)">确定</a>
         <div class="error-area" ng-show="noteNameError">{{noteNameError}}</div>
       </div>
       <!--repeat start-->
       <div class="note-list-item"
            ng-repeat="note in sideBar.notes.flatList | orderBy:sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
-           ng-class="{'active':sideBar.isActive(note.id),'locked':note.mask=='reader','last-child':$last}">
+           ng-class="{'active':sideBar.isActive(note.id),'locked':sideBar.readOnly(note),'last-child':$last}">
         <a ng-if="note.id"
            href="#/notebook/{{note.id}}"
            class="note-title text-ellipsis"
@@ -29,7 +29,7 @@
         <a href="javascript:;"
            class="remove"
            title="删除"
-           ng-show="note.mask=='owner'||note.mask=='admin'"
+           ng-show="sideBar.removeable(note)"
            ng-click="sideBar.removeNote(note.id)"></a>
       </div>
       <!--repeat end-->

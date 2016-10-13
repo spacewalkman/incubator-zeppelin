@@ -12,9 +12,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<div id="{{paragraph.id}}_control" class="control" ng-show="!asIframe">
+<div id="{{paragraph.id}}_control"
+     class="control"
+     ng-show="!asIframe"
+     ng-if="note.permission.exec || note.permission.write">
 
-  <span class="btn-group group-language">
+  <span class="btn-group group-language"
+        ng-hide="viewOnly"
+        ng-if="note.permission.write">
     <button type="button"
             class="btn btn-default btn-xs dropdown-toggle"
             data-toggle="dropdown">
@@ -32,6 +37,7 @@ limitations under the License.
   <span class="labelBtn btn-group">
     <button type="button"
             class="btn btn-default btn-xs btn-execute-all"
+            ng-if="note.permission.exec"
             ng-click="runParagraph(getEditorValue())"
             ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING' && paragraph.config.enabled"
             tooltip-placement="bottom" tooltip="执行程序 (Shift+Enter)"><span class="ico-placeholder"></span></button>
@@ -41,34 +47,40 @@ limitations under the License.
             ng-class="{'btn-size-fullscreen':paragraph.config.tableHide,'btn-size-actual':!paragraph.config.tableHide}"
             ng-click="toggleEditor()"
             ng-hide="viewOnly"
+            ng-if="note.permission.write"
             tooltip-placement="bottom" tooltip="{{(paragraph.config.editorHide ? '显示' : '隐藏') + '代码'}}"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-move-up"
+            ng-if="note.permission.write"
             ng-click="moveUp()"
             ng-hide="$first"
             tooltip-placement="bottom" tooltip="向上移动"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-move-down"
+            ng-if="note.permission.write"
             ng-click="moveDown()"
             ng-hide="$last"
             tooltip-placement="bottom" tooltip="向下移动"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-add-above"
+            ng-if="note.permission.write"
             ng-click="insertNew('above')"
             ng-hide="viewOnly || asIframe"
             tooltip-placement="bottom" tooltip="在上面添加新的程序"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-add-below"
+            ng-if="note.permission.write"
             ng-click="insertNew('below')"
             ng-hide="viewOnly || asIframe"
             tooltip-placement="bottom" tooltip="在下面添加新的程序"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-remove-paragraph"
+            ng-if="note.permission.write"
             ng-click="removeParagraph()"
             ng-hide="viewOnly || asIframe"
             tooltip-placement="bottom" tooltip="删除程序"><span class="ico-placeholder"></span></button>

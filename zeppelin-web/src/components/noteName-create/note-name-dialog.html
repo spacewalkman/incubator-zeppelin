@@ -19,23 +19,29 @@ limitations under the License.
       <div class="modal-content" id="NotenameCtrl">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title" ng-show="!notenamectrl.clone">Create new note</h4>
-          <h4 class="modal-title" ng-show="notenamectrl.clone">Clone note</h4>
+          <h4 class="modal-title" ng-show="!notenamectrl.clone">新建算法</h4>
+          <h4 class="modal-title" ng-show="notenamectrl.clone">克隆算法</h4>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="noteName">Note Name</label> <input
-              placeholder="Note name" type="text" class="form-control"
-              id="noteName" ng-model="note.notename" ng-enter="notenamectrl.handleNameEnter()"/>
+            <label for="noteName">算法名称：</label>
+            <input placeholder="Note name"
+                   type="text"
+                   class="form-control"
+                   id="noteName"
+                   ng-change="notenamectrl.validateNoteName($event)"
+                   ng-model="note.notename"
+                   ng-enter="notenamectrl.handleNameEnter($event)"/>
           </div>
-          Use '/' to create folders. Example: /NoteDirA/Notebook1
+          <div class="validate-error" style="color:red">{{noteNameValidateMsg}}</div>
         </div>
         <div class="modal-footer">
           <button type="button" id="createNoteButton"
                   class="btn btn-default"
-                  data-dismiss="modal" ng-click="notenamectrl.createNote()">
-            <span ng-show="!notenamectrl.clone">Create Note</span>
-            <span ng-show="notenamectrl.clone">Clone Note</span>
+                  data-dismiss="modal"
+                  ng-click="notenamectrl.createNote($event)">
+            <span ng-show="!notenamectrl.clone">新建算法</span>
+            <span ng-show="notenamectrl.clone">克隆算法</span>
           </button>
         </div>
       </div>

@@ -22,7 +22,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
     },
 
     createNotebook: function(noteName) {
-      websocketEvents.sendNewEvent({op: 'NEW_NOTE',data: {name: noteName}});
+      websocketEvents.sendNewEvent({op: 'NEW_NOTE', data: {name: noteName}});
     },
 
     deleteNotebook: function(noteId) {
@@ -57,8 +57,13 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({op: 'MOVE_PARAGRAPH', data: {id: paragraphId, index: newIndex}});
     },
 
-    insertParagraph: function(newIndex) {
-      websocketEvents.sendNewEvent({op: 'INSERT_PARAGRAPH', data: {index: newIndex}});
+    insertParagraph: function(newIndex, defaultInterpreter) {
+      websocketEvents.sendNewEvent({
+        op: 'INSERT_PARAGRAPH',
+        data: {
+          index: newIndex, interpreterMark: defaultInterpreter
+        }
+      });
     },
 
     updateAngularObject: function(noteId, paragraphId, name, value, interpreterGroupId) {
@@ -133,7 +138,8 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       });
     },
 
-    commitParagraph: function(paragraphId, paragraphTitle, paragraphData, paragraphConfig, paragraphParams,interpreterMark) {
+    commitParagraph: function(paragraphId, paragraphTitle, paragraphData, paragraphConfig,
+                              paragraphParams, interpreterMark) {
       websocketEvents.sendNewEvent({
         op: 'COMMIT_PARAGRAPH',
         data: {
@@ -142,7 +148,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
           paragraph: paragraphData,
           config: paragraphConfig,
           params: paragraphParams,
-          interpreterMark:interpreterMark
+          interpreterMark: interpreterMark
         }
       });
     },
@@ -180,12 +186,12 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
     // 查询提交次数
     currentSubmitTimes: function(group, projectId) {
       websocketEvents.sendNewEvent({
-         op: 'QUERY_SUBMIT_TIME',
-         data: {
-           group: group,
-           projectId: projectId
-         }
-       });
+        op: 'QUERY_SUBMIT_TIME',
+        data: {
+          group: group,
+          projectId: projectId
+        }
+      });
     },
 
     listRevisionHistory: function(noteId) {
@@ -230,8 +236,10 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
     },
 
     saveInterpreterBindings: function(noteID, selectedSettingIds) {
-      websocketEvents.sendNewEvent({op: 'SAVE_INTERPRETER_BINDINGS',
-        data: {noteID: noteID, selectedSettingIds: selectedSettingIds}});
+      websocketEvents.sendNewEvent({
+        op: 'SAVE_INTERPRETER_BINDINGS',
+        data: {noteID: noteID, selectedSettingIds: selectedSettingIds}
+      });
     }
 
   };

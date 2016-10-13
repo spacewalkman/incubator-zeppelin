@@ -14,21 +14,21 @@
 'use strict';
 
 angular.module('zeppelinWebApp').factory('websocketEvents',
-  function ($rootScope, $websocket, $location, baseUrlSrv) {
+  function($rootScope, $websocket, $location, baseUrlSrv,ngToast) {
     var websocketCalls = {};
 
     websocketCalls.ws = $websocket(baseUrlSrv.getWebsocketUrl());
     websocketCalls.ws.reconnectIfNotNormalClose = true;
 
-    websocketCalls.ws.onOpen(function () {
+    websocketCalls.ws.onOpen(function() {
       console.log('Websocket created');
       $rootScope.$broadcast('setConnectedStatus', true);
-      setInterval(function () {
+      setInterval(function() {
         websocketCalls.sendNewEvent({op: 'PING'});
       }, 10000);
     });
 
-    websocketCalls.sendNewEvent = function (data) {
+    websocketCalls.sendNewEvent = function(data) {
       if (!$rootScope.ticket) {
         //TODO:redirect to login page
         throw new Error('invaild url,please to login');
@@ -41,11 +41,11 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       websocketCalls.ws.send(JSON.stringify(data));
     };
 
-    websocketCalls.isConnected = function () {
+    websocketCalls.isConnected = function() {
       return (websocketCalls.ws.socket.readyState === 1);
     };
 
-    websocketCalls.ws.onMessage(function (event) {
+    websocketCalls.ws.onMessage(function(event) {
       var payload;
       if (event.data) {
         payload = angular.fromJson(event.data);
@@ -63,29 +63,6 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         $rootScope.$broadcast('setNotebookJobs', data.notebookJobs);
       } else if (op === 'LIST_UPDATE_NOTEBOOK_JOBS') {
         $rootScope.$broadcast('setUpdateNotebookJobs', data.notebookRunningJobs);
-      } else if (op === 'AUTH_INFO') {
-        BootstrapDialog.show({
-          closable: false,
-          closeByBackdrop: false,
-          closeByKeyboard: false,
-          title: 'Insufficient privileges',
-          message: data.info.toString(),
-          buttons: [{
-            label: 'Login',
-            action: function (dialog) {
-              dialog.close();
-              angular.element('#loginModal').modal({
-                show: 'true'
-              });
-            }
-          }, {
-            label: 'Cancel',
-            action: function (dialog) {
-              dialog.close();
-              $location.path('/');
-            }
-          }]
-        });
       } else if (op === 'NO_CHANGE_FOUND') {
         BootstrapDialog.show({
           closable: false,
@@ -95,25 +72,18 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           message: data.info.toString(),
           buttons: [{
             label: 'OK',
-            action: function (dialog) {
+            action: function(dialog) {
               dialog.close();
             }
           }]
         });
       } else if (op === 'REVISION_SUBMIT') { //成功提交到组委会
-        BootstrapDialog.show({
-          closable: false,
-          closeByBackdrop: false,
-          closeByKeyboard: false,
-          title: '',
-          message: data.submitLeftOver,
-          buttons: [{
-            label: 'OK',
-            action: function (dialog) {
-              dialog.close();
-            }
-          }]
+
+        ngToast.danger({
+          content: data.submitLeftOver,
+          timeout: '3000'
         });
+
       } else if (op === 'ACK_SUBMIT_TIME') {
         BootstrapDialog.show({
           closable: false,
@@ -123,7 +93,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           message: '已经提交了' + data.info.toString() + '次',
           buttons: [{
             label: 'OK',
-            action: function (dialog) {
+            action: function(dialog) {
               dialog.close();
             }
           }]
@@ -159,12 +129,12 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       }
     });
 
-    websocketCalls.ws.onError(function (event) {
+    websocketCalls.ws.onError(function(event) {
       console.log('error message: ', event);
       $rootScope.$broadcast('setConnectedStatus', false);
     });
 
-    websocketCalls.ws.onClose(function (event) {
+    websocketCalls.ws.onClose(function(event) {
       console.log('close message: ', event);
       $rootScope.$broadcast('setConnectedStatus', false);
     });
