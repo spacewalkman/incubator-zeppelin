@@ -30,7 +30,6 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
 
     websocketCalls.sendNewEvent = function(data) {
       if (!$rootScope.ticket) {
-        //TODO:redirect to login page
         throw new Error('invaild url,please to login');
       }
       data.ticket = $rootScope.ticket.ticket;
@@ -85,19 +84,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         });
 
       } else if (op === 'ACK_SUBMIT_TIME') {
-        BootstrapDialog.show({
-          closable: false,
-          closeByBackdrop: false,
-          closeByKeyboard: false,
-          title: '已经提交到组委会次数',
-          message: '已经提交了' + data.info.toString() + '次',
-          buttons: [{
-            label: 'OK',
-            action: function(dialog) {
-              dialog.close();
-            }
-          }]
-        });
+        $rootScope.$broadcast('flushSubmitTimes',data);
       } else if (op === 'PARAGRAPH') {
         $rootScope.$broadcast('updateParagraph', data);
       } else if (op === 'PARAGRAPH_APPEND_OUTPUT') {

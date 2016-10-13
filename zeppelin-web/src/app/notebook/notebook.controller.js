@@ -42,6 +42,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.isNoteDirty = null;
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
+  $scope.submitTimes = 0;
 
   var connectedOnce = false;
 
@@ -193,6 +194,10 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   // 提交该版本到组委会
   $scope.submitNotebook = function(revisionId) {
+    if ($scope.submitTimes <= 0) {
+      return;
+    }
+
     if (!$scope.noteRevisions || $scope.noteRevisions.length === 0) {
       ngToast.danger({
         content: '没有可用评测的算法快照，请先提交快照。',
@@ -558,69 +563,69 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   var getPermissions = function(callback) {
     $http.get(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.id + '/permissions')
       .success(function(data, status, headers, config) {
-      $scope.permissions = data.body;
-      $scope.permissionsOrig = angular.copy($scope.permissions); // to check dirty
+        $scope.permissions = data.body;
+        $scope.permissionsOrig = angular.copy($scope.permissions); // to check dirty
 
-      var selectJson = {
-        tokenSeparators: [',', ' '],
-        ajax: {
-          url: function(params) {
-            if (!params.term) {
-              return false;
-            }
-            return baseUrlSrv.getRestApiBase() + '/security/userlist/' + params.term;
-          },
-          delay: 250,
-          processResults: function(data, params) {
-            var results = [];
+        var selectJson = {
+          tokenSeparators: [',', ' '],
+          ajax: {
+            url: function(params) {
+              if (!params.term) {
+                return false;
+              }
+              return baseUrlSrv.getRestApiBase() + '/security/userlist/' + params.term;
+            },
+            delay: 250,
+            processResults: function(data, params) {
+              var results = [];
 
-            if (data.body.users.length !== 0) {
-              var users = [];
-              for (var len = 0; len < data.body.users.length; len++) {
-                users.push({
-                  'id': data.body.users[len],
-                  'text': data.body.users[len]
+              if (data.body.users.length !== 0) {
+                var users = [];
+                for (var len = 0; len < data.body.users.length; len++) {
+                  users.push({
+                    'id': data.body.users[len],
+                    'text': data.body.users[len]
+                  });
+                }
+                results.push({
+                  'text': 'Users :',
+                  'children': users
                 });
               }
-              results.push({
-                'text': 'Users :',
-                'children': users
-              });
-            }
-            if (data.body.roles.length !== 0) {
-              var roles = [];
-              for (var len = 0; len < data.body.roles.length; len++) {
-                roles.push({
-                  'id': data.body.roles[len],
-                  'text': data.body.roles[len]
+              if (data.body.roles.length !== 0) {
+                var roles = [];
+                for (var len = 0; len < data.body.roles.length; len++) {
+                  roles.push({
+                    'id': data.body.roles[len],
+                    'text': data.body.roles[len]
+                  });
+                }
+                results.push({
+                  'text': 'Roles :',
+                  'children': roles
                 });
               }
-              results.push({
-                'text': 'Roles :',
-                'children': roles
-              });
-            }
-            return {
-              results: results,
-              pagination: {
-                more: false
-              }
-            };
+              return {
+                results: results,
+                pagination: {
+                  more: false
+                }
+              };
+            },
+            cache: false
           },
-          cache: false
-        },
-        width: ' ',
-        tags: true,
-        minimumInputLength: 3
-      };
+          width: ' ',
+          tags: true,
+          minimumInputLength: 3
+        };
 
-      angular.element('#selectOwners').select2(selectJson);
-      angular.element('#selectReaders').select2(selectJson);
-      angular.element('#selectWriters').select2(selectJson);
-      if (callback) {
-        callback();
-      }
-    }).error(function(data, status, headers, config) {
+        angular.element('#selectOwners').select2(selectJson);
+        angular.element('#selectReaders').select2(selectJson);
+        angular.element('#selectWriters').select2(selectJson);
+        if (callback) {
+          callback();
+        }
+      }).error(function(data, status, headers, config) {
       if (status !== 0) {
         console.log('Error %o %o', status, data.message);
       }
@@ -828,7 +833,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     if (newIndex < 0 || newIndex > $scope.note.paragraphs.length) {
       return;
     }
-    websocketMsgSrv.insertParagraph(newIndex,$scope.interpreterBindings[0]);
+    websocketMsgSrv.insertParagraph(newIndex, $scope.interpreterBindings[0]);
   });
 
   $scope.$on('setNoteContent', function(event, note) {
@@ -861,6 +866,10 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
     console.log('right note', $scope.note);
 
+    //查询可提交次数
+    if (notePermission.isRevision($scope.note.type)) {
+      websocketMsgSrv.currentSubmitTimes($rootScope.ticket.projectId);
+    }
   });
   //这里显示revision历史
   $scope.$on('listRevisionHistory', function(event, data) {
@@ -870,6 +879,10 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   // receive certain revision of note
   $scope.$on('noteRevision', function(event, revision) {
     $rootScope.$broadcast('setNoteContent', revision.data);
+  });
+  //更新可提交次数
+  $scope.$on('flushSubmitTimes', function(event, times) {
+    $scope.submitTimes = times.info;
   });
   $scope.$on('$destroy', function() {
     angular.element(window).off('beforeunload');

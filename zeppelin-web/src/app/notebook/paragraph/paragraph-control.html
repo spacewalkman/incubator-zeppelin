@@ -44,11 +44,12 @@ limitations under the License.
 
     <button type="button"
             class="btn btn-default btn-xs"
-            ng-class="{'btn-size-fullscreen':paragraph.config.tableHide,'btn-size-actual':!paragraph.config.tableHide}"
+            ng-class="{'btn-size-fullscreen':paragraph.config.editorHide,'btn-size-actual':!paragraph.config.editorHide}"
             ng-click="toggleEditor()"
             ng-hide="viewOnly"
             ng-if="note.permission.write"
-            tooltip-placement="bottom" tooltip="{{(paragraph.config.editorHide ? '显示' : '隐藏') + '代码'}}"><span class="ico-placeholder"></span></button>
+            tooltip-placement="bottom"
+            tooltip="{{(paragraph.config.editorHide ? '显示' : '隐藏') + '代码'}}"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-move-up"

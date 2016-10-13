@@ -48,18 +48,18 @@ limitations under the License.
                     tooltip-placement="bottom" tooltip="执行所有代码"><span class="ico-placeholder"></span></button>
             <button type="button"
                     class="btn btn-default btn-xs"
-                    ng-class="{'btn-size-fullscreen':editorToggled,'btn-size-actual':!editorToggled}"
+                    ng-class="{'btn-size-fullscreen':!editorToggled,'btn-size-actual':editorToggled}"
                     ng-click="toggleAllEditor()"
                     ng-if="note.permission.write"
                     ng-hide="viewOnly"
-                    tooltip-placement="bottom" tooltip="显示/隐藏代码"><span class="ico-placeholder"></span></button>
+                    tooltip-placement="bottom" tooltip="{{editorToggled?'显示':'隐藏'}}编辑器"><span class="ico-placeholder"></span></button>
             <button type="button"
                     class="btn btn-default btn-xs"
-                    ng-class="{'btn-note-output':tableToggled,'btn-note-only':!tableToggled}"
+                    ng-class="{'btn-note-output':!tableToggled,'btn-note-only':tableToggled}"
                     ng-click="toggleAllTable()"
                     ng-hide="viewOnly"
                     ng-if="note.permission.write"
-                    tooltip-placement="bottom" tooltip="显示/隐藏输出结果"><span class="ico-placeholder"></span></button>
+                    tooltip-placement="bottom" tooltip="{{editorToggled?'显示':'隐藏'}}输出结果"><span class="ico-placeholder"></span></button>
             <button type="button"
                     class="btn btn-default btn-xs btn-clear-output"
                     ng-class="{'disabled':isNoteRunning()}"
@@ -106,8 +106,9 @@ limitations under the License.
                 type="button"
                 ng-hide="viewOnly"
                 ng-if="note.permission.submit"
+                ng-class="{'disabled':submitTimes == 0}"
                 ng-click="submitNotebook()"
-                tooltip-placement="bottom">提交评测</span>
+                tooltip-placement="bottom">提交评测<i class="arrow-flag">{{submitTimes}}</i></span>
 
           <span class="commit-button-holder"
                 ng-if="note.permission.commit">

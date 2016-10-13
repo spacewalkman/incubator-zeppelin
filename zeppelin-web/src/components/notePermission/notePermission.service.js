@@ -20,16 +20,18 @@ angular.module('zeppelinWebApp').service('notePermission', [function() {
     return noteType === 'template';
   };
 
+  this.isRevision = isRevision;
+
+  function isRevision(noteType) {
+    return noteType === 'revision';
+  }
+
   function permissionJudge(permissionMap, key) {
     return !!permissionMap && isRealTrue(permissionMap[key]);
   }
 
   function isRealTrue(value) {
     return !!value && Boolean(value);
-  }
-
-  function isRevision(noteType) {
-    return noteType === 'revision';
   }
 
   function isNormal(noteType) {

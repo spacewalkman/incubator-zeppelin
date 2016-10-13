@@ -355,11 +355,15 @@
 .btn-execute-all{
   background: url("run.png") no-repeat center;
 }
-.btn-size-fullscreen,
+.btn-size-fullscreen{
+  background: url("eye-close.png") no-repeat center;
+}
 .btn-size-actual{
   background: url("eye.png") no-repeat center;
 }
-.btn-note-output,
+.btn-note-output{
+  background: url("book-close.png") no-repeat center;
+}
 .btn-note-only{
   background: url("book.png") no-repeat center;
 }
@@ -374,6 +378,7 @@
 }
 .btn-note-submit,
 .btn-note-save{
+  position: relative;
   display: inline-block;
   margin: 0 0 0 10px;
   width: 96px;
@@ -396,7 +401,13 @@
   -webkit-box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
   box-shadow: 4px 10px 20px #cac5ff,-4px 0 20px #cac5ff;
 }
-
+.btn-note-submit.disabled{
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  background: #eee;
+  color: #999;
+  cursor: none;
+}
 
 
 .commit-button-holder{
@@ -423,4 +434,18 @@
   padding: 6px 0;
   line-height: 16px;
   font-size: 12px;
+}
+
+.arrow-flag{
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: red;
+  color: #fff;
+  font-size: 12px;
+  line-height: 20px;
 }

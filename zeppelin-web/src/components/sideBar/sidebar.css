@@ -207,9 +207,6 @@
   display: block;
   line-height: 2em;
 }
-.history-list .history-item.committed a.note-title {
-  color: #fff;
-}
 .history-list .history-item .commit-time,
 .history-list .history-item .commiter{
   margin: 0;

@@ -184,12 +184,12 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
     },
 
     // 查询提交次数
-    currentSubmitTimes: function(group, projectId) {
+    currentSubmitTimes: function(projectId) {
       websocketEvents.sendNewEvent({
         op: 'QUERY_SUBMIT_TIME',
         data: {
-          group: group,
-          projectId: projectId
+          projectId: projectId,
+          group:'user1'
         }
       });
     },
