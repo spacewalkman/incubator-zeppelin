@@ -87,6 +87,56 @@ public class Note implements Serializable, ParagraphJobListener {
   private String topic;
   private Date lastUpdated;//max(lastUpdaed in paragraphs)
 
+  /**
+   * 当前note的种类，有三种：模板/历史/正常note
+   */
+  private String type;
+
+  /**
+   * note种类：模板
+   */
+  public static final String NOTE_TYPE_TEMPLATE = "template";
+
+  /**
+   * note种类：版本历史
+   */
+  public static final String NOTE_TYPE_REVISION = "revision";
+
+  /**
+   * 正常的note
+   */
+  public static final String NOTE_TYPE_NORMAL = "normal";
+
+  /**
+   * 当前用户对该note的读写owner/是否可提交/可执行权限
+   */
+  private Map<String, Boolean> permissionsMap;
+
+  /**
+   * 用来permissionsMapkey，是否允许删除
+   */
+  public static final String DELETABLE = "canDelete";
+
+  /**
+   * 用来permissionsMapkey，是否允许写
+   */
+  public static final String WRITEABLE = "canWrite";
+
+  /**
+   * 用来permissionsMapkey，committer key
+   */
+  public static final String COMMITTERABLE = "canCommit";
+
+  /**
+   * 用来permissionsMapkey，submitter key
+   */
+  public static final String SUMITTERABLE = "canSubmit";
+
+  /**
+   * 用来permissionsMapkey，executor key
+   */
+  public static final String EXECUTORABLE = "canExecute";
+
   private Map<String, List<AngularObject>> angularObjects = new HashMap<>();
 
   private transient InterpreterFactory factory;
@@ -525,9 +575,6 @@ public class Note implements Serializable, ParagraphJobListener {
         AuthenticationInfo authenticationInfo = new AuthenticationInfo();
         authenticationInfo.setUser(cronExecutingUser);
         p.setAuthenticationInfo(authenticationInfo);//这里由于要跨越thrift，所以要传递pojo，而不是Subject
-//        PrincipalCollection principals = new SimplePrincipalCollection(cronExecutingUser, ZeppelinConfiguration.create().getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_SHIRO_REALM_NAME));
-//        Subject subject = new Subject.Builder().principals(principals).buildSubject();
-//        p.setSubject(subject);
         run(p.getId());
       }
     }
@@ -865,5 +912,43 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public void setProjectId(String projectId) {
     this.projectId = projectId;
+  }
+
+  /**
+   * 当前note的种类，有三种：模板/历史/正常note
+   */
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  /**
+   * 当前用户对该note的读写owner/是否可提交/可执行权限
+   */
+  public Map<String, Boolean> getPermissionsMap() {
+    if (permissionsMap == null) {
+      permissionsMap = new HashMap<>(5);
+    }
+
+    return permissionsMap;
+  }
+
+  public void setPermissionsMap(Map<String, Boolean> permissionsMap) {
+    this.permissionsMap = permissionsMap;
+  }
+
+  /**
+   * 是否是模板
+   * @return
+   */
+  public boolean isTemplate() {
+    if ((this.getGroup() == null || this.getGroup().isEmpty()) && (this.getProjectId() != null && this.getProjectId().isEmpty())) {
+      return true;
+    }
+
+    return false;
   }
 }

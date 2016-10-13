@@ -1,6 +1,5 @@
 package org.apache.zeppelin.notebook;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.slf4j.Logger;
@@ -12,6 +11,7 @@ import java.util.List;
 /**
  * shiro-based authorization,singleton模式，全局唯一实例
  */
+//TODO:如果启用SecurityManager的sessionManager，则在session过期的时候会报错找不到某uuid的session，详见http://git.jd.com/qianyong11/miningplatform/issues/20
 public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   private static final Logger LOG = LoggerFactory.getLogger(ShiroNotebookAuthorization.class);
 
@@ -167,7 +167,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   }
 
   /**
-   * 为用户添加"队长"角色
+   * 为用户添加"队长"角色，处理了重复创建问题
    *
    * @param groupId  队id
    * @param userName 用户名

@@ -379,6 +379,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
         String noteID = rs.getString(2);
         if (!noteID.equals(noteId)) {
           LOG.error("getRevison should return the same noteId as argument,expected:{},but actual:{}", noteId, noteID);
+          return null;
         }
         String noteName = rs.getString(3);
         String committer = rs.getString(4);

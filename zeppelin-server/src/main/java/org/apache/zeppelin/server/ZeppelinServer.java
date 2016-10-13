@@ -17,7 +17,15 @@
 
 package org.apache.zeppelin.server;
 
-import org.apache.cxf.jaxrs.servlet.CXFNonSpringJaxrsServlet;
+import java.io.File;
+import java.io.IOException;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.DispatcherType;
+import javax.ws.rs.core.Application;
+
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.dep.DependencyResolver;
@@ -120,6 +128,9 @@ public class ZeppelinServer extends Application {
     notebook = new Notebook(conf,
             notebookRepo, schedulerFactory, replFactory, notebookWsServer,
             notebookIndex, notebookAuthorization, credentials);
+
+    //初始化现有note与user之间的权限关系
+
 
     // to update notebook from application event from remote process.
     heliumApplicationFactory.setNotebook(notebook);
@@ -270,13 +281,15 @@ public class ZeppelinServer extends Application {
   private static void setupRestApiContextHandler(WebAppContext webapp,
                                                  ZeppelinConfiguration conf) {
 
-    final ServletHolder cxfServletHolder = new ServletHolder(new CXFNonSpringJaxrsServlet());
-    cxfServletHolder.setInitParameter("javax.ws.rs.Application", ZeppelinServer.class.getName());
-    cxfServletHolder.setName("rest");
-    cxfServletHolder.setForcedPath("rest");
+    final ServletHolder servletHolder = new ServletHolder(
+            new org.glassfish.jersey.servlet.ServletContainer());
+
+    servletHolder.setInitParameter("javax.ws.rs.Application", ZeppelinServer.class.getName());
+    servletHolder.setName("rest");
+    servletHolder.setForcedPath("rest");
 
     webapp.setSessionHandler(new SessionHandler());
-    webapp.addServlet(cxfServletHolder, "/api/*");
+    webapp.addServlet(servletHolder, "/api/*");
 
     webapp.setInitParameter("shiroConfigLocations",
             new File(conf.getShiroPath()).toURI().toString());

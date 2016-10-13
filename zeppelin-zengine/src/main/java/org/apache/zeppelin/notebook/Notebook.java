@@ -417,6 +417,13 @@ public class Notebook implements NoteEventListener {
     note.setJobListenerFactory(jobListenerFactory);
     note.setNotebookRepo(notebookRepo);
 
+    //设置前台需要的type
+    if (note.isTemplate()) {
+      note.setType(Note.NOTE_TYPE_TEMPLATE);
+    } else {
+      note.setType(Note.NOTE_TYPE_NORMAL);
+    }
+
     Map<String, SnapshotAngularObject> angularObjectSnapshot = new HashMap<>();
 
     // restore angular object --------------

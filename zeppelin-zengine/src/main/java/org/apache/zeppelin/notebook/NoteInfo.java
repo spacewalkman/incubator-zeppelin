@@ -18,24 +18,29 @@
 package org.apache.zeppelin.notebook;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 用来向前端传递数据的pojo
+ */
 public class NoteInfo {
   String id;
   String name;
-  private Map<String, Object> config = new HashMap<String, Object>();
+  String type;
+  private Map<String, Boolean> permissionsMap;
 
-  public NoteInfo(String id, String name, Map<String, Object> config) {
+  public NoteInfo(String id, String name) {
     super();
     this.id = id;
     this.name = name;
-    this.config = config;
+    this.permissionsMap = new LinkedHashMap<>(5);
   }
 
   public NoteInfo(Note note) {
     id = note.getId();
     name = note.getName();
-    config = note.getConfig();
+    type = note.getType();
   }
 
   public String getId() {
@@ -54,21 +59,21 @@ public class NoteInfo {
     this.name = name;
   }
 
-  public Map<String, Object> getConfig() {
-    return config;
-  }
-
-  public void setConfig(Map<String, Object> config) {
-    this.config = config;
-  }
-
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("NoteInfo:[");
-    sb.append("id=" + id == null ? "null" : id+",");
-    sb.append("name=" + name == null ? "null" : name+",");
+    sb.append("id=" + id == null ? "null" : id + ",");
+    sb.append("name=" + name == null ? "null" : name + ",");
     return sb.toString();
   }
 
+  public Map<String, Boolean> addPermission(String key, boolean value) {
+    if (permissionsMap == null) {
+      permissionsMap = new HashMap<>(5);
+    }
+
+    permissionsMap.put(key, value);
+    return permissionsMap;
+  }
 }
