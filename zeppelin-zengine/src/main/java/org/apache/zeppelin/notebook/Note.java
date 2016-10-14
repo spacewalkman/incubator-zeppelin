@@ -305,7 +305,7 @@ public class Note implements Serializable, ParagraphJobListener {
   void addCloneParagraph(Paragraph srcParagraph) {
 
     // Keep paragraph original ID
-    final Paragraph newParagraph = new Paragraph(srcParagraph.getId(), this, this, factory);
+    final Paragraph newParagraph = new Paragraph(srcParagraph.getId(), this, this, factory, srcParagraph.getReplName());
 
     Map<String, Object> config = new HashMap<>(srcParagraph.getConfig());
     Map<String, Object> param = new HashMap<>(srcParagraph.settings.getParams());
@@ -547,6 +547,9 @@ public class Note implements Serializable, ParagraphJobListener {
     return info;
   }
 
+  /**
+   * 设置类型%md解释器标识
+   */
   private void setParagraphMagic(Paragraph p, int index) {
     if (paragraphs.size() > 0) {
       String magic;
@@ -556,7 +559,7 @@ public class Note implements Serializable, ParagraphJobListener {
         magic = paragraphs.get(index - 1).getMagic();
       }
       if (StringUtils.isNotEmpty(magic)) {
-        p.setText(magic + "\n");
+        p.setReplName(magic);
       }
     }
   }
@@ -942,7 +945,6 @@ public class Note implements Serializable, ParagraphJobListener {
 
   /**
    * 是否是模板
-   * @return
    */
   public boolean isTemplate() {
     if ((this.getGroup() == null || this.getGroup().isEmpty()) && (this.getProjectId() != null && this.getProjectId().isEmpty())) {

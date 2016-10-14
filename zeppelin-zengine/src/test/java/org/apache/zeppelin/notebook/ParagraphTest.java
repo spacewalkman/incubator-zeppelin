@@ -53,27 +53,6 @@ public class ParagraphTest {
   }
 
   @Test
-  public void replNameEndsWithWhitespace() {
-    String text = "%md\r\n###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-
-    text = "%md\t###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-
-    text = "%md\u000b###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-
-    text = "%md\f###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-
-    text = "%md\n###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-
-    text = "%md ###Hello";
-    assertEquals("md", Paragraph.getRequiredReplName(text));
-  }
-
-  @Test
   public void should_extract_variable_from_angular_object_registry() throws Exception {
     //Given
     final String noteId = "noteId";

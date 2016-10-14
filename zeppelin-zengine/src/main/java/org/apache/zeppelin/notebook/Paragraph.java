@@ -75,6 +75,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   String text;
   String user;
   Date dateUpdated;
+  private String replName;//将%md类似这样的interpreter声明显示话，IDE采用下拉列表选择
   private int paraIndex;//paragraph下标位置，用来在ES中获取note的paragraphs列表时保持顺序
   private Map<String, Object> config; // paragraph configs like isOpen, colWidth, etc
   public final GUI settings;          // form and parameter settings
@@ -92,7 +93,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   }
 
   public Paragraph(String paragraphId, Note note, JobListener listener,
-                   InterpreterFactory factory) {
+                   InterpreterFactory factory, String replName) {
     super(paragraphId, generateId(), listener);
     this.note = note;
     this.factory = factory;
@@ -103,6 +104,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     dateUpdated = null;
     settings = new GUI();
     config = new HashMap<String, Object>();
+    this.replName = replName;
   }
 
   public Paragraph(Note note, JobListener listener, InterpreterFactory factory) {
@@ -115,6 +117,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     dateUpdated = null;
     settings = new GUI();
     config = new HashMap<String, Object>();
+    this.replName = "markdown";
   }
 
   private static String generateId() {
@@ -161,17 +164,20 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return enabled == null || enabled.booleanValue();
   }
 
+  /**
+   * 不再从text（正文）中获取，而从field中获取
+   */
   public String getRequiredReplName() {
-    return getRequiredReplName(text);
+    return this.replName;
   }
 
   /**
-   * 获取首行的百分号开头的字符串
+   * 获取首行的百分号开头的字符串，由于目前采用单独的字段replName来存储interpreter name，故此方法未使用
    *
    * @param text paragrapph的正文
    * @return %之后的字符串
    */
-  public static String getRequiredReplName(String text) {
+  private static String getRequiredReplName(String text) {
     if (text == null) {
       return null;
     }
@@ -200,19 +206,12 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     return getScriptBody(text);
   }
 
+  /**
+   * 获取正文，由于正文首行不再是interpreter name，故正文全部都是代码
+   */
   public static String getScriptBody(String text) {
-    if (text == null) {
-      return null;
-    }
-
-    String magic = getRequiredReplName(text);
-    if (magic == null) {
-      return text;
-    }
-    if (magic.length() + 1 >= text.length()) {
-      return "";
-    }
-    return text.substring(magic.length() + 1).trim();
+    //这里首行不再是interpreter name
+    return text.trim();
   }
 
   public Interpreter getRepl(String name) {
@@ -251,7 +250,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       }
     }
 
-    String replName = getRequiredReplName(buffer);
+    String replName = this.getRequiredReplName();
     if (replName != null && cursor > replName.length()) {
       cursor -= replName.length() + 1;
     }
@@ -507,6 +506,14 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     this.paraIndex = paraIndex;
   }
 
+  public String getReplName() {
+    return replName;
+  }
+
+  public void setReplName(String replName) {
+    this.replName = replName;
+  }
+
   static class ParagraphRunner extends InterpreterContextRunner {
     private transient Note note;
 
@@ -600,6 +607,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   }
 
   public String getMagic() {
+    return replName;
+    /*
     String magic = StringUtils.EMPTY;
     String text = getText();
     if (text != null && text.startsWith("%")) {
@@ -611,6 +620,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       }
     }
     return magic;
+    */
   }
 
   private boolean isValidInterpreter(String replName) {
