@@ -246,7 +246,8 @@ module.exports = function(grunt) {
       dist: {
         options: {
           open: true,
-          base: '<%= yeoman.dist %>'
+          base: '<%= yeoman.dist %>',
+          keepalive: true
         }
       }
     },
@@ -364,7 +365,6 @@ module.exports = function(grunt) {
         }
       }
     },
-
     // Performs rewrites based on filerev and the useminPrepare configuration
     usemin: {
       html: ['<%= yeoman.dist %>/{,*/}*.html'],
@@ -389,23 +389,30 @@ module.exports = function(grunt) {
     },
 
     uglify: {
-      options: {
-        mangle: {
-          'screw_ie8': true
+      vendor: {
+        options: {
+          mangle: true,
+          preserveComments: 'false'
         },
-        preserveComments: 'some',
-        compress: {
-          'screw_ie8': true,
-          sequences: true,
-          'dead_code': true,
-          conditionals: true,
-          booleans: true,
-          unused: true,
-          'if_return': true,
-          'join_vars': true,
-          'drop_console': true
-        }
-      }
+        files: [{
+          expand: true,
+          cwd: 'dist/scripts',
+          src: 'vendor*.js',
+          dest: 'dist/scripts'
+        }]
+      },
+      scripts: {
+        options: {
+          mangle: false,
+          preserveComments: 'false'
+        },
+        files: [{
+          expand: true,
+          cwd: 'dist/scripts',
+          src: '{scripts,oldieshim}*.js',
+          dest: 'dist/scripts'
+        }]
+      },
     },
     // concat: {
     //   dist: {}
@@ -421,7 +428,20 @@ module.exports = function(grunt) {
         }]
       }
     },
-
+    imagemin: {
+      /* 压缩图片大小 */
+      dist: {
+        options: {
+          optimizationLevel: 7 //定义 PNG 图片优化水平
+        },
+        files: [{
+            expand: true,
+            cwd: '.tmp/styles/',
+            src: ['**/*.{png,jpg,jpeg}'], // 优化 img 目录下所有 png/jpg/jpeg 图片
+            dest: '.tmp/styles/' // 优化后的图片保存位置，覆盖旧图片，并且不作提示
+          }]
+      }
+    },
     htmlmin: {
       dist: {
         options: {
@@ -499,9 +519,26 @@ module.exports = function(grunt) {
         cwd: '<%= yeoman.app %>',
         dest: '.tmp/styles/',
         src: '{fonts,components,app}/**/*.css'
+      },
+      images: {
+        expand: true,
+        flatten: true,
+        cwd: '<%= yeoman.app %>',
+        dest: '.tmp/styles/',
+        src: '{fonts,components,app}/**/*.png'
       }
     },
-
+    dataUri: {
+      dist: {
+        src: ['.tmp/styles/*.css'],
+        dest: '.tmp/styles',
+        options: {
+          target: ['.tmp/styles/*.*'],
+          fixDirLevel: true,
+          maxBytes : 2048
+        }
+      }
+    },
     // Run some tasks in parallel to speed up the build process
     concurrent: {
       server: [
@@ -512,6 +549,7 @@ module.exports = function(grunt) {
       ],
       dist: [
         'copy:styles',
+        'copy:images',
         'svgmin'
       ]
     },
@@ -569,9 +607,12 @@ module.exports = function(grunt) {
     'concat',
     'ngAnnotate',
     'copy:dist',
+    'imagemin',
+    'dataUri',
     'cssmin',
-    //'uglify',
     'usemin',
+    'uglify:vendor',
+    'uglify:scripts',
     //'htmlmin',
     'cacheBust'
   ]);
