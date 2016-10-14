@@ -17,6 +17,7 @@
 package org.apache.zeppelin.socket;
 
 import com.google.common.base.Strings;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -108,10 +109,20 @@ public class NotebookServer extends WebSocketServlet implements
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(NotebookServer.class);
-  final Map<String, List<NotebookSocket>> noteSocketMap = new ConcurrentHashMap<>();//存储note与ws socket之间的映射关系
+  /**
+   * 存储note与ws socket之间的映射关系
+   */
+  final Map<String, List<NotebookSocket>> noteSocketMap = new ConcurrentHashMap<>();
+
+  /**
+   * 存储note
+   */
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
 
-  final Map<NotebookSocket, Subject> socketSubjectMap = new HashMap<>();//存储socket对应了哪个用户的
+  /**
+   * 存储websocket与用户之间的对应关系，以便于在broadcast note或者noteinfos时，set permissionsMap和type信息
+   */
+  final Map<NotebookSocket, Subject> socketSubjectMap = new HashMap<>();
 
   private Notebook notebook() {
     return ZeppelinServer.notebook;
@@ -154,7 +165,15 @@ public class NotebookServer extends WebSocketServlet implements
   public void onMessage(NotebookSocket conn, String msg) {
     Notebook notebook = notebook();
     try {
-      Message messagereceived = deserializeMessage(msg);
+      Message messagereceived = null;
+      try {
+        messagereceived = deserializeMessage(msg);
+      } catch (JsonSyntaxException e) {
+        LOG.debug("未识别的message", e);
+        unicast(new Message(OP.UNAUTHORIED).put("info", "错误的消息格式"), conn);
+        return;
+      }
+
       if (LOG.isTraceEnabled()) {
         LOG.trace("接收到消息 message = " + messagereceived);
       }
@@ -672,7 +691,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     for (NotebookSocket conn : socketLists) {
       Subject subject = this.socketSubjectMap.get(conn);
-      this.setNotePermissionsMap(note, notebookAuthorization, subject);
+      this.setNotePermissionsMap(note, notebookAuthorization, subject, false);
 
       unicast(new Message(OP.NOTE).put("note", note), conn, true);
     }
@@ -757,7 +776,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       this.setNoteType(note, null);
       //设置permissionsMap transient permission字段
-      this.setNotePermissionsMap(note, notebookAuthorization, subject);
+      this.setNotePermissionsMap(note, notebookAuthorization, subject, false);
 
       this.addConnectionToNote(note.getId(), conn);//note与connection之间是1：N的关系
       conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NOTE).put("note", note)));
@@ -773,31 +792,43 @@ public class NotebookServer extends WebSocketServlet implements
    * @param note                  待设置权限的note
    * @param notebookAuthorization note的授权manager
    * @param subject               当前shiro subject
+   * @param isRevision            是否是历史版本
    */
   private void setNotePermissionsMap(Note note, NotebookAuthorizationAdaptor notebookAuthorization,
-                                     Subject subject) {
+                                     Subject subject, boolean isRevision) {
     Map<String, Boolean> permissionsMap = note.getPermissionsMap();
     permissionsMap.clear();
 
     if (notebookAuthorization.isAdmin(subject)) {//admin等同owner
-      permissionsMap.put(Note.DELETABLE, true);
-      permissionsMap.put(Note.WRITEABLE, true);
+      if (!isRevision) {
+        permissionsMap.put(Note.DELETABLE, true);
+        permissionsMap.put(Note.WRITEABLE, true);
+      }
     } else if (notebookAuthorization.isOwner(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.DELETABLE, true);
-      permissionsMap.put(Note.WRITEABLE, true);
+      if (!isRevision) {
+        permissionsMap.put(Note.DELETABLE, true);
+        permissionsMap.put(Note.WRITEABLE, true);
+      }
     } else if (notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.WRITEABLE, true);
+      if (!isRevision) {
+        permissionsMap.put(Note.WRITEABLE, true);
+      }
     }
 
     if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.EXECUTORABLE, true);
+      if (!isRevision) {
+        permissionsMap.put(Note.EXECUTORABLE, true);
+      }
     }
 
     if (notebookAuthorization.isCommitter(subject, note.getGroup(), note.getId())) {
-      permissionsMap.put(Note.COMMITTERABLE, true);
+      if (!isRevision) {
+        permissionsMap.put(Note.COMMITTERABLE, true);
+      }
     }
 
     if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
+      //TODO:这里要判断是否满足提交策略
       permissionsMap.put(Note.SUMITTERABLE, true);
     }
   }
@@ -901,8 +932,6 @@ public class NotebookServer extends WebSocketServlet implements
           throws IOException {
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Note note = notebook.createNote(userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
-    note.setGroup(userProfile.getTeam());//设置note所属的参赛队
-    note.setProjectId(userProfile.getProjectId());//设置note所属的题目
 
     note.addParagraph(); // it's an empty note. so add one paragraph
     if (message != null) {
@@ -922,7 +951,7 @@ public class NotebookServer extends WebSocketServlet implements
     NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     this.setNoteType(note, null);
     //设置permissionsMap transient permission字段
-    this.setNotePermissionsMap(note, notebookAuthorization, subject);
+    this.setNotePermissionsMap(note, notebookAuthorization, subject, false);
 
     note.persist(userProfile.getUserName());
     addConnectionToNote(note.getId(), conn);
@@ -1050,8 +1079,8 @@ public class NotebookServer extends WebSocketServlet implements
     Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
     String noteId = getOpenNoteId(conn);
     final Note note = notebook.getNote(noteId);
-    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
 
+    NotebookAuthorizationAdaptor notebookAuthorization = notebook.getNotebookAuthorization();
     if (!notebookAuthorization.isWriter(subject, note.getGroup(), note.getId())) {
       permissionError(conn, subject, "修改", note.getGroup(), note.getId());
       return;
@@ -1062,6 +1091,16 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
     p.setText((String) fromMessage.get("paragraph"));
+
+    //处理前后台paragraph magic不一致的地方
+    String interpreterMark = (String) fromMessage.get("replName");
+    if (interpreterMark != null) {
+      if (interpreterMark.equalsIgnoreCase("markdown")) {
+        p.setReplName("md");
+      } else {
+        p.setReplName(interpreterMark);
+      }
+    }
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     note.persist(userProfile.getUserName());
@@ -1488,7 +1527,7 @@ public class NotebookServer extends WebSocketServlet implements
               fromMessage.ticket);
       p.setAuthenticationInfo(authenticationInfo);
     } else {
-      p.setAuthenticationInfo(new AuthenticationInfo());
+      p.setAuthenticationInfo(new AuthenticationInfo(userProfile.getUserName(), userProfile.getTicket()));
     }
 
     Map<String, Object> params = (Map<String, Object>) fromMessage.get("params");
@@ -1506,7 +1545,7 @@ public class NotebookServer extends WebSocketServlet implements
     try {
       note.run(paragraphId);
     } catch (Exception ex) {
-      LOG.error("Exception from run", ex);
+      LOG.error("paragraph:'{}'执行出错", paragraphId, ex);
       if (p != null) {
         p.setReturn(
                 new InterpreterResult(InterpreterResult.Code.ERROR, ex.getMessage()),
@@ -1600,11 +1639,11 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     if (submitLeftOver == null) {//已经提交了
-      conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", "该版本已经提交过了")));
+      conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("errorMessage", "该版本已经提交过了")));
       return;
     }
 
-    conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver.toString())));
+    conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver)));
   }
 
   /**
@@ -1657,7 +1696,7 @@ public class NotebookServer extends WebSocketServlet implements
     Note revisionNote = notebook.getNoteByRevision(noteId, revisionId, userProfile.getUserName());
 
     this.setNoteType(revisionNote, Note.NOTE_TYPE_REVISION);//只有从该方法入口进入的note.type才revision
-    this.setNotePermissionsMap(revisionNote, notebookAuthorization, subject);
+    this.setNotePermissionsMap(revisionNote, notebookAuthorization, subject, true);
 
     conn.send(serializeNoteInfosWithOutPermissions(new Message(OP.NOTE_REVISION)
             .put("noteId", noteId)
