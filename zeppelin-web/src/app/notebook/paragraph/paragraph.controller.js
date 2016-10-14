@@ -93,6 +93,15 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     'ace/mode/sh': /^%sh/
   };
 
+  var countEditorMode = function(replName) {
+    for (var key in editorModes) {
+      if (editorModes[key].test('%'+replName)) {
+        return key;
+      }
+    }
+    return 'ace/mode/markdown';
+  };
+
   // Controller init
   $scope.init = function(newParagraph, note) {
     $scope.paragraph = newParagraph;
@@ -108,6 +117,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (!$scope.paragraph.config) {
       $scope.paragraph.config = {};
     }
+
+
 
     initializeDefault();
 
@@ -270,6 +281,10 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (config.enabled === undefined) {
       config.enabled = true;
     }
+
+    if(config.editorMode === undefined){
+      config.editorMode = countEditorMode($scope.paragraph.replName);
+    }
   };
 
   $scope.getIframeDimensions = function() {
@@ -331,8 +346,9 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     commitParagraph($scope.paragraph.title, $scope.paragraph.text, newConfig, newParams);
   };
 
-  $scope.setParagraphInterpreter = function(paragraphId, interpreterId) {
-    $scope.paragraph.replName = interpreterId;
+  $scope.setParagraphInterpreter = function(paragraphId, replName) {
+    $scope.paragraph.replName = replName;
+    $scope.paragraph.config.editorMode = countEditorMode(replName);
     commitParagraph($scope.paragraph.title, $scope.dirtyText, $scope.paragraph.config,
       $scope.paragraph.settings.params);
   };
@@ -560,6 +576,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     _editor.$blockScrolling = Infinity;
     $scope.editor = _editor;
     $scope.editor.on('input', $scope.aceChanged);
+
     if (_editor.container.id !== '{{paragraph.id}}_editor') {
       $scope.editor.renderer.setShowGutter($scope.paragraph.config.lineNumbers);
       $scope.editor.setShowFoldWidgets(false);
@@ -568,12 +585,14 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       $scope.editor.getSession().setUseWrapMode(true);
       $scope.editor.setTheme('ace/theme/chrome');
       $scope.editor.setReadOnly($scope.isRunning() || !$scope.parentNote.permission.write);
+
       if ($scope.paragraphFocused) {
         $scope.editor.focus();
         $scope.goToEnd();
       }
 
       autoAdjustEditorHeight(_editor.container.id);
+
       angular.element(window).resize(function() {
         autoAdjustEditorHeight(_editor.container.id);
       });

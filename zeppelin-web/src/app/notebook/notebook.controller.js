@@ -46,6 +46,17 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.submited = $location.search().v && $location.search().s && Boolean($location.search().s);
 
   var connectedOnce = false;
+  var saveSetting = function() {
+    //写死的执行器ID
+    var selectedSettingIds = [
+      '2BVG9HFPX'/*spark*/,
+      '2BU89QVB4'/*md*/,
+      '2BXW3M22D'/*python*/,
+      '2BXXK14KY'/*jdbc*/];
+
+    websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedSettingIds);
+    console.log('Interpreter bindings saved', selectedSettingIds);
+  };
 
   // user auto complete related
   $scope.noteRevisions = [];
@@ -543,16 +554,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     }
   };
 
-  var saveSetting = function() {
-    var selectedSettingIds = [
-      '2BVG9HFPX'/*spark*/,
-      '2BU89QVB4'/*md*/,
-      '2BXW3M22D'/*python*/,
-      '2BXXK14KY'/*jdbc*/];
 
-    websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedSettingIds);
-    console.log('Interpreter bindings saved', selectedSettingIds);
-  };
 
   $scope.toggleSetting = function() {
     if ($scope.showSetting) {
