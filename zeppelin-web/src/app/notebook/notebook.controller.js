@@ -173,7 +173,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     });
     $timeout(success, 1500);
 
-    angular.elements(document).click();
+    angular.element(document).click();
   };
 
   $scope.checkpointMsgChanged = function() {

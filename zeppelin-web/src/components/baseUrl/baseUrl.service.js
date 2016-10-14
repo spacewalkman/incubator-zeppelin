@@ -13,7 +13,7 @@
  */
 'use strict';
 
-angular.module('zeppelinWebApp').service('baseUrlSrv', function() {
+angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location','$rootScope',function($location,$rootScope) {
 
   this.getPort = function() {
     var port = Number(location.port);
@@ -55,4 +55,4 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', function() {
   var socketHost = '172.24.6.20';
 
   //TODO:load socketHost from server or glob var or url
-});
+}]);
