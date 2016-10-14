@@ -43,7 +43,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
   $scope.submitTimes = 0;
-  $scope.submited = $location.search().v && $location.search().s && Boolean($location.search().s);
+  $scope.submited = $location.search().v && $location.search().s && !Boolean($location.search().s);
 
   var connectedOnce = false;
   var saveSetting = function() {
