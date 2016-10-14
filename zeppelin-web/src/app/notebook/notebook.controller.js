@@ -26,7 +26,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.submitable = false;
 
   $scope.showSetting = false;
-  $scope.looknfeelOption = [{k: 'default', v: '代码试图'}, {k: 'report', v: '报告试图'}];
+  $scope.looknfeelOption = [{k: 'default', v: '代码视图'}, {k: 'report', v: '报告视图'}];
   // $scope.cronOption = [
   //   {name: 'None', value: undefined},
   //   {name: '1m', value: '0 0/1 * * * ?'},
@@ -183,7 +183,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   var validateCheckpointMessage = function() {
     if (!$scope.note.checkpoint || !$scope.note.checkpoint.message) {
-      $scope.commitMsgError = 'commit message 必须填写！';
+      $scope.commitMsgError = '提交日志必须填写！';
       return false;
     } else {
       $scope.commitMsgError = null;

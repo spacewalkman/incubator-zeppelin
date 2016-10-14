@@ -88,12 +88,6 @@ limitations under the License.
                 data-target="#shortcutModal"
                 ng-hide="viewOnly"
                 tooltip-placement="bottom" tooltip="快捷键列表"><span class="ico-placeholder"></span></span>
-          <span class="setting-btn btn-help"
-                type="button"
-                ng-click="console.error('fix me!!!')"
-                ng-hide="viewOnly"
-                tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
-
           <span type="button"
                 class="setting-btn"
                 tooltip-placement="bottom" tooltip="克隆算法"
@@ -101,7 +95,11 @@ limitations under the License.
                 data-toggle="modal" data-target="#noteNameModal" data-clone="true">
             <i class="fa fa-copy"></i>
           </span>
-
+          <span class="setting-btn btn-help"
+                type="button"
+                ng-click="console.error('暂无帮助手册')"
+                ng-hide="viewOnly"
+                tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
           <span class="setting-btn btn-note-submit"
                 type="button"
                 ng-hide="viewOnly"
@@ -125,7 +123,7 @@ limitations under the License.
                      ng-class="{'validate-error':!!commitMsgError}">
                     <input type="text"
                            dropdown-input
-                           placeholder="commit message"
+                           placeholder="提交日志"
                            id="note.checkpoint.message"
                            ng-enter="checkpointNotebook()"
                            ng-change="checkpointMsgChanged()"
