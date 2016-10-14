@@ -50,12 +50,22 @@ public abstract class Job {
    * ABORT - Job finished by abort
    */
   public static enum Status {
-    READY,
-    PENDING,
-    RUNNING,
-    FINISHED,
-    ERROR,
-    ABORT;
+    READY("未执行"),
+    PENDING("等待执行"),
+    RUNNING("正在执行"),
+    FINISHED("执行成功"),
+    ERROR("执行出错"),
+    ABORT("执行中止");
+
+    private String name;
+
+    Status(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return this.name;
+    }
 
     public boolean isReady() {
       return this == READY;
