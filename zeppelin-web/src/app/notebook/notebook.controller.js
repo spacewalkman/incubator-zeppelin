@@ -172,6 +172,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
       });
     });
     $timeout(success, 1500);
+
+    angular.elements(document).click();
   };
 
   $scope.checkpointMsgChanged = function() {
@@ -210,7 +212,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '提交当前版本到组委会评测?',
+      message: '提交当前版本到组委会评测？今天还可以提交'+$scope.submitTimes+'次。',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.submitNotebook($routeParams.noteId, revisionID);

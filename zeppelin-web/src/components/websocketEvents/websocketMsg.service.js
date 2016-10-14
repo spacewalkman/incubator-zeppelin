@@ -188,8 +188,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({
         op: 'QUERY_SUBMIT_TIME',
         data: {
-          projectId: projectId,
-          group:'user1'
+          projectId: projectId
         }
       });
     },
