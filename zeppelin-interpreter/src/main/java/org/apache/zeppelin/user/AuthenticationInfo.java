@@ -19,8 +19,9 @@
 package org.apache.zeppelin.user;
 
 /***
- *
+ * 作为zeppelin向paragraph执行时传递用户和权限的pojo
  */
+//TODO:是否还有存在的意义，UserProfile不能替代其功能吗？
 public class AuthenticationInfo {
   String user;
   String ticket;

@@ -24,6 +24,6 @@ import org.apache.zeppelin.scheduler.JobListener;
  * Listen paragraph update
  */
 public interface ParagraphJobListener extends JobListener {
-  public void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output);
-  public void onOutputUpdate(Paragraph paragraph, InterpreterOutput out, String output);
+  void onOutputAppend(Paragraph paragraph, InterpreterOutput out, String output);
+  void onOutputUpdate(Paragraph paragraph, InterpreterOutput out, String output);
 }
