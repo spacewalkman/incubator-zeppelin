@@ -70,8 +70,9 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   /** Init the new controller */
   var initNotebook = function() {
+    $scope.isRevision = noteRevisionJudgement.isHistory();
     //是否要进入历史视图
-    if (noteRevisionJudgement.isHistory()) {
+    if ($scope.isRevision) {
       websocketMsgSrv.getNoteByRevision($routeParams.noteId, $location.search().v);
     } else {
       websocketMsgSrv.getNotebook($routeParams.noteId);
