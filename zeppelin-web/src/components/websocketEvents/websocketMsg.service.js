@@ -61,7 +61,8 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({
         op: 'INSERT_PARAGRAPH',
         data: {
-          index: newIndex, interpreterMark: defaultInterpreter
+          index: newIndex,
+          replName: defaultInterpreter
         }
       });
     },
@@ -139,7 +140,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
     },
 
     commitParagraph: function(paragraphId, paragraphTitle, paragraphData, paragraphConfig,
-                              paragraphParams, interpreterMark) {
+                              paragraphParams, replName) {
       websocketEvents.sendNewEvent({
         op: 'COMMIT_PARAGRAPH',
         data: {
@@ -148,7 +149,7 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
           paragraph: paragraphData,
           config: paragraphConfig,
           params: paragraphParams,
-          interpreterMark: interpreterMark
+          replName: replName
         }
       });
     },

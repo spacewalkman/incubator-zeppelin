@@ -38,11 +38,12 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   //   {name: '1d', value: '0 0 0 * * ?'}
   // ];
 
-  $scope.interpreterBindings = ['r', 'python', 'markdown', 'jdbc'];
+  $scope.interpreterBindings = ['r', 'python', 'md', 'jdbc'];
   $scope.isNoteDirty = null;
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
   $scope.submitTimes = 0;
+  $scope.submited = $location.search().v && $location.search().s && Boolean($location.search().s);
 
   var connectedOnce = false;
 
@@ -544,10 +545,10 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   var saveSetting = function() {
     var selectedSettingIds = [
-      '2BXG7UDF3'/*spark*/,
-      '2C1BTWRGP'/*md*/,
-      '2BX183VEF'/*python*/,
-      '2BXQ4H4A2'/*jdbc*/];
+      '2BVG9HFPX'/*spark*/,
+      '2BU89QVB4'/*md*/,
+      '2BXW3M22D'/*python*/,
+      '2BXXK14KY'/*jdbc*/];
 
     websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedSettingIds);
     console.log('Interpreter bindings saved', selectedSettingIds);
@@ -894,5 +895,11 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.removeEventListener('click', $scope.focusParagraphOnClick);
     document.removeEventListener('keydown', $scope.keyboardShortcut);
   });
-
+  $scope.$on('revisionSubmit',function(data) {
+    $scope.submitTimes = parseInt(data.leftTimes);
+    ngToast.danger({
+      content: data.message,
+      timeout: '3000'
+    });
+  });
 });

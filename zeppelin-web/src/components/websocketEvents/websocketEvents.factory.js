@@ -77,11 +77,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           }]
         });
       } else if (op === 'REVISION_SUBMIT') { //成功提交到组委会
-
-        ngToast.danger({
-          content: data.submitLeftOver,
-          timeout: '3000'
-        });
+        $rootScope.$broadcast('revisionSubmit',data);
 
       } else if (op === 'ACK_SUBMIT_TIME') {
         $rootScope.$broadcast('flushSubmitTimes',data);

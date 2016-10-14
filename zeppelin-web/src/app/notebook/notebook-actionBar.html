@@ -105,7 +105,7 @@ limitations under the License.
           <span class="setting-btn btn-note-submit"
                 type="button"
                 ng-hide="viewOnly"
-                ng-if="note.permission.submit"
+                ng-if="note.permission.submit && !submited"
                 ng-class="{'disabled':submitTimes == 0}"
                 ng-click="submitNotebook()"
                 tooltip-placement="bottom">提交评测<i class="arrow-flag">{{submitTimes}}</i></span>

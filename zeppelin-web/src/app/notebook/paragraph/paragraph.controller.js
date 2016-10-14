@@ -332,7 +332,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   };
 
   $scope.setParagraphInterpreter = function(paragraphId, interpreterId) {
-    $scope.paragraph.interpreterMark = interpreterId;
+    $scope.paragraph.replName = interpreterId;
     commitParagraph($scope.paragraph.title, $scope.dirtyText, $scope.paragraph.config,
       $scope.paragraph.settings.params);
   };
@@ -988,7 +988,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   };
 
   var commitParagraph = function(title, text, config, params) {
-    websocketMsgSrv.commitParagraph($scope.paragraph.id, title, text, config, params, $scope.paragraph.interpreterMark);
+    websocketMsgSrv.commitParagraph($scope.paragraph.id, title, text, config, params, $scope.paragraph.replName);
   };
 
   var setTable = function(data, refresh) {
