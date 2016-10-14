@@ -225,7 +225,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '提交当前版本到组委会评测？今天还可以提交'+$scope.submitTimes+'次。',
+      message: '提交当前版本到组委会评测？今天还可以提交' + $scope.submitTimes + '次。',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.submitNotebook($routeParams.noteId, revisionID);
@@ -554,8 +554,6 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
       $scope.showSetting = false;
     }
   };
-
-
 
   $scope.toggleSetting = function() {
     if ($scope.showSetting) {
@@ -898,10 +896,12 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.removeEventListener('click', $scope.focusParagraphOnClick);
     document.removeEventListener('keydown', $scope.keyboardShortcut);
   });
-  $scope.$on('revisionSubmit',function(data) {
-    $scope.submitTimes = parseInt(data.leftTimes);
+  $scope.$on('revisionSubmit', function(data) {
+    if(!data.errorMessage)
+        $scope.submitTimes = parseInt(data.leftTimes);
+
     ngToast.danger({
-      content: data.message,
+      content: data.errorMessage || data.message,
       timeout: '3000'
     });
   });

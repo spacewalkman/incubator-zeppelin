@@ -95,7 +95,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
 
   var countEditorMode = function(replName) {
     for (var key in editorModes) {
-      if (editorModes[key].test('%'+replName)) {
+      if (editorModes[key].test('%' + replName)) {
         return key;
       }
     }
@@ -117,8 +117,6 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (!$scope.paragraph.config) {
       $scope.paragraph.config = {};
     }
-
-
 
     initializeDefault();
 
@@ -282,7 +280,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       config.enabled = true;
     }
 
-    if(config.editorMode === undefined){
+    if (config.editorMode === undefined) {
       config.editorMode = countEditorMode($scope.paragraph.replName);
     }
   };
