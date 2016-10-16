@@ -167,7 +167,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
       success();
 
       ngToast.danger({
-        content: '算法快照提交成功。',
+        content: '算法快照保存成功。',
         verticalPosition: 'bottom',
         timeout: '3000'
       });
@@ -203,7 +203,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
     if (!$scope.noteRevisions || $scope.noteRevisions.length === 0) {
       ngToast.danger({
-        content: '没有可用评测的算法快照，请先提交快照。',
+        content: '只对算法快照评测，请先保存快照。',
         timeout: '3000'
       });
       return;
@@ -213,7 +213,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '提交当前版本到组委会评测？今天还可以提交'+$scope.submitTimes+'次。',
+      message: '提交当前版本到组委会评测？还可以提交'+$scope.submitTimes+'次。',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.submitNotebook($routeParams.noteId, revisionID);
@@ -231,7 +231,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '执行所有?',
+      message: '执行所有段落?',
       callback: function(result) {
         if (result) {
           _.forEach($scope.note.paragraphs, function(n, key) {
