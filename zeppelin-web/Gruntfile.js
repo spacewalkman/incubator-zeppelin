@@ -435,11 +435,11 @@ module.exports = function(grunt) {
           optimizationLevel: 7 //定义 PNG 图片优化水平
         },
         files: [{
-            expand: true,
-            cwd: '.tmp/styles/',
-            src: ['**/*.{png,jpg,jpeg}'], // 优化 img 目录下所有 png/jpg/jpeg 图片
-            dest: '.tmp/styles/' // 优化后的图片保存位置，覆盖旧图片，并且不作提示
-          }]
+          expand: true,
+          cwd: '.tmp/styles/',
+          src: ['**/*.{png,jpg,jpeg}'], // 优化 img 目录下所有 png/jpg/jpeg 图片
+          dest: '.tmp/styles/' // 优化后的图片保存位置，覆盖旧图片，并且不作提示
+        }]
       }
     },
     htmlmin: {
@@ -535,7 +535,7 @@ module.exports = function(grunt) {
         options: {
           target: ['.tmp/styles/*.*'],
           fixDirLevel: true,
-          maxBytes : 2048
+          maxBytes: 2048
         }
       }
     },

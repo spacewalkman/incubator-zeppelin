@@ -14,7 +14,7 @@
 'use strict';
 
 angular.module('zeppelinWebApp').factory('websocketEvents',
-  function($rootScope, $websocket, $location, baseUrlSrv,ngToast) {
+  function($rootScope, $websocket, $location, baseUrlSrv, ngToast) {
     var websocketCalls = {};
 
     websocketCalls.ws = $websocket(baseUrlSrv.getWebsocketUrl());
@@ -77,10 +77,10 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           }]
         });
       } else if (op === 'REVISION_SUBMIT') { //成功提交到组委会
-        $rootScope.$broadcast('revisionSubmit',data);
+        $rootScope.$broadcast('revisionSubmit', data);
 
       } else if (op === 'ACK_SUBMIT_TIME') {
-        $rootScope.$broadcast('flushSubmitTimes',data);
+        $rootScope.$broadcast('flushSubmitTimes', data);
       } else if (op === 'PARAGRAPH') {
         $rootScope.$broadcast('updateParagraph', data);
       } else if (op === 'PARAGRAPH_APPEND_OUTPUT') {

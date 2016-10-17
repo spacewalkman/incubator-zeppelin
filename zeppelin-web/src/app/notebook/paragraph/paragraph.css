@@ -556,3 +556,9 @@ table.table-striped {
   vertical-align: middle;
   font-size: 14px;
 }
+.icon-control-pause:before{
+  display: inline-block;
+  width: 19px;
+  height: 21px;
+  line-height: 21px;
+}

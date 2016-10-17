@@ -40,7 +40,15 @@ limitations under the License.
             ng-if="note.permission.exec"
             ng-click="runParagraph(getEditorValue())"
             ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING' && paragraph.config.enabled"
-            tooltip-placement="bottom" tooltip="执行程序 (Shift+Enter)"><span class="ico-placeholder"></span></button>
+            tooltip-placement="bottom"
+            tooltip="执行程序 (Shift+Enter)"><span class="ico-placeholder"></span></button>
+
+    <button class="icon-control-pause btn btn-default btn-xs"
+          style="cursor:pointer;"
+          tooltip-placement="bottom"
+          tooltip="取消执行"
+          ng-show="paragraph.status=='RUNNING' || paragraph.status=='PENDING'"
+          ng-click="cancelParagraph()"></button>
 
     <button type="button"
             class="btn btn-default btn-xs"
