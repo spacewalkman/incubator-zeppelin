@@ -897,8 +897,9 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.removeEventListener('keydown', $scope.keyboardShortcut);
   });
   $scope.$on('revisionSubmit', function(data) {
-    if(!data.errorMessage)
+    if(!data.errorMessage) {
         $scope.submitTimes = parseInt(data.leftTimes);
+    }
 
     ngToast.danger({
       content: data.errorMessage || data.message,
