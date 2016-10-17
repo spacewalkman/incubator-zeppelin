@@ -195,7 +195,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   var validateCheckpointMessage = function() {
     if (!$scope.note.checkpoint || !$scope.note.checkpoint.message) {
-      $scope.commitMsgError = 'commit message 必须填写！';
+      $scope.commitMsgError = '提交日志必须填写！';
       return false;
     } else {
       $scope.commitMsgError = null;
@@ -243,7 +243,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '执行所有?',
+      message: '执行所有段落?',
       callback: function(result) {
         if (result) {
           _.forEach($scope.note.paragraphs, function(n, key) {

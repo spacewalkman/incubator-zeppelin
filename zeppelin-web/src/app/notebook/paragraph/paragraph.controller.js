@@ -857,7 +857,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     var timeMs = Date.parse(pdata.dateFinished) - Date.parse(pdata.dateStarted);
     if (isNaN(timeMs) || timeMs < 0) {
       if ($scope.isResultOutdated()) {
-        return 'outdated';
+        return '已过期';
       }
       return '';
     }
@@ -865,7 +865,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     var desc = '用时 ' + moment.duration((timeMs / 1000), 'seconds').format('h [小时] m [分] s [秒]') +
       '，' + user + '于' + moment(pdata.dateFinished).format('YYYY-MM-DD HH:mm:ss') + '最后一次执行。';
     if ($scope.isResultOutdated()) {
-      desc += ' (outdated)';
+      desc += ' (已过期)';
     }
     return desc;
   };
