@@ -199,7 +199,6 @@ public class NotebookRestApi {
   }
 
   @GET
-  @Path("/")
   @ZeppelinApi
   public Response getNotebookList() throws IOException {
     List<Map<String, String>> notesInfo = new LinkedList<>();  //notebookServer.generateNotebooksInfo(false);//TODO:如何识别身份，进行note过滤
