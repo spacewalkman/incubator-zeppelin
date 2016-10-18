@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * interpreter.json序列化的格式
  */
 public class InterpreterInfoSaving {
   public Map<String, InterpreterSetting> interpreterSettings;

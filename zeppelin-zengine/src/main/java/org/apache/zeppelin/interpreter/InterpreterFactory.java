@@ -96,7 +96,7 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
   /**
    * This is only references with default settings, name and properties
-   * key: InterpreterSetting.name
+   * key: InterpreterSetting.name （其实是group name)
    */
   private final Map<String, InterpreterSetting> interpreterSettingsRef = new HashMap<>();
 
@@ -106,6 +106,9 @@ public class InterpreterFactory implements InterpreterGroupFactory {
    */
   private final Map<String, InterpreterSetting> interpreterSettings = new HashMap<>();
 
+  /**
+   * 存储noteId与interpreterId之间的映射关系，1：N关系
+   */
   private Map<String, List<String>> interpreterBindings = new HashMap<>();
   private List<RemoteRepository> interpreterRepositories;
 
@@ -126,7 +129,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
   public InterpreterFactory(ZeppelinConfiguration conf,
                             AngularObjectRegistryListener angularObjectRegistryListener,
                             RemoteInterpreterProcessListener remoteInterpreterProcessListener,
-                            ApplicationEventListener appEventListener, DependencyResolver depResolver)
+                            ApplicationEventListener appEventListener,
+                            DependencyResolver depResolver)
           throws InterpreterException, IOException, RepositoryException {
     this(conf, new InterpreterOption(true), angularObjectRegistryListener,
             remoteInterpreterProcessListener, appEventListener, depResolver);
@@ -136,7 +140,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
   public InterpreterFactory(ZeppelinConfiguration conf, InterpreterOption defaultOption,
                             AngularObjectRegistryListener angularObjectRegistryListener,
                             RemoteInterpreterProcessListener remoteInterpreterProcessListener,
-                            ApplicationEventListener appEventListener, DependencyResolver depResolver)
+                            ApplicationEventListener appEventListener,
+                            DependencyResolver depResolver)
           throws InterpreterException, IOException, RepositoryException {
     this.conf = conf;
     this.defaultOption = defaultOption;
@@ -337,6 +342,9 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
   }
 
+  /**
+   * 从interpreter.json加载interpreter的配置、note和interpreter的关联关系、repository配置等，参见InterpreterInfoSaving
+   */
   private void loadFromFile() throws IOException {
     File settingFile = new File(conf.getInterpreterSettingPath());
     if (!settingFile.exists()) {
@@ -506,7 +514,9 @@ public class InterpreterFactory implements InterpreterGroupFactory {
   }
 
   public InterpreterSetting createNewSetting(String name, String group,
-      List<Dependency> dependencies, InterpreterOption option, Properties p) throws IOException {
+                                             List<Dependency> dependencies,
+                                             InterpreterOption option,
+                                             Properties p) throws IOException {
     if (name.indexOf(".") >= 0) {
       throw new IOException("'.' is invalid for InterpreterSetting name.");
     }
@@ -532,13 +542,10 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
   /**
    * @param group InterpreterSetting reference name
-<<<<<<< HEAD
-=======
-   * @return
->>>>>>> upstream/master
    */
   public InterpreterSetting add(String group, ArrayList<InterpreterInfo> interpreterInfos,
-                                List<Dependency> dependencies, InterpreterOption option, Properties properties, String path) {
+                                List<Dependency> dependencies, InterpreterOption option,
+                                Properties properties, String path) {
     Preconditions.checkNotNull(group, "name should not be null");
     Preconditions.checkNotNull(interpreterInfos, "interpreterInfos should not be null");
     Preconditions.checkNotNull(dependencies, "dependencies should not be null");
@@ -583,8 +590,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
       } else {
         interpreterSetting =
-            new InterpreterSetting(group, null, interpreterInfos, properties, dependencies, option,
-                path);
+                new InterpreterSetting(group, null, interpreterInfos, properties, dependencies, option,
+                        path);
         interpreterSettingsRef.put(group, interpreterSetting);
       }
     }
@@ -623,6 +630,10 @@ public class InterpreterFactory implements InterpreterGroupFactory {
   }
 
   public void removeInterpretersForNote(InterpreterSetting interpreterSetting, String noteId) {
+    if (interpreterSetting == null || interpreterSetting.getOption() == null) {
+      return;
+    }
+
     if (interpreterSetting.getOption().isPerNoteProcess()) {
       interpreterSetting.closeAndRemoveInterpreterGroup(noteId);
     } else if (interpreterSetting.getOption().isPerNoteSession()) {
@@ -988,9 +999,9 @@ public class InterpreterFactory implements InterpreterGroupFactory {
     int maxPoolSize = conf.getInt(ConfVars.ZEPPELIN_INTERPRETER_MAX_POOL_SIZE);
 
     RemoteInterpreter remoteInterpreter =
-        new RemoteInterpreter(property, noteId, className, conf.getInterpreterRemoteRunnerPath(),
-            interpreterPath, localRepoPath, connectTimeout, maxPoolSize,
-            remoteInterpreterProcessListener, appEventListener);
+            new RemoteInterpreter(property, noteId, className, conf.getInterpreterRemoteRunnerPath(),
+                    interpreterPath, localRepoPath, connectTimeout, maxPoolSize,
+                    remoteInterpreterProcessListener, appEventListener);
     remoteInterpreter.addEnv(env);
 
     return new LazyOpenInterpreter(remoteInterpreter);

@@ -78,7 +78,6 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         });
       } else if (op === 'REVISION_SUBMIT') { //成功提交到组委会
         $rootScope.$broadcast('revisionSubmit', data);
-
       } else if (op === 'ACK_SUBMIT_TIME') {
         $rootScope.$broadcast('flushSubmitTimes', data);
       } else if (op === 'PARAGRAPH') {

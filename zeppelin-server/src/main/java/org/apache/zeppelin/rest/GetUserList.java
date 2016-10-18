@@ -22,7 +22,6 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
 import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.JndiLdapContextFactory;
-import org.apache.shiro.realm.ldap.JndiLdapRealm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.shiro.util.JdbcUtils;
 import org.apache.zeppelin.server.ActiveDirectoryGroupRealm;
