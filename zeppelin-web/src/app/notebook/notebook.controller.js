@@ -26,7 +26,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.submitable = false;
 
   $scope.showSetting = false;
-  $scope.looknfeelOption = [{k: 'default', v: '代码试图'}, {k: 'report', v: '报告试图'}];
+  $scope.looknfeelOption = [{k: 'default', v: '代码视图'}, {k: 'report', v: '报告视图'}];
   // $scope.cronOption = [
   //   {name: 'None', value: undefined},
   //   {name: '1m', value: '0 0/1 * * * ?'},
@@ -38,7 +38,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   //   {name: '1d', value: '0 0 0 * * ?'}
   // ];
 
-  $scope.interpreterBindings = ['r', 'python', 'md', 'jdbc'];
+  $scope.interpreterBindings = ['r', 'python', 'spark', 'md', 'jdbc'];
   $scope.isNoteDirty = null;
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
@@ -48,14 +48,14 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   var connectedOnce = false;
   var saveSetting = function() {
     //写死的执行器ID
-    var selectedSettingIds = [
-      '2BVG9HFPX'/*spark*/,
-      '2BU89QVB4'/*md*/,
-      '2BXW3M22D'/*python*/,
-      '2BXXK14KY'/*jdbc*/];
+    var selectedInterpreterNames = [
+      'spark',
+      'md',
+      'python',
+      'jdbc'];
 
-    websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedSettingIds);
-    console.log('Interpreter bindings saved', selectedSettingIds);
+    websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedInterpreterNames);
+    console.log('Interpreter bindings saved', selectedInterpreterNames);
   };
 
   // user auto complete related
@@ -225,7 +225,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '提交当前版本到组委会评测？今天还可以提交' + $scope.submitTimes + '次。',
+      message: '提交当前版本到组委会评测？还可以提交' + $scope.submitTimes + '次。',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.submitNotebook($routeParams.noteId, revisionID);
@@ -886,7 +886,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   });
   //更新可提交次数
   $scope.$on('flushSubmitTimes', function(event, times) {
-    $scope.submitTimes = times.info;
+    $scope.submitTimes = times.leftTimes;
   });
   $scope.$on('$destroy', function() {
     angular.element(window).off('beforeunload');
@@ -897,8 +897,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.removeEventListener('keydown', $scope.keyboardShortcut);
   });
   $scope.$on('revisionSubmit', function(data) {
-    if(!data.errorMessage) {
-        $scope.submitTimes = parseInt(data.leftTimes);
+    if (!data.errorMessage) {
+      $scope.submitTimes = parseInt(data.leftTimes);
     }
 
     ngToast.danger({
