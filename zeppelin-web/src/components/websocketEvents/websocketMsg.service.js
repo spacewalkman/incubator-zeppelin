@@ -235,10 +235,10 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({op: 'GET_INTERPRETER_BINDINGS', data: {noteID: noteID}});
     },
 
-    saveInterpreterBindings: function(noteID, selectedSettingIds) {
+    saveInterpreterBindings: function(noteID, selectedInterpreterNames) {
       websocketEvents.sendNewEvent({
         op: 'SAVE_INTERPRETER_BINDINGS',
-        data: {noteID: noteID, selectedSettingIds: selectedSettingIds}
+        data: {noteID: noteID, selectedInterpreterNames: selectedInterpreterNames}
       });
     }
 

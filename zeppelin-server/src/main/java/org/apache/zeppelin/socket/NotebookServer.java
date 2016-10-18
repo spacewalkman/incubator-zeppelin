@@ -257,7 +257,7 @@ public class NotebookServer extends WebSocketServlet implements
         case PARAGRAPH_CLEAR_OUTPUT:
           clearParagraphOutput(conn, subject, notebook, messagereceived);
           break;
-        case NOTE_UPDATE://set note级别的属性，例如修改title、config等
+        case NOTE_UPDATE://set note级别的属性，例如修改title、config等 TODO:测试修改interpreter下拉列表走这个方法吗?
           updateNote(conn, subject, notebook, messagereceived);
           break;
         case COMPLETION:
@@ -301,7 +301,7 @@ public class NotebookServer extends WebSocketServlet implements
         case GET_INTERPRETER_BINDINGS://打开note时，获取note启用了哪些interpreter
           getInterpreterBindings(conn, messagereceived);
           break;
-        case SAVE_INTERPRETER_BINDINGS://启/禁用某些interpreter之后，save
+        case SAVE_INTERPRETER_BINDINGS://启/禁用某些interpreter之后，save，现在由前台在GET_NOTE之后，自动调用
           saveInterpreterBindings(conn, messagereceived);
           break;
         default:
@@ -546,10 +546,10 @@ public class NotebookServer extends WebSocketServlet implements
   public void saveInterpreterBindings(NotebookSocket conn, Message fromMessage) {
     String noteId = (String) fromMessage.data.get("noteID");
     try {
-      List<String> settingIdList = GsonUtil.fromJson(String.valueOf(
-              fromMessage.data.get("selectedSettingIds")), new TypeToken<ArrayList<String>>() {
+      List<String> settingNames = GsonUtil.fromJson(String.valueOf(
+              fromMessage.data.get("selectedInterpreterNames")), new TypeToken<ArrayList<String>>() {
       }.getType());
-      notebook().bindInterpretersToNote(noteId, settingIdList);
+      notebook().bindInterpretersToNote(noteId, settingNames);
       broadcastInterpreterBindings(noteId,
               InterpreterBindingUtils.getInterpreterBindings(notebook(), noteId));
     } catch (Exception e) {
@@ -828,7 +828,7 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     if (notebookAuthorization.isSubmitter(subject, note.getGroup(), note.getId())) {
-      //TODO:这里要判断是否满足提交策略
+      //如果在这里判断是否满足SubmitStrategy，会造成比较大的性能影响
       permissionsMap.put(Note.SUMITTERABLE, true);
     }
   }
@@ -1632,7 +1632,7 @@ public class NotebookServer extends WebSocketServlet implements
       submitLeftOver = notebook.submit(noteId, revisionId);
     } catch (Exception e) {
       if (e instanceof SubmitStrategyVolationException) {
-        conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", e.getMessage())));
+        conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("errorMessage", e.getMessage())));
       }
 
       return;
@@ -1644,6 +1644,11 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     conn.send(serializeMessage(new Message(OP.REVISION_SUBMIT).put("submitLeftOver", submitLeftOver)));
+
+    //push revisions,让note历史刷新
+    List<Revision> revisions = notebook.listRevisionHistory(noteId, userProfile.getUserName());
+    conn.send(serializeMessage(new Message(OP.LIST_REVISION_HISTORY)
+            .put("revisionList", revisions)));
   }
 
   /**
@@ -1659,8 +1664,9 @@ public class NotebookServer extends WebSocketServlet implements
       throw new IllegalArgumentException("group is null");
     }
 
-    int submitTimes = notebook.currentSubmitTimes(group, userProfile.getProjectId());
-    conn.send(serializeMessage(new Message(OP.ACK_SUBMIT_TIME).put("info", submitTimes)));//TODO：前端需要处理这个OP=ACK_SUBMIT_TIME，并且binding submitLeftOver，显示指定时间内还剩余提交次数
+    SubmitLeftOver submitLeftOver = notebook.currentSubmitLeftTimes(group, userProfile.getProjectId());
+    //前端需要处理这个OP=ACK_SUBMIT_TIME，并且binding submitLeftOver，显示指定时间内还剩余提交次数
+    conn.send(serializeMessage(new Message(OP.ACK_SUBMIT_TIME).put("submitLeftOver", submitLeftOver)));
   }
 
   private void listRevisionHistory(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -1673,6 +1679,9 @@ public class NotebookServer extends WebSocketServlet implements
             .put("revisionList", revisions)));
   }
 
+  /**
+   * 获取指定noteid和revisionid的Note历史版本
+   */
   private void getNoteByRevision(NotebookSocket conn, Subject subject, Notebook notebook,
                                  Message fromMessage)
           throws IOException {

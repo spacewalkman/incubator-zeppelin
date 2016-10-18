@@ -453,10 +453,11 @@ public class NotebookRepoSync implements NotebookRepo {
    * @param revisionId 待提交的版本
    */
   @Override
-  public SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException {
+  public SubmitLeftOver submit(String noteId,
+                               String revisionId) throws SubmitStrategyVolationException {
     try {
       for (int i = 0; i < getRepoCount(); i++) {
-        SubmitLeftOver submitLeftOver = getRepo(i).submit(noteId, revisionId);
+        SubmitLeftOver submitLeftOver = getRepo(i).submit(noteId, revisionId);//目前只有jdbcNotebookRepo支持
         if (submitLeftOver != null) {
           return submitLeftOver;
         }
@@ -468,17 +469,17 @@ public class NotebookRepoSync implements NotebookRepo {
   }
 
   @Override
-  public int currentSubmitTimes(String team, String projectId) {
+  public SubmitLeftOver currentSubmitLeftTimes(String team, String projectId) {
     try {
       for (int i = 0; i < getRepoCount(); i++) {
-        int time = getRepo(i).currentSubmitTimes(team, projectId);
-        if (time != -1) {
-          return time;
+        SubmitLeftOver submitLeftOver = getRepo(i).currentSubmitLeftTimes(team, projectId);
+        if (submitLeftOver != null) {
+          return submitLeftOver;
         }
       }
     } catch (IOException e) {
       LOG.error("Failed to query current submit time for team:'{}' of project:'{}'", team, projectId, e);
     }
-    return -1;
+    return null;
   }
 }

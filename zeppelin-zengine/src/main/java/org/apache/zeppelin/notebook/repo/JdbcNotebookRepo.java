@@ -527,32 +527,35 @@ public class JdbcNotebookRepo implements NotebookRepo {
       throw new IllegalArgumentException("revision's projectId is null");
     }
 
-    int currentSubmitTimes = this.currentSubmitTimes(revision.team, revision.projectId);
+    int currentTimes = this.queryCurrentSubmitTimes(revision.team, revision.projectId);
     final int maxTimes = this.getSubmitStrategy().getMaxTime();
-    LOG.debug("team='{}',groupId='{}',当前已经提交次数:{},允许提交次数:{}", revision.team, revision.projectId, currentSubmitTimes, maxTimes);
+    LOG.debug("team='{}',groupId='{}',当前已经提交次数:{},允许提交次数:{}", revision.team, revision.projectId, currentTimes, maxTimes);
     //提交之前检查是否超过允许提交次数
-    if (currentSubmitTimes >= maxTimes) {
+    if (currentTimes >= maxTimes) {
       throw new SubmitStrategyVolationException("超过提交次数限制");
     }
 
     int affected = this.doSubmit(revisionId);
     if (affected == 1) {
-      return new SubmitLeftOver(revision.team, revision.projectId, currentSubmitTimes + 1, maxTimes, this.getSubmitStrategy().getTypeName());
+      return new SubmitLeftOver(revision.team, revision.projectId, currentTimes + 1, maxTimes, this.getSubmitStrategy().getTypeName());
     } else {//该版本已经submit过了
       return null;
     }
   }
 
   /**
-   * 查询当前队伍对当前题目已经的提交次数
+   * 查询当前队伍对当前题目还被允许提交的次数
    *
    * @param team      队伍
    * @param projectId 赛题
    * @return 已经提交的次数
    */
   @Override
-  public int currentSubmitTimes(String team, String projectId) {
-    return this.queryCurrentSubmitTimes(team, projectId);
+  public SubmitLeftOver currentSubmitLeftTimes(String team, String projectId) {
+    final int maxTimes = this.getSubmitStrategy().getMaxTime();
+    final int currentTimes = this.queryCurrentSubmitTimes(team, projectId);
+
+    return new SubmitLeftOver(team, projectId, currentTimes, maxTimes, this.getSubmitStrategy().getTypeName());
   }
 
   /**
@@ -585,12 +588,12 @@ public class JdbcNotebookRepo implements NotebookRepo {
   /**
    * 查询当前该参赛队、该题目，已经提交了多少次了
    */
-  public int queryCurrentSubmitTimes(String team, String projectId) {
+  private int queryCurrentSubmitTimes(String team, String projectId) {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Connection connection = null;
 
-    int result = Integer.MIN_VALUE;
+    int result = -1;
     long[] timeRanges = this.getSubmitStrategy().getTimeRange();
     try {
       NotebookDataSource dataSource = NotebookDataSource.getInstance(conf);

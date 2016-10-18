@@ -63,6 +63,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -270,20 +271,35 @@ public class Notebook implements NoteEventListener {
     return newNote;
   }
 
-  public void bindInterpretersToNote(String id, List<String> interpreterSettingIds)
+  /**
+   * 根据前台传递过来的interpreterName来关联note到interpreterSetting
+   *
+   * @param nodeId           note的id
+   * @param interpreterNames 类似md、spark、python、r等这样的interpreter name，而不是id，由于IDE前端没有让用户选择interpreter了，故需要通过name来bind
+   */
+  public void bindInterpretersToNote(String nodeId, List<String> interpreterNames)
           throws IOException {
-    Note note = getNote(id);
+    Note note = getNote(nodeId);
     if (note != null) {
-      List<InterpreterSetting> currentBindings = replFactory.getInterpreterSettings(id);
-      for (InterpreterSetting setting : currentBindings) {
-        if (!interpreterSettingIds.contains(setting.getId())) {
-          fireUnbindInterpreter(note, setting);
+      List<InterpreterSetting> allInterpreterSettings = replFactory.get();
+
+      //找到与IDE传过来的interpreter name匹配的interpreter ids
+      List<String> interpreterIds = new LinkedList<>();
+      for (InterpreterSetting interpreterSetting : allInterpreterSettings) {
+        if (interpreterNames.contains(interpreterSetting.getName())) {
+          interpreterIds.add(interpreterSetting.getId());
         }
       }
 
-      replFactory.setInterpreters(note.getId(), interpreterSettingIds);
-      // comment out while note.getNoteReplLoader().setInterpreters(...) do the same
-      // replFactory.putNoteInterpreterSettingBinding(id, interpreterSettingIds);
+      //比较现有note绑定的ids与IDE传过来的ids之间的不同
+      List<InterpreterSetting> currentBindings = replFactory.getInterpreterSettings(nodeId);
+      for (InterpreterSetting currentSetting : currentBindings) {
+        if (!interpreterIds.contains(currentSetting.getId())) {
+          fireUnbindInterpreter(note, currentSetting);
+        }
+      }
+
+      replFactory.setInterpreters(note.getId(), interpreterIds);//保存note与interpreter ids之间的映射关系
     }
   }
 
@@ -390,10 +406,10 @@ public class Notebook implements NoteEventListener {
   }
 
   /**
-   * 查询当前队伍对当前题目已经提交的次数
+   * 查询当前队伍对当前题目剩余提交的次数
    */
-  public int currentSubmitTimes(String groupId, String projectId) {
-    return this.notebookRepo.currentSubmitTimes(groupId, projectId);
+  public SubmitLeftOver currentSubmitLeftTimes(String groupId, String projectId) {
+    return this.notebookRepo.currentSubmitLeftTimes(groupId, projectId);
   }
 
   @SuppressWarnings("rawtypes")
@@ -812,6 +828,7 @@ public class Notebook implements NoteEventListener {
         }
       }
     }
+
   }
 
   public void refreshCron(String id) {

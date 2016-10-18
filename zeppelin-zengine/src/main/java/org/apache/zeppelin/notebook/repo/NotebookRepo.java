@@ -119,13 +119,13 @@ public interface NotebookRepo {
   SubmitLeftOver submit(String noteId, String revisionId) throws SubmitStrategyVolationException;
 
   /**
-   * 获取当前参赛队对该题目已经提交的次数
+   * 获取当前参赛队对该题目剩余提交次数
    *
    * @param team      参赛队
    * @param projectId 题目id
    * @return 已经提交到组委会的次数, 如果为-1表示不支持查询已经提交的次数
    */
-  int currentSubmitTimes(String team, String projectId);
+  SubmitLeftOver currentSubmitLeftTimes(String team, String projectId);
 
   /**
    * Represents the 'Revision' a point in life of the notebook

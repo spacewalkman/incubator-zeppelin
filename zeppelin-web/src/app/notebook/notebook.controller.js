@@ -43,6 +43,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
   $scope.submitTimes = 0;
+  $scope.submitStrategyName = null;
   $scope.submited = $location.search().v && $location.search().s;
 
   var connectedOnce = false;
@@ -225,7 +226,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
-      message: '提交当前版本到组委会评测？还可以提交' + $scope.submitTimes + '次。',
+      message: '提交当前版本到组委会评测？本' + $scope.submitStrategyName + '还可以提交' + $scope.submitTimes + '次。',
       callback: function(result) {
         if (result) {
           websocketMsgSrv.submitNotebook($routeParams.noteId, revisionID);
@@ -885,8 +886,9 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     $rootScope.$broadcast('setNoteContent', revision.data);
   });
   //更新可提交次数
-  $scope.$on('flushSubmitTimes', function(event, times) {
-    $scope.submitTimes = times.leftTimes;
+  $scope.$on('flushSubmitTimes', function(event, data) {
+    $scope.submitTimes = data.submitLeftOver.maxTimes - data.submitLeftOver.currentTimes;
+    $scope.submitStrategyName = data.submitLeftOver.strategyTypeName;
   });
   $scope.$on('$destroy', function() {
     angular.element(window).off('beforeunload');
@@ -896,14 +898,19 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     document.removeEventListener('click', $scope.focusParagraphOnClick);
     document.removeEventListener('keydown', $scope.keyboardShortcut);
   });
-  $scope.$on('revisionSubmit', function(data) {
+  $scope.$on('revisionSubmit', function(event, data) {
     if (!data.errorMessage) {
-      $scope.submitTimes = parseInt(data.leftTimes);
+      $scope.submitTimes = data.submitLeftOver.maxTimes - data.submitLeftOver.currentTimes;
+      $scope.submited = true;
+      ngToast.danger({
+                       content: '提交评测成功',
+                       timeout: '3000'
+                     });
+    } else {
+      ngToast.danger({
+                       content: data.errorMessage,
+                       timeout: '3000'
+                     });
     }
-
-    ngToast.danger({
-      content: data.errorMessage || data.message,
-      timeout: '3000'
-    });
   });
 });
