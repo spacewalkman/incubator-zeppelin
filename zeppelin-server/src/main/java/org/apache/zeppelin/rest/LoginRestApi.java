@@ -36,11 +36,16 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * 登录验证，使用稻田REST验证接口，zeppelin将成功验证的<UserProfile,Subject>缓存
@@ -49,6 +54,15 @@ import javax.ws.rs.core.Response;
 @Produces("application/json")
 public class LoginRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
+
+
+  @XmlRootElement
+  public static class LoginBean {
+    @XmlElement
+    public String ticket;
+    @XmlElement
+    public int serverIndex;
+  }
 
   /**
    * Required by Swagger.
@@ -67,19 +81,19 @@ public class LoginRestApi {
    * @return 200 response
    */
   @POST
+  @Consumes({MediaType.APPLICATION_JSON})
   @ZeppelinApi
-  public Response postLogin(@FormParam("ticket") String ticket,
-                            @FormParam("serverindex") int serverindex) {
+  public Response postLogin(LoginBean loginBean) {
     JsonResponse response = null;
 
-    Subject subject = TicketContainer.instance.getCachedSubject(ticket);
+    Subject subject = TicketContainer.instance.getCachedSubject(loginBean.ticket);
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
     }
 
     if (!subject.isAuthenticated()) {
       try {
-        TicketUserNameToken token = new TicketUserNameToken(ticket, serverindex);
+        TicketUserNameToken token = new TicketUserNameToken(loginBean.ticket, loginBean.serverIndex);
         //token.setRememberMe(true);
 
         Date startTime = new Date();
