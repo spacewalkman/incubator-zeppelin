@@ -45,8 +45,8 @@ public class JdbcNotebookRepo implements NotebookRepo {
   //采用dbms存储note时，不区分note的author和committer，只存储committer字段
   private static final String REVISION_INSERT_SQL = "insert into " + NOTE_REVISION_TABLE_NAME + "(noteId,note_name,committer,team,projectId,message,commit_date,content,sha1) values (?,?,?,?,?,?,?,?,?)";
   private static final String GET_REVISION_BY_ID = "select id,noteId,note_name,committer,team,projectId,message,commit_date,content,sha1 FROM " + NOTE_REVISION_TABLE_NAME + " where id=?";
-  private static final String GET_REVISION_CONTENT_BY_ID = "select content from " + NOTE_REVISION_TABLE_NAME + " where id=? and noteId=? and committer=?";
-  private static final String SELECT_REVISION_BY_NOTE_ID = "select id,note_name,committer,message,commit_date,team,projectId,is_submit from " + NOTE_REVISION_TABLE_NAME + " where noteId=? and committer=? order by commit_date desc";
+  private static final String GET_REVISION_CONTENT_BY_ID = "select content from " + NOTE_REVISION_TABLE_NAME + " where id=? and noteId=?";
+  private static final String SELECT_REVISION_BY_NOTE_ID = "select id,note_name,committer,message,commit_date,team,projectId,is_submit from " + NOTE_REVISION_TABLE_NAME + " where noteId=? order by commit_date desc";
   private static final String SET_SUBMITTED_FLAG_SQL = "update " + NOTE_REVISION_TABLE_NAME + " set is_submit=true where id=? and (is_submit is null OR is_submit=false)";//限制is_submit=false，避免重复submit同一个revision占用提交次数
   private static final String SELECT_LAST_NOTE_CONTENT_SQL = "select n1.sha1 from " + NOTE_REVISION_TABLE_NAME + " n1 where n1.noteId=? and n1.commit_date in (select max(n2.commit_date) from " + NOTE_REVISION_TABLE_NAME + " n2 where n2.noteId=?)";
 
@@ -336,10 +336,9 @@ public class JdbcNotebookRepo implements NotebookRepo {
     Connection connection = null;
     try {
       connection = notebookDataSource.getConnection();
-      ps = connection.prepareStatement(GET_REVISION_CONTENT_BY_ID); //TODO:这里noteId与revId是重复的，与git不同，dbms存储版本，是独立的，没有working copy
+      ps = connection.prepareStatement(GET_REVISION_CONTENT_BY_ID);//不能将committer作为过滤条件，否则同组的A看不到B提交的revison了
       ps.setString(1, revId);
       ps.setString(2, noteId);
-      ps.setString(3, principal);
 
       rs = ps.executeQuery();
       if (rs.next()) {
@@ -427,6 +426,12 @@ public class JdbcNotebookRepo implements NotebookRepo {
     }
   }
 
+  /**
+   * 查询一个note的所有提交历史
+   *
+   * @param noteId    id of the Notebook
+   * @param principal 当前用户，由于目前ntoe的历史是同组同project都能看到，所以这里并不将principal作为查询条件
+   */
   @Override
   public List<Revision> revisionHistory(String noteId, String principal) {
     PreparedStatement ps = null;
@@ -439,7 +444,6 @@ public class JdbcNotebookRepo implements NotebookRepo {
       connection = notebookDataSource.getConnection();
       ps = connection.prepareStatement(SELECT_REVISION_BY_NOTE_ID);
       ps.setString(1, noteId);
-      ps.setString(2, principal);
 
       rs = ps.executeQuery();
 
@@ -449,10 +453,10 @@ public class JdbcNotebookRepo implements NotebookRepo {
         String committer = rs.getString(3);
         String message = rs.getString(4);
         Timestamp commitDate = rs.getTimestamp(5);
-        String team = rs.getString(6);
+        String teamInDb = rs.getString(6);
         String projectId = rs.getString(7);
         boolean isSubmit = rs.getBoolean(8);//TODO：如何显示是否已经提交组委会
-        Revision revision = new Revision(id + "", noteId, noteName, message, commitDate.getTime(), committer, committer, team, projectId, isSubmit);//基于dbms的存储，无法区分commit的author和committer，除非做 行级别的代码与用户之间的对应关系
+        Revision revision = new Revision(id + "", noteId, noteName, message, commitDate.getTime(), committer, committer, teamInDb, projectId, isSubmit);//基于dbms的存储，无法区分commit的author和committer，除非做 行级别的代码与用户之间的对应关系
         revisionList.add(revision);
       }
     } catch (SQLException e) {
