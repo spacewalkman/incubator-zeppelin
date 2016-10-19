@@ -117,7 +117,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     dateUpdated = null;
     settings = new GUI();
     config = new HashMap<String, Object>();
-    this.replName = "markdown";
+    this.replName = "md";
   }
 
   private static String generateId() {
@@ -324,13 +324,16 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     }
 
     String script = getScriptBody();
+    if (script.isEmpty()) {
+      return new InterpreterResult(Code.SUCCESS, InterpreterResult.Type.NULL, "代码为空");
+    }
+
     // inject form
     if (repl.getFormType() == FormType.NATIVE) {
       settings.clear();
     } else if (repl.getFormType() == FormType.SIMPLE) {
       String scriptBody = getScriptBody();
-      Map<String, Input> inputs = Input.extractSimpleQueryParam(scriptBody); // inputs will be built
-      // from script body
+      Map<String, Input> inputs = Input.extractSimpleQueryParam(scriptBody); // inputs will be built from script body
 
       final AngularObjectRegistry angularRegistry = repl.getInterpreterGroup()
               .getAngularObjectRegistry();
