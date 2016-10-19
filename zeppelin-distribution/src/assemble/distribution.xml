@@ -73,7 +73,8 @@
         <exclude>interpreter.json</exclude>
         <exclude>zeppelin-env.cmd</exclude>
         <exclude>zeppelin-env.sh</exclude>
-        <exclude>zeppelin-site.xml</exclude>
+        <!--distribution里面含有zeppelin-site.xml文件-->
+        <!--<exclude>zeppelin-site.xml</exclude>-->
       </excludes>
     </fileSet>
     <fileSet>

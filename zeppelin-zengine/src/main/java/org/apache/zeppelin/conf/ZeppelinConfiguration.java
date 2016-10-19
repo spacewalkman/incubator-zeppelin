@@ -582,8 +582,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE("zeppelin.note.repo.jdbc.max.pool.size", 2),
 
     //提交策略，每天提交3次
-    ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS("zeppelin.note.commit.strategy.class", DailySubmitStrategy.class.getName()),
-    ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES("zeppelin.note.commit.strategy.max.commit.times", 3),
+    ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS("zeppelin.note.submit.strategy.class", DailySubmitStrategy.class.getName()),
+    ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES("zeppelin.note.submit.strategy.max.times", 3),
 
     /**
      * zeppelin利用稻田验证用户的REST地址

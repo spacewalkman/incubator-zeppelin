@@ -1,8 +1,6 @@
 package org.apache.zeppelin.notebook.repo.commit;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.TimeZone;
 
 /**
  * 按照每天限制次数
