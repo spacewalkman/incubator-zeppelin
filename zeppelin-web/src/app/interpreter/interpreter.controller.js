@@ -190,7 +190,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl',
         closeByBackdrop: false,
         closeByKeyboard: false,
         title: '',
-        message: 'Do you want to update this interpreter and restart with new settings?',
+        message: '确定更新配置并重启该解释器?',
         callback: function(result) {
           if (result) {
             var index = _.findIndex($scope.interpreterSettings, {'id': settingId});
@@ -261,7 +261,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl',
       BootstrapDialog.confirm({
         closable: true,
         title: '',
-        message: 'Do you want to delete this interpreter setting?',
+        message: '确定删除该解释器配置?',
         callback: function(result) {
           if (result) {
             $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + settingId)
@@ -298,7 +298,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl',
       BootstrapDialog.confirm({
         closable: true,
         title: '',
-        message: 'Do you want to restart this interpreter?',
+        message: '确定重启该解释器?',
         callback: function(result) {
           if (result) {
             $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/restart/' + settingId)
@@ -534,7 +534,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl',
       BootstrapDialog.confirm({
         closable: true,
         title: '',
-        message: 'Do you want to delete this repository?',
+        message: '确定删除该解释器仓库?',
         callback: function(result) {
           if (result) {
             $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/repository/' + repoId)

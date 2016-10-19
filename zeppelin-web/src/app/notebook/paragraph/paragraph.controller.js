@@ -377,13 +377,13 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (paragraphs[paragraphs.length - 1].id.startsWith($scope.paragraph.id)) {
       BootstrapDialog.alert({
         closable: true,
-        message: 'The last paragraph can\'t be deleted.'
+        message: '不能删除最后一个段落.'
       });
     } else {
       BootstrapDialog.confirm({
         closable: true,
         title: '',
-        message: 'Do you want to delete this paragraph?',
+        message: '确定删除段落?',
         callback: function(result) {
           if (result) {
             console.log('Remove paragraph');

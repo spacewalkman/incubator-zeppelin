@@ -131,7 +131,7 @@ angular.module('zeppelinWebApp').controller('CredentialCtrl', function($scope, $
       closeByBackdrop: false,
       closeByKeyboard: false,
       title: '',
-      message: 'Do you want to delete this credential information?',
+      message: '确定删除该账户密码信息?',
       callback: function(result) {
         if (result) {
           $http.delete(baseUrlSrv.getRestApiBase() + '/credential/' + entity).
