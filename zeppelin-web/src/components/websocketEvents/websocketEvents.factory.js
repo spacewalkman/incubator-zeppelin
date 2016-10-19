@@ -67,7 +67,6 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           closable: false,
           closeByBackdrop: false,
           closeByKeyboard: false,
-          title: '算法没有更新',
           message: data.info.toString(),
           buttons: [{
             label: 'OK',
