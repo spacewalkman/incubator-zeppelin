@@ -283,6 +283,14 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (config.editorMode === undefined) {
       config.editorMode = countEditorMode($scope.paragraph.replName);
     }
+
+    if (config.title === undefined) {
+      config.title = true;
+    }
+
+    if (config.lineNumbers === undefined) {
+      config.lineNumbers = true;
+    }
   };
 
   $scope.getIframeDimensions = function() {
@@ -321,6 +329,10 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   };
 
   $scope.runParagraph = function(data) {
+    if (!data || data.trim() === '') {
+      return;
+    }
+
     websocketMsgSrv.runParagraph($scope.paragraph.id, $scope.paragraph.title,
       data, $scope.paragraph.config, $scope.paragraph.settings.params);
     $scope.originalText = angular.copy(data);
@@ -377,6 +389,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     if (paragraphs[paragraphs.length - 1].id.startsWith($scope.paragraph.id)) {
       BootstrapDialog.alert({
         closable: true,
+        title: '',
         message: '不能删除最后一个段落.'
       });
     } else {
@@ -848,7 +861,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       return $scope.getProgress();
     }
     if ($scope.paragraphFocused) {
-      return '所有编写代码无需保存，均能实时在线存储';
+      return '系统会实时保存代码';
     }
     return pdata.status;
   };
