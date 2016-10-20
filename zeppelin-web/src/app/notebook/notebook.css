@@ -12,6 +12,10 @@
  * limitations under the License.
  */
 
+.bootstrap-dialog-footer .bootstrap-dialog-footer-buttons .btn-primary {
+  background-color: #24243e;
+}
+
 .notebookContent {
   padding: 20px;
 }
