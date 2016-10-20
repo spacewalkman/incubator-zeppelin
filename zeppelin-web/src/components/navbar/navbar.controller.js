@@ -43,6 +43,7 @@ angular.module('zeppelinWebApp')
   }
 
   function initController() {
+    $scope.isDrawNavbarNotebookList = false;
     angular.element('#notebook-list').perfectScrollbar({suppressScrollX: true});
 
     angular.element(document).click(function() {
@@ -107,6 +108,19 @@ angular.module('zeppelinWebApp')
 
   $scope.$on('loginSuccess', function(event, param) {
     loadNotes();
+  });
+
+  /*
+   +    ** Performance optimization for Browser Render.
+   +    */
+  angular.element(document).ready(function() {
+    angular.element('.notebook-list-dropdown').on('show.bs.dropdown', function() {
+      $scope.isDrawNavbarNotebookList = true;
+    });
+
+    angular.element('.notebook-list-dropdown').on('hide.bs.dropdown', function() {
+      $scope.isDrawNavbarNotebookList = false;
+    });
   });
 
 });
