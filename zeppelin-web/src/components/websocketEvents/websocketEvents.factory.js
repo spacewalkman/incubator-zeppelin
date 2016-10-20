@@ -65,6 +65,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       } else if (op === 'NO_CHANGE_FOUND') {
         BootstrapDialog.show({
           closable: false,
+          title: '',
           closeByBackdrop: false,
           closeByKeyboard: false,
           message: data.info.toString(),
