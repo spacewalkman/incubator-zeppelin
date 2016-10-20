@@ -41,7 +41,7 @@ limitations under the License.
             ng-click="runParagraph(getEditorValue())"
             ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING' && paragraph.config.enabled"
             tooltip-placement="bottom"
-            tooltip="执行程序 (Shift+Enter)"><span class="ico-placeholder"></span></button>
+            tooltip="执行当前段落"><span class="ico-placeholder"></span></button>
 
     <button class="icon-control-pause btn btn-default btn-xs"
           style="cursor:pointer;"
@@ -78,21 +78,21 @@ limitations under the License.
             ng-if="note.permission.write"
             ng-click="insertNew('above')"
             ng-hide="viewOnly || asIframe"
-            tooltip-placement="bottom" tooltip="在上面添加新的程序"><span class="ico-placeholder"></span></button>
+            tooltip-placement="bottom" tooltip="在上面添加新段落"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-add-below"
             ng-if="note.permission.write"
             ng-click="insertNew('below')"
             ng-hide="viewOnly || asIframe"
-            tooltip-placement="bottom" tooltip="在下面添加新的程序"><span class="ico-placeholder"></span></button>
+            tooltip-placement="bottom" tooltip="在下面添加新段落"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-remove-paragraph"
             ng-if="note.permission.write"
             ng-click="removeParagraph()"
             ng-hide="viewOnly || asIframe"
-            tooltip-placement="bottom" tooltip="删除程序"><span class="ico-placeholder"></span></button>
+            tooltip-placement="bottom" tooltip="删除当前段落"><span class="ico-placeholder"></span></button>
 <!--    <span class="icon-control-pause" style="cursor:pointer;color:#CD5C5C" tooltip-placement="top" tooltip="Cancel"
           ng-click="cancelParagraph()"
           ng-show="paragraph.status=='RUNNING' || paragraph.status=='PENDING'"></span>
