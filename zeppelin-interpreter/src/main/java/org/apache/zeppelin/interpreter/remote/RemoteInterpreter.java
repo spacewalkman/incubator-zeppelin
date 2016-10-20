@@ -424,7 +424,7 @@ public class RemoteInterpreter extends Interpreter {
 
     boolean broken = false;
     try {
-      return client.getProgress(noteId, className, convert(context));
+      return client.getProgress(noteId, className, convert(context));//TODO:这里经常报错org.apache.thrift.transport.TTransportException
     } catch (TException e) {
       broken = true;
       throw new InterpreterException(e);

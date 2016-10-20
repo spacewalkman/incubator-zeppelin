@@ -198,12 +198,12 @@ public class NotebookServer extends WebSocketServlet implements
         subject = this.doOrGetCachedAuthentication(messagereceived.ticket, messagereceived.serverIndex);
       } catch (AuthenticationException ae) {
         LOG.debug("用户验证失败", ae);
-        unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
+        unicast(new Message(OP.UNAUTHORIED).put("errorMessage", "未授权的用户"), conn);
         return;
       }
 
       if (subject == null) {//只会在发生datasource创建失败之后
-        unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
+        unicast(new Message(OP.UNAUTHORIED).put("errorMessage", "未授权的用户"), conn);
         return;
       }
 
