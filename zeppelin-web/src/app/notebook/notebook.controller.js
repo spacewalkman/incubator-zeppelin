@@ -48,7 +48,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
 
   var connectedOnce = false;
   var saveSetting = function() {
-    //传入interpreter name,后台自动bind ids
+    //传入interpreter group name,后台自动bind ids
     var selectedInterpreterNames = [
       'spark',
       'md',

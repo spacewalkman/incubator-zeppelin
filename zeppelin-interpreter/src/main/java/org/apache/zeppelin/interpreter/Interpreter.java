@@ -313,6 +313,9 @@ public abstract class Interpreter {
     FIFO, PARALLEL
   }
 
+  /**
+   * key为interpreter的group.name
+   */
   public static Map<String, RegisteredInterpreter> registeredInterpreters = Collections
       .synchronizedMap(new HashMap<String, RegisteredInterpreter>());
 

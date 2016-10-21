@@ -16,7 +16,7 @@ limitations under the License.
      class="control"
      ng-show="!asIframe"
      ng-if="note.permission.exec || note.permission.write">
-
+  语言:
   <span class="btn-group group-language"
         ng-hide="viewOnly"
         ng-if="note.permission.write">
@@ -32,7 +32,7 @@ limitations under the License.
       </li>
     </ul>
   </span>
-
+  &nbsp;&nbsp;&nbsp;
   <!-- Run / Cancel button -->
   <span class="labelBtn btn-group">
     <button type="button"
@@ -41,7 +41,7 @@ limitations under the License.
             ng-click="runParagraph(getEditorValue())"
             ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING' && paragraph.config.enabled"
             tooltip-placement="bottom"
-            tooltip="执行当前段落"><span class="ico-placeholder"></span></button>
+            tooltip="执行该段落"><span class="ico-placeholder"></span></button>
 
     <button class="icon-control-pause btn btn-default btn-xs"
           style="cursor:pointer;"

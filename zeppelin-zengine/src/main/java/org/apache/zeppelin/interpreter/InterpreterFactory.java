@@ -86,8 +86,7 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
   private static final String SHARED_SESSION = "shared_session";
 
-  private Map<String, URLClassLoader> cleanCl =
-          Collections.synchronizedMap(new HashMap<String, URLClassLoader>());
+  private Map<String, URLClassLoader> cleanCl = Collections.synchronizedMap(new HashMap<String, URLClassLoader>());
 
   private ZeppelinConfiguration conf;
   @Deprecated
@@ -166,15 +165,15 @@ public class InterpreterFactory implements InterpreterGroupFactory {
     String interpreterJson = conf.getInterpreterJson();
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
+    //从${ZEPPELIN_HOME}/interpreters/各个子目录中注册interpreter
     Path interpretersDir = Paths.get(conf.getInterpreterDir());
     if (Files.exists(interpretersDir)) {
-      for (Path interpreterDir : Files
-              .newDirectoryStream(interpretersDir, new DirectoryStream.Filter<Path>() {
-                @Override
-                public boolean accept(Path entry) throws IOException {
-                  return Files.exists(entry) && Files.isDirectory(entry);
-                }
-              })) {
+      for (Path interpreterDir : Files.newDirectoryStream(interpretersDir, new DirectoryStream.Filter<Path>() {
+        @Override
+        public boolean accept(Path entry) throws IOException {
+          return Files.exists(entry) && Files.isDirectory(entry);
+        }
+      })) {
         String interpreterDirString = interpreterDir.toString();
 
         registerInterpreterFromPath(interpreterDirString, interpreterJson);
@@ -193,10 +192,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
             Class.forName(className, true, ccl);
             Set<String> interpreterKeys = Interpreter.registeredInterpreters.keySet();
             for (String interpreterKey : interpreterKeys) {
-              if (className
-                      .equals(Interpreter.registeredInterpreters.get(interpreterKey).getClassName())) {
-                Interpreter.registeredInterpreters.get(interpreterKey)
-                        .setPath(interpreterDirString);
+              if (className.equals(Interpreter.registeredInterpreters.get(interpreterKey).getClassName())) {
+                Interpreter.registeredInterpreters.get(interpreterKey).setPath(interpreterDirString);
                 logger.info("Interpreter " + interpreterKey + " found. class=" + className);
                 cleanCl.put(interpreterDirString, ccl);
               }
@@ -208,20 +205,13 @@ public class InterpreterFactory implements InterpreterGroupFactory {
       }
     }
 
-    for (RegisteredInterpreter registeredInterpreter : Interpreter.registeredInterpreters
-            .values()) {
-      logger
-              .debug("Registered: {} -> {}. Properties: {}", registeredInterpreter.getInterpreterKey(),
-                      registeredInterpreter.getClassName(), registeredInterpreter.getProperties());
-    }
-
     // RegisteredInterpreters -> interpreterSettingRef
     InterpreterInfo interpreterInfo;
     for (RegisteredInterpreter r : Interpreter.registeredInterpreters.values()) {
-      interpreterInfo =
-              new InterpreterInfo(r.getClassName(), r.getName(), r.isDefaultInterpreter());
-      add(r.getGroup(), interpreterInfo, convertInterpreterProperties(r.getProperties()),
-              r.getPath());
+      logger.debug("Registered: {} -> {}. Properties: {}", r.getInterpreterKey(), r.getClassName(), r.getProperties());
+
+      interpreterInfo = new InterpreterInfo(r.getClassName(), r.getName(), r.isDefaultInterpreter());
+      this.add(r.getGroup(), interpreterInfo, convertInterpreterProperties(r.getProperties()), r.getPath());
     }
 
     for (String settingId : interpreterSettingsRef.keySet()) {
@@ -298,14 +288,19 @@ public class InterpreterFactory implements InterpreterGroupFactory {
     }
   }
 
+  /**
+   * 从指定interpreter子目录中的指定配置文件(interpreter-setting.json）注册Interpreter
+   *
+   * @param interpreterDir  interpreters子目录中的某个具体的Interpreter目录
+   * @param interpreterJson interpreter配置文件名，一般为interpreter-setting.json
+   */
   private void registerInterpreterFromPath(String interpreterDir, String interpreterJson)
           throws IOException, RepositoryException {
 
     Path interpreterJsonPath = Paths.get(interpreterDir, interpreterJson);
     if (Files.exists(interpreterJsonPath)) {
       logger.debug("Reading {}", interpreterJsonPath);
-      List<RegisteredInterpreter> registeredInterpreterList =
-              getInterpreterListFromJson(interpreterJsonPath);
+      List<RegisteredInterpreter> registeredInterpreterList = getInterpreterListFromJson(interpreterJsonPath);
       registerInterpreters(registeredInterpreterList, interpreterDir);
     }
   }
@@ -367,8 +362,8 @@ public class InterpreterFactory implements InterpreterGroupFactory {
     String json = sb.toString();
     InterpreterInfoSaving info = gson.fromJson(json, InterpreterInfoSaving.class);
 
-    for (String k : info.interpreterSettings.keySet()) {
-      InterpreterSetting setting = info.interpreterSettings.get(k);
+    for (String interpreterId : info.interpreterSettings.keySet()) {
+      InterpreterSetting setting = info.interpreterSettings.get(interpreterId);
 
       // Always use separate interpreter process
       // While we decided to turn this feature on always (without providing
@@ -388,7 +383,7 @@ public class InterpreterFactory implements InterpreterGroupFactory {
 
       setting.setInterpreterGroupFactory(this);
       loadInterpreterDependencies(setting);
-      interpreterSettings.put(k, setting);
+      interpreterSettings.put(interpreterId, setting);
     }
 
     this.interpreterBindings = info.interpreterBindings;
@@ -589,13 +584,10 @@ public class InterpreterFactory implements InterpreterGroupFactory {
         }
 
       } else {
-        interpreterSetting =
-                new InterpreterSetting(group, null, interpreterInfos, properties, dependencies, option,
-                        path);
+        interpreterSetting = new InterpreterSetting(group, null, interpreterInfos, properties, dependencies, option, path);
         interpreterSettingsRef.put(group, interpreterSetting);
       }
     }
-
 
     if (dependencies.size() > 0) {
       loadInterpreterDependencies(interpreterSetting);
