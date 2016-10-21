@@ -101,7 +101,7 @@ limitations under the License.
             ng-model="paragraph.config.graph.scatter.xAxis"
             jqyoui-droppable="{onDrop:'onGraphOptionChange()'}"
             class="list-unstyled"
-            style="height:36px">
+            style="height:55px">
           <li ng-if="paragraph.config.graph.scatter.xAxis">
             <div class="btn btn-primary btn-xs">
               {{paragraph.config.graph.scatter.xAxis.name}} <span class="fa fa-close" ng-click="removeScatterOptionXaxis($index)"></span>
@@ -117,7 +117,7 @@ limitations under the License.
             ng-model="paragraph.config.graph.scatter.yAxis"
             jqyoui-droppable="{onDrop:'onGraphOptionChange()'}"
             class="list-unstyled"
-            style="height:36px">
+            style="height:55px">
           <li ng-if="paragraph.config.graph.scatter.yAxis">
             <div class="btn btn-success btn-xs">
               {{paragraph.config.graph.scatter.yAxis.name}} <span class="fa fa-close" ng-click="removeScatterOptionYaxis($index)"></span>
@@ -133,7 +133,7 @@ limitations under the License.
             ng-model="paragraph.config.graph.scatter.group"
             jqyoui-droppable="{onDrop:'onGraphOptionChange()'}"
             class="list-unstyled"
-            style="height:36px">
+            style="height:55px">
           <li ng-if="paragraph.config.graph.scatter.group">
             <div class="btn btn-info btn-xs">
               {{paragraph.config.graph.scatter.group.name}} <span class="fa fa-close" ng-click="removeScatterOptionGroup($index)"></span>
@@ -147,15 +147,15 @@ limitations under the License.
         size
         <a tabindex="0" class="fa fa-info-circle" role="button" popover-placement="top"
            popover-trigger="focus"
-           popover-html-unsafe="<li>Size option is valid only when you drop numeric field here.</li>
-                                <li>When data in each axis are discrete, 'number of values in corresponding coordinate' will be used as size.</li>
-                                <li>Zeppelin consider values as discrete when the values contain string value or the number of distinct values are bigger than 5% of total number of values.</li>
-                                <li>Size field button turns to grey when the option you chose is not valid.</li>"></a>
+           popover-html-unsafe="<li>size选项只有在选择数值类型的列时才有效</li>
+                                <li>对离散值，size值为该坐标轴上值的个数</li>
+                                <li>对于distinct值个数大于总的数值个数的5%，系统认为是离散值</li>
+                                <li>如果选项设置错误，size选项会变灰</li>"></a>
         <ul data-drop="true"
             ng-model="paragraph.config.graph.scatter.size"
             jqyoui-droppable="{onDrop:'onGraphOptionChange()'}"
             class="list-unstyled"
-            style="height:36px">
+            style="height:55px">
           <li ng-if="paragraph.config.graph.scatter.size">
             <div class="btn btn-xs" style="color:white" ng-class="{'btn-warning': isValidSizeOption(paragraph.config.graph.scatter, paragraph.result.rows)}">
               {{paragraph.config.graph.scatter.size.name}} <span class="fa fa-close" ng-click="removeScatterOptionSize($index)"></span>
