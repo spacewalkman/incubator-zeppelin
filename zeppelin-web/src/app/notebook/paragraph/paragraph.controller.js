@@ -89,8 +89,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     'ace/mode/scala': /^%(\w*\.)?spark\s*$/,
     'ace/mode/r': /^%(\w*\.)?(r|sparkr|knitr)\s*$/,
     'ace/mode/sql': /^%(\w*\.)?\wql/,
-    'ace/mode/markdown': /^%md/,
-    'ace/mode/sh': /^%sh/
+    'ace/mode/markdown': /^%md/
+    // 'ace/mode/sh': /^%sh/
   };
 
   var countEditorMode = function(replName) {
@@ -359,7 +359,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   $scope.setParagraphInterpreter = function(paragraphId, replName) {
     $scope.paragraph.replName = replName;
     $scope.paragraph.config.editorMode = countEditorMode(replName);
-    commitParagraph($scope.paragraph.title, $scope.dirtyText, $scope.paragraph.config,
+    commitParagraph($scope.paragraph.title, $scope.originalText, $scope.paragraph.config,
       $scope.paragraph.settings.params);
   };
 
