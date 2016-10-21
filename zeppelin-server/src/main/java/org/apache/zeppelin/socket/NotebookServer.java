@@ -1093,10 +1093,15 @@ public class NotebookServer extends WebSocketServlet implements
     p.setText((String) fromMessage.get("paragraph"));
 
     //处理前后台paragraph magic不一致的地方
+
     String interpreterMark = (String) fromMessage.get("replName");
     if (interpreterMark != null) {
       if (interpreterMark.equalsIgnoreCase("markdown")) {
         p.setReplName("md");
+      } else if (interpreterMark.equalsIgnoreCase("sparkSQL") || interpreterMark.equalsIgnoreCase("sql")) {
+        p.setReplName("spark");
+      } else if (interpreterMark.equalsIgnoreCase("scala")) {
+        p.setReplName("spark");
       } else {
         p.setReplName(interpreterMark);
       }
