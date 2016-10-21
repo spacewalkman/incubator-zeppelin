@@ -20,7 +20,7 @@ limitations under the License.
   <button type="button" class="btn btn-default btn-sm"
           ng-if="paragraph.result.type == 'TABLE'"
           ng-class="{'active': isGraphMode('table')}"
-          ng-click="setGraphMode('table', true)" 
+          ng-click="setGraphMode('table', true)"
           tooltip="Table" tooltip-placement="bottom"><i class="fa fa-table"></i>
   </button>
   <button type="button" class="btn btn-default btn-sm"
@@ -53,12 +53,12 @@ limitations under the License.
           ng-click="setGraphMode('scatterChart', true)"
           tooltip="Scatter Chart" tooltip-placement="bottom"><i class="cf cf-scatter-chart"></i>
   </button>
-  <button type="button" class="btn btn-default btn-sm"
-          ng-if="paragraph.result.type == 'TABLE'"
-          ng-class="{'active': isGraphMode('map')}"
-          ng-click="setGraphMode('map', true)"
-          tooltip="Map" tooltip-placement="bottom"><i class="fa fa-map-marker"></i>
-  </button>
+  <!--<button type="button" class="btn btn-default btn-sm"-->
+          <!--ng-if="paragraph.result.type == 'TABLE'"-->
+          <!--ng-class="{'active': isGraphMode('map')}"-->
+          <!--ng-click="setGraphMode('map', true)"-->
+          <!--tooltip="Map" tooltip-placement="bottom"><i class="fa fa-map-marker"></i>-->
+  <!--</button>-->
 
   <button type="button"
           ng-if="paragraph.result.type != 'TABLE'"
@@ -105,25 +105,25 @@ limitations under the License.
   </ul>
 </div>
 
-<div class="btn-group"
-     ng-if="paragraph.result.type == 'TABLE' && !asIframe && !viewOnly"
-     style="margin-bottom: 10px;">
-  <button type="button" class="btn btn-default btn-sm"
-          style="margin-left:10px"
-          ng-click="exportToDSV(',')"
-          tooltip="Download Data as CSV" tooltip-placement="bottom">
-    <i class="fa fa-download"></i>
-  </button>
-  <button type="button" class="btn btn-default btn-sm dropdown-toggle caretBtn"
-          data-toggle="dropdown">
-    <span class="caret" style="margin: 0px;"></span>
-    <span class="sr-only">Toggle Dropdown</span>
-  </button>
-  <ul class="dropdown-menu" role="menu" style="min-width: 70px;">
-    <li ng-click="exportToDSV(',')"><a>CSV</a></li>
-    <li ng-click="exportToDSV('\t')"><a>TSV</a></li>
-  </ul>
-</div>
+<!--<div class="btn-group"-->
+     <!--ng-if="paragraph.result.type == 'TABLE' && !asIframe && !viewOnly"-->
+     <!--style="margin-bottom: 10px;">-->
+  <!--<button type="button" class="btn btn-default btn-sm"-->
+          <!--style="margin-left:10px"-->
+          <!--ng-click="exportToDSV(',')"-->
+          <!--tooltip="Download Data as CSV" tooltip-placement="bottom">-->
+    <!--<i class="fa fa-download"></i>-->
+  <!--</button>-->
+  <!--<button type="button" class="btn btn-default btn-sm dropdown-toggle caretBtn"-->
+          <!--data-toggle="dropdown">-->
+    <!--<span class="caret" style="margin: 0px;"></span>-->
+    <!--<span class="sr-only">Toggle Dropdown</span>-->
+  <!--</button>-->
+  <!--<ul class="dropdown-menu" role="menu" style="min-width: 70px;">-->
+    <!--<li ng-click="exportToDSV(',')"><a>CSV</a></li>-->
+    <!--<li ng-click="exportToDSV('\t')"><a>TSV</a></li>-->
+  <!--</ul>-->
+<!--</div>-->
 
 <span
    ng-if="getResultType()=='TABLE' && !paragraph.config.helium.activeApp && getGraphMode()!='table' && !asIframe && !viewOnly"
