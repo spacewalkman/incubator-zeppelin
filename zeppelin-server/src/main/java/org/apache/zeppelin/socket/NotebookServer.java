@@ -1090,7 +1090,7 @@ public class NotebookServer extends WebSocketServlet implements
     p.settings.setParams(params);
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
-    p.setText((String) fromMessage.get("paragraph"));
+    p.setText(((String) fromMessage.get("paragraph")).trim());
 
     //处理前后台paragraph magic不一致的地方
 
