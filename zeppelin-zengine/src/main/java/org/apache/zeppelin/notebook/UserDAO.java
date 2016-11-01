@@ -55,7 +55,6 @@ public class UserDAO {
 
   /**
    * add role to user default sql, demo schema as below:
-   * TODO: schema
    */
   public static final String INSERT_ROLE_TO_USER_SQL = "insert into USER_ROLE(user_name,role_name) values (?,?)";
 
@@ -245,10 +244,17 @@ public class UserDAO {
     PreparedStatement ps = null;
     Connection connection = null;
 
+
     try {
       connection = this.dataSource.getConnection();
+
       ps = dataSource.getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
       for (String role : roles) {
+        boolean hasRoleAlready = this.isRoleExistForUser(user, role);
+        if (hasRoleAlready) {
+          return;
+        }
+
         ps.setString(1, user);
         ps.setString(2, role);
 
@@ -262,6 +268,8 @@ public class UserDAO {
             throw e;
           }
         }
+
+        ps.clearParameters();
       }
     } catch (SQLException e) {
       final String message = "There was a SQL error while assign role to user [" + user + "]";
