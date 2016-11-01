@@ -15,8 +15,11 @@ import javax.sql.DataSource;
  */
 public class NotebookDataSource {
   private static final String JDBC_URL_FORMAT = "jdbc:%s://%s:%d/%s?useSSL=false";
-  private static NotebookDataSource datasource;
+  private volatile static NotebookDataSource datasource;
   private ComboPooledDataSource ds;
+
+  private static final int DEFAULT_MAX_POOL_SIZE = 10;
+  private static final int DEFAULT_MIN_POOL_SIZE = 3;
 
   private NotebookDataSource(
           ZeppelinConfiguration conf) throws PropertyVetoException {
@@ -27,7 +30,19 @@ public class NotebookDataSource {
     String database = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_DATABASE);
     String userName = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_USER_NAME);
     String password = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_PASSWORD);
+
+    int minPoolSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_MIN_POOL_SIZE);
+    if (minPoolSize < 0) {
+      minPoolSize = DEFAULT_MIN_POOL_SIZE;
+    }
     int maxPoolSize = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE);
+    if (maxPoolSize < 0) {
+      maxPoolSize = DEFAULT_MAX_POOL_SIZE;
+    }
+
+    if (maxPoolSize < minPoolSize) {
+      maxPoolSize = minPoolSize;
+    }
 
     ds = new ComboPooledDataSource();
     ds.setDriverClass(driver);
@@ -35,18 +50,22 @@ public class NotebookDataSource {
     ds.setPassword(password);
     //ds.setAutoCommitOnClose(true);
     ds.setMaxPoolSize(maxPoolSize);
-    ds.setMinPoolSize(1);
+    ds.setMinPoolSize(minPoolSize);
     ds.setJdbcUrl(String.format(JDBC_URL_FORMAT, dbType, host, port, database));
   }
 
   public static NotebookDataSource getInstance(
           ZeppelinConfiguration conf) throws PropertyVetoException {
     if (datasource == null) {
-      datasource = new NotebookDataSource(conf);
+      synchronized (NotebookDataSource.class) {
+        if (datasource == null) {
+          datasource = new NotebookDataSource(conf);
+        }
+      }
     }
-
     return datasource;
   }
+
 
   public Connection getConnection() throws SQLException {
     return this.ds.getConnection();
