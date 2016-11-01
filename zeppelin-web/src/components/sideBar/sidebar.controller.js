@@ -40,16 +40,6 @@ angular.module('zeppelinWebApp')
 
     initController();
 
-    // function getZeppelinVersion() {
-    //   $http.get(baseUrlSrv.getRestApiBase() + '/version').success(
-    //     function(data, status, headers, config) {
-    //       $rootScope.zeppelinVersion = data.body;
-    //     }).error(
-    //     function(data, status, headers, config) {
-    //       console.log('Error %o %o', status, data.message);
-    //     });
-    // }
-
     function initController() {
       angular.element('.scroll-panel').perfectScrollbar();
 
@@ -59,7 +49,6 @@ angular.module('zeppelinWebApp')
         });
       });
 
-      // getZeppelinVersion();
       loadNotes();
 
       //如果是加载的历史版本，切换选中状态
