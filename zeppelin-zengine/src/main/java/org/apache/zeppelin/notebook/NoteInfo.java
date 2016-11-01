@@ -28,19 +28,16 @@ public class NoteInfo {
   String id;
   String name;
   String type;
+  long lastModifiedTime;
   private Map<String, Boolean> permissionsMap;
-
-  public NoteInfo(String id, String name) {
-    super();
-    this.id = id;
-    this.name = name;
-    this.permissionsMap = new LinkedHashMap<>(5);
-  }
 
   public NoteInfo(Note note) {
     id = note.getId();
     name = note.getName();
     type = note.getType();
+    if (note.getLastUpdated() != null) {
+      lastModifiedTime = note.getLastUpdated().getTime();
+    }
   }
 
   public String getId() {
