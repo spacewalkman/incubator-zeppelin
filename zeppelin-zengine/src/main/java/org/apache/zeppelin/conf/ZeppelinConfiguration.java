@@ -581,7 +581,12 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_JDBC_DATABASE("zeppelin.note.repo.jdbc.database", "zeppelin"),
     ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.note.repo.jdbc.username", "root"),
     ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.note.repo.jdbc.password", "mysql"),
-    ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE("zeppelin.note.repo.jdbc.max.pool.size", 2),
+
+    /**
+     * notebook storage的connection pool的min和max size
+     */
+    ZEPPELIN_NOTE_REPO_JDBC_MIN_POOL_SIZE("zeppelin.note.repo.jdbc.min.pool.size", 3),
+    ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE("zeppelin.note.repo.jdbc.max.pool.size", 10),
 
     ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000"),
 
