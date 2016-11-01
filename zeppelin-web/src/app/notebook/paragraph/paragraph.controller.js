@@ -2340,11 +2340,11 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     var noteId = $route.current.pathParams.noteId;
     $http.get(baseUrlSrv.getRestApiBase() + '/helium/suggest/' + noteId + '/' + $scope.paragraph.id)
       .success(function(data, status, headers, config) {
-        console.log('Suggested apps %o', data);
+        //console.log('Suggested apps %o', data);
         $scope.suggestion = data.body;
       })
       .error(function(err, status, headers, config) {
-        console.log('Error %o', err);
+        //console.log('Error %o', err);
       });
   };
 
@@ -2367,14 +2367,14 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   var renderApp = function(appState) {
     var retryRenderer = function() {
       var targetEl = angular.element(document.getElementById('p' + appState.id));
-      console.log('retry renderApp %o', targetEl);
+      //console.log('retry renderApp %o', targetEl);
       if (targetEl.length) {
         try {
-          console.log('renderApp %o', appState);
+          //console.log('renderApp %o', appState);
           targetEl.html(appState.output);
           $compile(targetEl.contents())(getAppScope(appState));
         } catch (err) {
-          console.log('App rendering error %o', err);
+          //console.log('App rendering error %o', err);
         }
       } else {
         $timeout(retryRenderer, 1000);
