@@ -159,7 +159,8 @@ public class Message {
   public OP op;
   public Map<String, Object> data = new HashMap<String, Object>();
   public String ticket = "anonymous";
-  public int serverIndex = -1;
+  public String ip;
+  //public int serverIndex = -1;
 
   public Message(OP op) {
     this.op = op;

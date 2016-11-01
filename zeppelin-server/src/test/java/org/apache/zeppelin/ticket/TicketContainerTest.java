@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.ticket;
 
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +32,7 @@ public class TicketContainerTest {
 
   @Before
   public void setUp() throws Exception {
-    container = TicketContainer.instance;
+    container = TicketContainer.getSingleton(ZeppelinConfiguration.create());
   }
 }
 

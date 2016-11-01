@@ -56,7 +56,7 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.server.ZeppelinServer;
 import org.apache.zeppelin.ticket.TicketContainer;
-import org.apache.zeppelin.ticket.TicketUserNameToken;
+import org.apache.zeppelin.ticket.TicketToken;
 import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.util.GsonUtil;
@@ -153,6 +153,7 @@ public class NotebookServer extends WebSocketServlet implements
   public void onOpen(NotebookSocket conn) {
     LOG.info("New connection from {} : {}", conn.getRequest().getRemoteAddr(), conn.getRequest().getRemotePort());
     connectedSockets.add(conn);
+
   }
 
   /**
@@ -180,14 +181,9 @@ public class NotebookServer extends WebSocketServlet implements
 
       LOG.debug("接收到消息OP << " + messagereceived.op);
       LOG.debug("接收到ticket << " + messagereceived.ticket);
-      LOG.debug("接收到serverIndex << " + messagereceived.serverIndex);
+      LOG.debug("接收到ip << " + messagereceived.ip);
 
       if (messagereceived.ticket == null || messagereceived.ticket.isEmpty()) {
-        unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
-        return;
-      }
-
-      if (messagereceived.serverIndex < 0) {
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
         return;
       }
@@ -195,7 +191,7 @@ public class NotebookServer extends WebSocketServlet implements
       Subject subject = null;
       //执行验证
       try {
-        subject = this.doOrGetCachedAuthentication(messagereceived.ticket, messagereceived.serverIndex);
+        subject = this.doOrGetCachedAuthentication(notebook.getConf(), messagereceived.ticket);
       } catch (AuthenticationException ae) {
         LOG.debug("用户验证失败", ae);
         unicast(new Message(OP.UNAUTHORIED).put("errorMessage", "未授权的用户"), conn);
@@ -315,19 +311,22 @@ public class NotebookServer extends WebSocketServlet implements
   /**
    * 获取缓存中已经完成身份鉴别的Subject，如果未验证过，则调用稻田REST验证接口，执行验证，并缓存
    *
-   * @param ticket      稻田传递过来的uuid token
-   * @param serverIndex 稻田传递过来的zeppelin server的编号
+   * @param conf   zeppelinConfiguration实例，用来将获取session timeout线程的配置
+   * @param ticket 稻田传递过来的uuid token
    * @return 如果验证顺利通过，则返回非null的subject，否则，抛出异常
    */
-  private Subject doOrGetCachedAuthentication(String ticket, int serverIndex) {
-    Subject subject = TicketContainer.instance.getCachedSubject(ticket);
+  private Subject doOrGetCachedAuthentication(ZeppelinConfiguration conf, String ticket) {
+    TicketContainer ticketContainer = TicketContainer.getSingleton(conf);
+    Subject subject = ticketContainer.getCachedSubject(ticket);
+    boolean isNewSubject = false;
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
+      isNewSubject = true;
     }
 
     //没有身份认证过，则执行验证，并缓存
-    if (!subject.isAuthenticated()) {
-      TicketUserNameToken token = new TicketUserNameToken(ticket, serverIndex);
+    if (!subject.isAuthenticated() || isNewSubject) {
+      TicketToken token = new TicketToken(ticket);
       //token.setRememberMe(true);
 
       Date startTime = new Date();
@@ -338,7 +337,7 @@ public class NotebookServer extends WebSocketServlet implements
       PrincipalCollection principalCollection = subject.getPrincipals();
       UserProfile userProfile = (UserProfile) principalCollection.getPrimaryPrincipal();
 
-      TicketContainer.instance.putSubject(userProfile.getTicket(), subject);//缓存
+      ticketContainer.putSubject(userProfile.getTicket(), subject);//缓存
 
       //创建user_role,role_permission等，保证用户经过RestAuth验证通过的用户，授权能过
       //TODO:这里与zeppelinServer构造函数中实例化的NotebookAuthorizationAdaptor的子类保持一致，目前没有处理自动初始化子类的问题
@@ -720,7 +719,7 @@ public class NotebookServer extends WebSocketServlet implements
 
       UserProfile userProfile = (UserProfile) (subject.getPrincipal());
       Message message = new Message(OP.NOTES_INFO);
-      message.serverIndex = userProfile.getServerIndex();
+      message.ip = userProfile.getIp();
       message.ticket = userProfile.getTicket();
       unicast(message.put("notes", noteInfos), conn, true);//带权限noteinfo json
     }
@@ -734,7 +733,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Message message = new Message(OP.NOTES_INFO);
-    message.serverIndex = userProfile.getServerIndex();
+    message.ip = userProfile.getIp();
     message.ticket = userProfile.getTicket();
 
     unicast(message.put("notes", noteInfos), conn, true);
@@ -956,12 +955,12 @@ public class NotebookServer extends WebSocketServlet implements
     note.persist(userProfile.getUserName());
     addConnectionToNote(note.getId(), conn);
 
-    Message messageToWeb = new Message(OP.NEW_NOTE);
-    messageToWeb.put("note", note);
-    messageToWeb.ticket = message.ticket;
-    messageToWeb.serverIndex = message.serverIndex;
+    Message messageToSend = new Message(OP.NEW_NOTE);
+    messageToSend.put("note", note);
+    messageToSend.ticket = message.ticket;
+    messageToSend.ip = message.ip;
 
-    conn.send(serializeMessageIncludePermissionAndType(messageToWeb));//序列化含有permissionsMap和type字段的note
+    conn.send(serializeMessageIncludePermissionAndType(messageToSend));//序列化含有permissionsMap和type字段的note
     broadcastNoteList();
   }
 

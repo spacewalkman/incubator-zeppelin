@@ -23,11 +23,12 @@ import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.ShiroNotebookAuthorization;
 import org.apache.zeppelin.realm.UserProfile;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
-import org.apache.zeppelin.ticket.TicketUserNameToken;
+import org.apache.zeppelin.ticket.TicketToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -55,13 +54,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class LoginRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
 
-
   @XmlRootElement
   public static class LoginBean {
     @XmlElement
     public String ticket;
-    @XmlElement
-    public int serverIndex;
   }
 
   /**
@@ -86,14 +82,15 @@ public class LoginRestApi {
   public Response postLogin(LoginBean loginBean) {
     JsonResponse response = null;
 
-    Subject subject = TicketContainer.instance.getCachedSubject(loginBean.ticket);
+    TicketContainer ticketContainer = TicketContainer.getSingleton(ZeppelinConfiguration.create());
+    Subject subject = ticketContainer.getCachedSubject(loginBean.ticket);
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
     }
 
     if (!subject.isAuthenticated()) {
       try {
-        TicketUserNameToken token = new TicketUserNameToken(loginBean.ticket, loginBean.serverIndex);
+        TicketToken token = new TicketToken(loginBean.ticket);
         //token.setRememberMe(true);
 
         Date startTime = new Date();
@@ -104,7 +101,7 @@ public class LoginRestApi {
         PrincipalCollection principalCollection = subject.getPrincipals();
         UserProfile userProfile = (UserProfile) principalCollection.getPrimaryPrincipal();
 
-        TicketContainer.instance.putSubject(userProfile.getTicket(), subject);
+        ticketContainer.putSubject(userProfile.getTicket(), subject);
 
         //创建user_role,role_permission等，保证用户经过RestAuth验证通过的用户，授权能过
         try {

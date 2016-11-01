@@ -132,7 +132,6 @@
       //从url上获取信息
       $rootScope.ticket = {
         ticket: gerParam('ticket'),//'a2529786-2b00-47a8-9503-8e4b786f991e',
-        serverIndex: gerParam('serverIndex'),//1,
         projectId: gerParam('projectId'),//'project1'
         serverIP: gerParam('ip')
       };

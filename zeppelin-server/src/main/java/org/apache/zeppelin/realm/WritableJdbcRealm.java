@@ -9,7 +9,7 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.jdbc.JdbcRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.JdbcUtils;
-import org.apache.zeppelin.ticket.TicketUserNameToken;
+import org.apache.zeppelin.ticket.TicketToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class WritableJdbcRealm extends JdbcRealm {//TODO: 处理schema中的主�
    */
   @Override
   public boolean supports(AuthenticationToken token) {
-    if (token instanceof TicketUserNameToken) {
+    if (token instanceof TicketToken) {
       return true;
     }
 

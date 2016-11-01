@@ -1,5 +1,6 @@
 package org.apache.zeppelin.realm;
 
+
 /**
  * zeppelin期望从"稻田"用户验证接口中获取到的用户相关信息
  */
@@ -11,7 +12,7 @@ public class UserProfile {
 
   private String projectId;
 
-  private int serverIndex;
+  private String ip;
 
   private String team;
 
@@ -23,9 +24,8 @@ public class UserProfile {
   public UserProfile() {
   }
 
-  public UserProfile(String ticket, int serverIndex) {
+  public UserProfile(String ticket) {
     this.ticket = ticket;
-    this.serverIndex = serverIndex;
   }
 
   /**
@@ -88,7 +88,19 @@ public class UserProfile {
       return false;
     }
 
-    if (this.getServerIndex() == other.getServerIndex()) {
+    if (this.getIp() == null || other.getIp() == null) {
+      return false;
+    }
+
+    if (this.getIp().startsWith("127.")) {
+      this.ip = "localhost";
+    }
+
+    if (other.getIp().startsWith("127.")) {
+      other.setIp("localhost");
+    }
+
+    if (!this.getIp().equals(other.getIp())) {
       return false;
     }
 
@@ -106,7 +118,6 @@ public class UserProfile {
     this.projectId = projectId;
   }
 
-
   @Override
   public int hashCode() {
     return this.getUserName().hashCode() << 1 + this.getTicket().hashCode() << 2;
@@ -115,22 +126,22 @@ public class UserProfile {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("UserProfile:[");
-    sb.append("userName=" + this.getUserName());
-    sb.append("ticket=" + this.getTicket());
-    sb.append("team=" + this.getTeam());
-    sb.append("isLeader=" + this.isLeader());
-    sb.append("projectId=" + this.getProjectId());
-    sb.append("serverIndex=" + this.getServerIndex());
+    sb.append("userName=" + this.getUserName() + ",");
+    sb.append("ticket=" + this.getTicket() + ",");
+    sb.append("team=" + this.getTeam() + ",");
+    sb.append("isLeader=" + this.isLeader() + ",");
+    sb.append("projectId=" + this.getProjectId() + ",");
+    sb.append("ip=" + this.getIp());
     sb.append("]");
 
     return sb.toString();
   }
 
-  public int getServerIndex() {
-    return serverIndex;
+  public String getIp() {
+    return ip;
   }
 
-  public void setServerIndex(int serverIndex) {
-    this.serverIndex = serverIndex;
+  public void setIp(String ip) {
+    this.ip = ip;
   }
 }

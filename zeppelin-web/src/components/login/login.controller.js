@@ -26,7 +26,6 @@ angular.module('zeppelinWebApp').controller('LoginCtrl',
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         data: $httpParamSerializer({
-          'serverindex': $scope.loginParams.serverindex,
           'ticket': $scope.loginParams.ticket,
         })
       }).then(function successCallback(response) {

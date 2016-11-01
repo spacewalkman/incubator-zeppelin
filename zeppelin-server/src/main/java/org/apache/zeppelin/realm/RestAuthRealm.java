@@ -19,7 +19,7 @@ import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.realm.AuthenticatingRealm;
-import org.apache.zeppelin.ticket.TicketUserNameToken;
+import org.apache.zeppelin.ticket.TicketToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +41,14 @@ public class RestAuthRealm extends AuthenticatingRealm {
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(
           AuthenticationToken token) throws AuthenticationException {
-    TicketUserNameToken ticketUserNameToken = (TicketUserNameToken) token;
-    if (ticketUserNameToken == null) {
+    TicketToken ticketToken = (TicketToken) token;
+    if (ticketToken == null) {
       throw new IllegalStateException("token不是TicketUserNameToken实例");
     }
 
     UserProfile userProfile = null;
     try {
-      userProfile = this.requestUserProfile(ticketUserNameToken);
+      userProfile = this.requestUserProfile(ticketToken);
     } catch (IOException e) {
       LOG.error("稻田REST身份鉴别接口失效", e);
       throw new AuthenticationException("稻田REST身份鉴别接口失效", e);
@@ -73,12 +73,12 @@ public class RestAuthRealm extends AuthenticatingRealm {
    * 通过httpClient调用稻田提供的REST接口，传入ticket鉴定用户
    */
   public UserProfile requestUserProfile(
-          TicketUserNameToken ticketUserNameToken) throws IOException {
+          TicketToken ticketToken) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
     URI uri = null;
 
     try {
-      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticketUserNameToken.getTicket()).setParameter("serverindex", ticketUserNameToken.getServerIndex() + "").build();
+      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticketToken.getTicket()).build();
     } catch (URISyntaxException e) {
       throw new IOException(e);
     }
@@ -116,7 +116,7 @@ public class RestAuthRealm extends AuthenticatingRealm {
 
   @Override
   public boolean supports(AuthenticationToken token) {
-    if (token instanceof TicketUserNameToken) {
+    if (token instanceof TicketToken) {
       return true;
     }
 

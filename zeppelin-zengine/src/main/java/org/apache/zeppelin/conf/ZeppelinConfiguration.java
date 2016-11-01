@@ -69,35 +69,37 @@ public class ZeppelinConfiguration extends XMLConfiguration {
   /**
    * Load from resource. url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
    */
-  public static synchronized ZeppelinConfiguration create() {
+  public static ZeppelinConfiguration create() {
     if (conf != null) {
       return conf;
     }
 
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    URL url;
+    synchronized (ZeppelinConfiguration.class) {
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      URL url;
 
-    url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
-    if (url == null) {
-      ClassLoader cl = ZeppelinConfiguration.class.getClassLoader();
-      if (cl != null) {
-        url = cl.getResource(ZEPPELIN_SITE_XML);
+      url = ZeppelinConfiguration.class.getResource(ZEPPELIN_SITE_XML);
+      if (url == null) {
+        ClassLoader cl = ZeppelinConfiguration.class.getClassLoader();
+        if (cl != null) {
+          url = cl.getResource(ZEPPELIN_SITE_XML);
+        }
       }
-    }
-    if (url == null) {
-      url = classLoader.getResource(ZEPPELIN_SITE_XML);
-    }
+      if (url == null) {
+        url = classLoader.getResource(ZEPPELIN_SITE_XML);
+      }
 
-    if (url == null) {
-      LOG.warn("Failed to load configuration, proceeding with a default");
-      conf = new ZeppelinConfiguration();
-    } else {
-      try {
-        LOG.info("Load configuration from " + url);
-        conf = new ZeppelinConfiguration(url);
-      } catch (ConfigurationException e) {
-        LOG.warn("Failed to load configuration from " + url + " proceeding with a default", e);
+      if (url == null) {
+        LOG.warn("Failed to load configuration, proceeding with a default");
         conf = new ZeppelinConfiguration();
+      } else {
+        try {
+          LOG.info("Load configuration from " + url);
+          conf = new ZeppelinConfiguration(url);
+        } catch (ConfigurationException e) {
+          LOG.warn("Failed to load configuration from " + url + " proceeding with a default", e);
+          conf = new ZeppelinConfiguration();
+        }
       }
     }
 
@@ -581,17 +583,22 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.note.repo.jdbc.password", "mysql"),
     ZEPPELIN_NOTE_REPO_JDBC_MAX_POOL_SIZE("zeppelin.note.repo.jdbc.max.pool.size", 2),
 
+    ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000"),
+
     //提交策略，每天提交3次
     ZEPPELIN_NOTE_COMMIT_STRATEGY_CLASS("zeppelin.note.submit.strategy.class", DailySubmitStrategy.class.getName()),
     ZEPPELIN_NOTE_COMMIT_STRATEGY_MAX_COMMIT_TIMES("zeppelin.note.submit.strategy.max.times", 3),
 
     /**
-     * zeppelin利用稻田验证用户的REST地址
-     * TODO:验证
+     * TicketContainer的timeout设置，以秒为单位
      */
-    DITECH_AUTH_REST_END_POINT("ditech.auth.rest.end.point", "http://localhost:8082/rest/auth"),
+    ZEPPELIN_TICKET_CONTAINER_SESSION_TIME_OUT("zeppelin.ticket.container.session.time.out", 3 * 60),
 
-    ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE("zeppelin.websocket.max.text.message.size", "1024000");
+    /**
+     * session timeout的check线程多长时间check一次，以秒为单位
+     */
+    ZEPPELIN_TICKET_CONTAINER_SESSION_CHECK_TIME("zeppelin.ticket.container.session.check.time", 1 * 60);
+
 
     private String varName;
     @SuppressWarnings("rawtypes")
