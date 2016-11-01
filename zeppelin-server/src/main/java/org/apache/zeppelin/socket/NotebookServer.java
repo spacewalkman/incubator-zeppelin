@@ -181,7 +181,6 @@ public class NotebookServer extends WebSocketServlet implements
 
       LOG.debug("接收到消息OP << " + messagereceived.op);
       LOG.debug("接收到ticket << " + messagereceived.ticket);
-      LOG.debug("接收到ip << " + messagereceived.ip);
 
       if (messagereceived.ticket == null || messagereceived.ticket.isEmpty()) {
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
