@@ -244,15 +244,17 @@ public class UserDAO {
     PreparedStatement ps = null;
     Connection connection = null;
 
-
     try {
       connection = this.dataSource.getConnection();
 
-      ps = dataSource.getConnection().prepareStatement(INSERT_ROLE_TO_USER_SQL);
       for (String role : roles) {
         boolean hasRoleAlready = this.isRoleExistForUser(user, role);
         if (hasRoleAlready) {
           return;
+        }
+
+        if (ps == null) {
+          ps = connection.prepareStatement(INSERT_ROLE_TO_USER_SQL);
         }
 
         ps.setString(1, user);
