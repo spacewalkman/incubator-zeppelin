@@ -107,7 +107,7 @@ public class RestAuthRealm extends AuthenticatingRealm {
         Charset charset = contentType.getCharset();
         Reader reader = new InputStreamReader(entity.getContent(), charset);
         RestAuthResponse authResponse = gson.fromJson(reader, RestAuthResponse.class);
-        return authResponse.getUserProfile();
+        return authResponse.getData();
       }
     };
 

@@ -7,7 +7,7 @@ public class RestAuthResponse {
   private int stateCode;
   private String retMessage;
 
-  private UserProfile userProfile;
+  private UserProfile data;
 
   public int getStateCode() {
     return stateCode;
@@ -25,11 +25,11 @@ public class RestAuthResponse {
     this.retMessage = retMessage;
   }
 
-  public UserProfile getUserProfile() {
-    return userProfile;
+  public UserProfile getData() {
+    return data;
   }
 
-  public void setUserProfile(UserProfile userProfile) {
-    this.userProfile = userProfile;
+  public void setData(UserProfile data) {
+    this.data = data;
   }
 }
