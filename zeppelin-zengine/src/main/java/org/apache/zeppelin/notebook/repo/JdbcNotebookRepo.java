@@ -32,7 +32,6 @@ import java.util.List;
 public class JdbcNotebookRepo implements NotebookRepo {
   private static final Logger LOG = LoggerFactory.getLogger(JdbcNotebookRepo.class);
 
-  //TODO:上次修改时间，上次提交时间，每个组每个队今天提交了几次，总共提交了几次？
   private static final String NOTE_TABLE_NAME = "note";
   private static final String INSERT_SQL = "insert into " + NOTE_TABLE_NAME + "(id,createdBy,projectId,team,content,last_updated_time) values (?,?,?,?,?,?)";
   private static final String UPDATE_SQL = "update " + NOTE_TABLE_NAME + " set content=?,last_updated_time=? where id=?";//group和projectId不会被更新
@@ -99,6 +98,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
     PreparedStatement ps = null;
     ResultSet rs = null;
     Connection connection = null;
+
     try {
       connection = notebookDataSource.getConnection();
       if (principal == null || principal.isEmpty()) {
@@ -111,7 +111,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
       rs = ps.executeQuery();
       while (rs.next()) {
         //id,createdBy,projectId,team,content
-        String id = rs.getString(1);
+        //String id = rs.getString(1);
         String createdBy = rs.getString(2);
         String projectId = rs.getString(3);
         String team = rs.getString(4);
@@ -147,7 +147,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
       // Execute query
       rs = ps.executeQuery();
       if (rs.next()) {
-        String id = rs.getString(1);
+        //String id = rs.getString(1);
         String createdBy = rs.getString(2);
         String projectId = rs.getString(3);
         String team = rs.getString(4);
@@ -401,19 +401,19 @@ public class JdbcNotebookRepo implements NotebookRepo {
   }
 
   private void closeAll(PreparedStatement ps, ResultSet rs, Connection connection) {
-    if (ps != null) {
-      try {
-        ps.close();
-      } catch (SQLException e) {
-        LOG.error("error when close statement!", e);
-      }
-    }
-
     if (rs != null) {
       try {
         rs.close();
       } catch (SQLException e) {
         LOG.error("error when close resultSet!", e);
+      }
+    }
+
+    if (ps != null) {
+      try {
+        ps.close();
+      } catch (SQLException e) {
+        LOG.error("error when close statement!", e);
       }
     }
 
@@ -614,7 +614,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
         result = rs.getInt(1);
       }
     } catch (Exception e) {
-      LOG.error("error when select max commit time!", e);
+      LOG.error("error when select max submit time!", e);
     } finally {
       this.closeAll(ps, rs, connection);
     }

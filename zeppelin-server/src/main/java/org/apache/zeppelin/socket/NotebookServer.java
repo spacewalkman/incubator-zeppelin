@@ -317,14 +317,12 @@ public class NotebookServer extends WebSocketServlet implements
   private Subject doOrGetCachedAuthentication(ZeppelinConfiguration conf, String ticket) {
     TicketContainer ticketContainer = TicketContainer.getSingleton(conf);
     Subject subject = ticketContainer.getCachedSubject(ticket);
-    boolean isNewSubject = false;
     if (subject == null) {
       subject = org.apache.shiro.SecurityUtils.getSubject();
-      isNewSubject = true;
     }
 
     //没有身份认证过，则执行验证，并缓存
-    if (!subject.isAuthenticated() || isNewSubject) {
+    if (!subject.isAuthenticated() ) {
       TicketToken token = new TicketToken(ticket);
       //token.setRememberMe(true);
 

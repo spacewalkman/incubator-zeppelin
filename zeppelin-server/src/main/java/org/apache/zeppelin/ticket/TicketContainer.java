@@ -89,8 +89,8 @@ public class TicketContainer {
     this.checkPeriod = conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_TICKET_CONTAINER_SESSION_CHECK_TIME);
 
     //同时启动timeout线程
-//    TimeoutThread timeoutThread = new TimeoutThread(this.subjectCache, sessionTimeOut, checkPeriod);
-//    new Thread(timeoutThread).start();
+    TimeoutThread timeoutThread = new TimeoutThread(this.subjectCache, sessionTimeOut, checkPeriod);
+    new Thread(timeoutThread).start();
   }
 
 
@@ -115,12 +115,6 @@ public class TicketContainer {
   public Subject getCachedSubject(String ticket) {
     SubjectAndCheckTimeEntry entry = subjectCache.get(ticket);
     if (entry == null) {
-      return null;
-    }
-
-    long elapsed = System.currentTimeMillis() - entry.getLastCheckTime();
-    if (elapsed > sessionTimeOut * 1000) {//超时了
-      entry.setLastCheckTime(System.currentTimeMillis());
       return null;
     }
 
@@ -154,7 +148,8 @@ public class TicketContainer {
           if (over > 0) {
             continue;
           } else {//超时了
-            //subjectAndCheckTimeEntry.getSubject().logout();
+            iter.remove();
+            subjectAndCheckTimeEntry.getSubject().logout();
           }
         }
 

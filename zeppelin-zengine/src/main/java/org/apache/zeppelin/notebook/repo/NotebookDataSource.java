@@ -51,6 +51,7 @@ public class NotebookDataSource {
     //ds.setAutoCommitOnClose(true);
     ds.setMaxPoolSize(maxPoolSize);
     ds.setMinPoolSize(minPoolSize);
+    ds.setAutoCommitOnClose(true);
     ds.setJdbcUrl(String.format(JDBC_URL_FORMAT, dbType, host, port, database));
   }
 
