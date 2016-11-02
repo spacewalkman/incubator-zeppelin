@@ -11,8 +11,11 @@ public class TicketToken implements AuthenticationToken {
    */
   private String ticket;
 
-  public TicketToken(String ticket) {
+  private String ip;
+
+  public TicketToken(String ticket, String ip) {
     this.ticket = ticket;
+    this.ip = ip;
   }
 
   @Override
@@ -33,4 +36,11 @@ public class TicketToken implements AuthenticationToken {
     this.ticket = ticket;
   }
 
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
 }

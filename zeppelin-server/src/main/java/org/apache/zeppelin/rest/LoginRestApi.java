@@ -58,6 +58,9 @@ public class LoginRestApi {
   public static class LoginBean {
     @XmlElement
     public String ticket;
+
+    @XmlElement
+    public String ip;
   }
 
   /**
@@ -90,7 +93,7 @@ public class LoginRestApi {
 
     if (!subject.isAuthenticated()) {
       try {
-        TicketToken token = new TicketToken(loginBean.ticket);
+        TicketToken token = new TicketToken(loginBean.ticket, loginBean.ip);
         //token.setRememberMe(true);
 
         Date startTime = new Date();

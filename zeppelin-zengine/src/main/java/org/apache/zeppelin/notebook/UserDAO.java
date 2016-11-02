@@ -248,6 +248,7 @@ public class UserDAO {
       connection = this.dataSource.getConnection();
 
       for (String role : roles) {
+        //是否已经存在
         boolean hasRoleAlready = this.isRoleExistForUser(user, role);
         if (hasRoleAlready) {
           return;

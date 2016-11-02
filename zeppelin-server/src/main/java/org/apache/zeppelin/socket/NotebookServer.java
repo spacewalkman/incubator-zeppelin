@@ -181,8 +181,14 @@ public class NotebookServer extends WebSocketServlet implements
 
       LOG.debug("接收到消息OP << " + messagereceived.op);
       LOG.debug("接收到ticket << " + messagereceived.ticket);
+      LOG.debug("接收到ip << " + messagereceived.ip);
 
       if (messagereceived.ticket == null || messagereceived.ticket.isEmpty()) {
+        unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
+        return;
+      }
+
+      if (messagereceived.ip == null || messagereceived.ip.isEmpty()) {
         unicast(new Message(OP.UNAUTHORIED).put("info", "未授权的用户"), conn);
         return;
       }
@@ -190,7 +196,7 @@ public class NotebookServer extends WebSocketServlet implements
       Subject subject = null;
       //执行验证
       try {
-        subject = this.doOrGetCachedAuthentication(notebook.getConf(), messagereceived.ticket);
+        subject = this.doOrGetCachedAuthentication(notebook.getConf(), messagereceived.ticket, messagereceived.ip);
       } catch (AuthenticationException ae) {
         LOG.debug("用户验证失败", ae);
         unicast(new Message(OP.UNAUTHORIED).put("errorMessage", "未授权的用户"), conn);
@@ -314,7 +320,8 @@ public class NotebookServer extends WebSocketServlet implements
    * @param ticket 稻田传递过来的uuid token
    * @return 如果验证顺利通过，则返回非null的subject，否则，抛出异常
    */
-  private Subject doOrGetCachedAuthentication(ZeppelinConfiguration conf, String ticket) {
+  private Subject doOrGetCachedAuthentication(ZeppelinConfiguration conf, String ticket,
+                                              String ip) {
     TicketContainer ticketContainer = TicketContainer.getSingleton(conf);
     Subject subject = ticketContainer.getCachedSubject(ticket);
     if (subject == null) {
@@ -322,8 +329,8 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     //没有身份认证过，则执行验证，并缓存
-    if (!subject.isAuthenticated() ) {
-      TicketToken token = new TicketToken(ticket);
+    if (!subject.isAuthenticated()) {
+      TicketToken token = new TicketToken(ticket, ip);
       //token.setRememberMe(true);
 
       Date startTime = new Date();

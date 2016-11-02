@@ -33,9 +33,10 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         throw new Error('invaild url,please to login');
       }
       data.ticket = $rootScope.ticket.ticket;
+      data.ip = $rootScope.ticket.serverIP;
       data.projectId = $rootScope.ticket.projectId;
 
-      console.log('Send >> %o, %o, %o, %o, %o', data.op, data.ticket, data.projectId, data);
+      console.log('Send >> %o, %o, %o, %o, %o', data.op, data.ticket, data.ip, data.projectId, data);
       websocketCalls.ws.send(JSON.stringify(data));
     };
 

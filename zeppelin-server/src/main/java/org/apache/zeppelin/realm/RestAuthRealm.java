@@ -78,7 +78,8 @@ public class RestAuthRealm extends AuthenticatingRealm {
     URI uri = null;
 
     try {
-      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticketToken.getTicket()).build();
+      uri = new URIBuilder(authRestEndPoint).setParameter("ticket", ticketToken.getTicket())
+              .setParameter("ip", ticketToken.getIp()).build();
     } catch (URISyntaxException e) {
       throw new IOException(e);
     }
@@ -86,7 +87,6 @@ public class RestAuthRealm extends AuthenticatingRealm {
     HttpGet httpget = new HttpGet(uri);
 
     ResponseHandler<UserProfile> rh = new ResponseHandler<UserProfile>() {
-
       @Override
       public UserProfile handleResponse(
               final HttpResponse response) throws IOException {
@@ -97,6 +97,7 @@ public class RestAuthRealm extends AuthenticatingRealm {
                   statusLine.getStatusCode(),
                   statusLine.getReasonPhrase());
         }
+
         if (entity == null) {
           throw new ClientProtocolException("Response contains no content");
         }
@@ -105,7 +106,8 @@ public class RestAuthRealm extends AuthenticatingRealm {
         ContentType contentType = ContentType.getOrDefault(entity);
         Charset charset = contentType.getCharset();
         Reader reader = new InputStreamReader(entity.getContent(), charset);
-        return gson.fromJson(reader, UserProfile.class);
+        RestAuthResponse authResponse = gson.fromJson(reader, RestAuthResponse.class);
+        return authResponse.getUserProfile();
       }
     };
 
