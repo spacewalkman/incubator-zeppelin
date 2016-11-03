@@ -178,7 +178,8 @@
 	  <compilerPlugins combine.children="append">
 	    <compilerPlugin>
 	      <groupId>org.scalamacros</groupId>
-	      <artifactId>paradise_${scala.version}</artifactId>
+	      <!--<artifactId>paradise_${scala.version}</artifactId>-->
+          <artifactId>paradise_2.11.4</artifactId>
 	      <version>${scala.macros.version}</version>
 	    </compilerPlugin>
 	  </compilerPlugins>

@@ -38,7 +38,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   //   {name: '1d', value: '0 0 0 * * ?'}
   // ];
 
-  $scope.interpreterBindings = ['r', 'python', 'spark', 'md', 'jdbc'];
+  $scope.interpreterBindings = ['r', 'python', 'spark', 'sh', 'md', 'jdbc'];
   $scope.isNoteDirty = null;
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
@@ -52,6 +52,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     var selectedInterpreterNames = [
       'spark',
       'md',
+      'sh',
       'python',
       'jdbc'];
 

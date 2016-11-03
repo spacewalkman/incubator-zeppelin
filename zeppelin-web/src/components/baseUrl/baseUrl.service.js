@@ -32,10 +32,6 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
 
   this.getWebsocketUrl = function() {
     var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // var webSocketUrl = wsProtocol + '//' + location.hostname + ':' + this.getPort() +
-    //                    skipTrailingSlash(location.pathname) + '/ws';
-    // console.log(webSocketUrl);
-    // return webSocketUrl;
     return wsProtocol + '//' + this.getHost() + ':' + this.getPort() + skipTrailingSlash(location.pathname) + '/ws';
   };
 
@@ -44,10 +40,6 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
       '/api';
   };
 
-  // this.setHost = function(host) {
-  //   socketHost = host;
-  // };
-
   var skipTrailingSlash = function(path) {
     return path.replace(/\/$/, '');
   };
@@ -55,6 +47,4 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
   this.getHost = function() {
     return $rootScope.ticket.serverIP;
   };
-  // var socketHost = '172.24.6.20';
-  //TODO:load socketHost from server or glob var or url
 }]);
