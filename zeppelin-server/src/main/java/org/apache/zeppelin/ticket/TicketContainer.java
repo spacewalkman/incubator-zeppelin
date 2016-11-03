@@ -149,7 +149,7 @@ public class TicketContainer {
             continue;
           } else {//超时了
             iter.remove();
-            subjectAndCheckTimeEntry.getSubject().logout();
+            //subjectAndCheckTimeEntry.getSubject().logout();
           }
         }
 
