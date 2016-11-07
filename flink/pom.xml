@@ -159,7 +159,7 @@
 	      <goal>compile</goal>
 	    </goals>
 	  </execution>
-          
+
 	  <!-- Run scala compiler in the process-test-resources phase, so that dependencies on
 	       scala classes can be resolved later in the (Java) test-compile phase -->
 	  <execution>
@@ -314,35 +314,28 @@
               <includeScope>runtime</includeScope>
             </configuration>
           </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
           <execution>
-            <id>copy-artifact</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/../../interpreter/flink</outputDirectory>
-              <overWriteReleases>false</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-              <includeScope>runtime</includeScope>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>${project.artifactId}</artifactId>
-                  <version>${project.version}</version>
-                  <type>${project.packaging}</type>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
+              <id>copy-artifact</id>
+              <phase>package</phase>
+              <goals>
+                  <goal>copy</goal>
+              </goals>
+              <configuration>
+                  <outputDirectory>${project.build.directory}/../../interpreter/flink</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <includeScope>runtime</includeScope>
+                  <artifactItems>
+                      <artifactItem>
+                          <groupId>${project.groupId}</groupId>
+                          <artifactId>${project.artifactId}</artifactId>
+                          <version>${project.version}</version>
+                          <type>${project.packaging}</type>
+                      </artifactItem>
+                  </artifactItems>
+              </configuration>
+            </execution>
         </executions>
       </plugin>
     </plugins>
