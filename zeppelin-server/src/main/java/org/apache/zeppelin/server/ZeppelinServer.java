@@ -129,9 +129,6 @@ public class ZeppelinServer extends Application {
             notebookRepo, schedulerFactory, replFactory, notebookWsServer,
             notebookIndex, notebookAuthorization, credentials);
 
-    //初始化现有note与user之间的权限关系
-
-
     // to update notebook from application event from remote process.
     heliumApplicationFactory.setNotebook(notebook);
     // to update fire websocket event on application event.
@@ -142,7 +139,6 @@ public class ZeppelinServer extends Application {
   }
 
   public static void main(String[] args) throws InterruptedException {
-
     ZeppelinConfiguration conf = ZeppelinConfiguration.create();
     conf.setProperty("args", args);
 
@@ -226,12 +222,8 @@ public class ZeppelinServer extends Application {
               server,
               new SslConnectionFactory(getSslContextFactory(conf), HttpVersion.HTTP_1_1.asString()),
               new HttpConnectionFactory(httpsConfig));
-
-
     } else {
-
       connector = new ServerConnector(server);
-
     }
 
     // Set some timeout options to make debugging easier.
