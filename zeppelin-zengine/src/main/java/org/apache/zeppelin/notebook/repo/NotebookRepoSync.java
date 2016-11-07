@@ -138,7 +138,12 @@ public class NotebookRepoSync implements NotebookRepo {
    */
   @Override
   public Note get(String noteId, String principal) throws IOException {
-    return getRepo(0).get(noteId, principal);
+    long startTime = System.currentTimeMillis();
+    Note note = getRepo(0).get(noteId, principal);
+    long endTime = System.currentTimeMillis();
+    LOG.debug("notes同步耗时:{} 秒", (endTime - startTime) / 1000.0);
+
+    return note;
   }
 
   /* get note from specific repo (for tests) */
