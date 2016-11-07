@@ -14,7 +14,7 @@ import javax.sql.DataSource;
  * singleton解决Datasource的唯一实例问题，供JdbcNotebookRepo使用，解决connection pooling的问题
  */
 public class NotebookDataSource {
-  private static final String JDBC_URL_FORMAT = "jdbc:%s://%s:%d/%s?useSSL=false";
+  private static final String JDBC_URL_FORMAT = "jdbc:%s://%s:%d/%s?useSSL=false&autoReconnect=true";
   private volatile static NotebookDataSource datasource;
   private ComboPooledDataSource ds;
 
@@ -53,6 +53,10 @@ public class NotebookDataSource {
     ds.setMinPoolSize(minPoolSize);
     ds.setAutoCommitOnClose(true);
     ds.setJdbcUrl(String.format(JDBC_URL_FORMAT, dbType, host, port, database));
+
+    //如下2个属性+ url中的autoReconnect=true，为了解决MySQL reconnect issues or ‘The last packet successfully received from the server XX milliseconds ago’ errors
+    ds.setTestConnectionOnCheckin(false);
+    ds.setTestConnectionOnCheckout(true);
   }
 
   public static NotebookDataSource getInstance(
