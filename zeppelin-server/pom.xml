@@ -35,7 +35,7 @@
   <properties>
     <commons.httpclient.version>4.3.6</commons.httpclient.version>
     <jersey.version>2.22.2</jersey.version>
-    <hadoop-common.version>2.6.0</hadoop-common.version>
+    <hadoop.version>2.6.0</hadoop.version>
   </properties>
 
   <dependencyManagement>
@@ -204,7 +204,7 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop-common.version}</version>
+      <version>${hadoop.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.sun.jersey</groupId>
@@ -344,11 +344,6 @@
       <version>5.1.39</version>
       <scope>runtime</scope>
     </dependency>
-      <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-      </dependency>
-
   </dependencies>
 
   <build>
