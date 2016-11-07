@@ -320,9 +320,6 @@
           <forkCount>1</forkCount>
           <reuseForks>false</reuseForks>
           <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
-          <excludes>
-            <exclude>**/SparkRInterpreterTest.java</exclude>
-          </excludes>
         </configuration>
       </plugin>
 
@@ -392,12 +389,6 @@
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
         <version>2.15.2</version>
-        <configuration>
-          <excludes combine.self="override">
-            <exclude>**/ZeppelinR.scala</exclude>
-            <exclude>**/SparkRBackend.scala</exclude>
-          </excludes>
-        </configuration>
         <executions>
           <execution>
             <id>compile</id>
@@ -434,6 +425,25 @@
             <testExclude>**/SparkRInterpreterTest.java</testExclude>
             <testExclude>**/ZeppelinRTest.java</testExclude>
           </testExcludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/ZeppelinR.scala</exclude>
+            <exclude>**/SparkRBackend.scala</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/SparkRInterpreterTest.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
     </plugins>
@@ -613,6 +623,14 @@
             <configuration>
               <excludes combine.self="override"></excludes>
               <testExcludes combine.self="override"></testExcludes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <configuration>
+              <excludes combine.self="override">
+              </excludes>
             </configuration>
           </plugin>
           <plugin>

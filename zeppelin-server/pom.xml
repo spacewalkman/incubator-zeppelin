@@ -33,9 +33,8 @@
   <name>Zeppelin: Server</name>
 
   <properties>
-    <commons.httpclient.version>4.3.6</commons.httpclient.version>
     <jersey.version>2.22.2</jersey.version>
-    <hadoop.version>2.6.0</hadoop.version>
+    <hadoop.version>2.7.2</hadoop.version>
   </properties>
 
   <dependencyManagement>
@@ -186,7 +185,6 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.3.6</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -218,7 +216,6 @@
           <groupId>com.sun.jersey</groupId>
           <artifactId>jersey-server</artifactId>
         </exclusion>
-
 
         <exclusion>
           <groupId>javax.servlet</groupId>
@@ -252,7 +249,6 @@
           <groupId>com.jcraft</groupId>
           <artifactId>jsch</artifactId>
         </exclusion>
-
       </exclusions>
     </dependency>
 
