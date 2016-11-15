@@ -18,7 +18,8 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
   this.getPort = function() {
     var port = Number(location.port);
     if (!port) {
-      port = 80;
+      //port = 80;
+      port = 8080;
       if (location.protocol === 'https:') {
         port = 443;
       }
@@ -32,17 +33,18 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
 
   this.getWebsocketUrl = function() {
     var wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return wsProtocol + '//' + this.getHost() + ':' + this.getPort() + skipTrailingSlash(location.pathname) + '/ws';
+    //return wsProtocol + '//' + this.getHost() + ':' + this.getPort() + skipTrailingSlash(location.pathname) + '/ws';
+    return wsProtocol + '//' + this.getHost() + ':' + this.getPort() + '/ws';
   };
 
   this.getRestApiBase = function() {
-    return location.protocol + '//' + this.getHost() + ':' + this.getPort() + skipTrailingSlash(location.pathname) +
-      '/api';
+    //return location.protocol + '//' + this.getHost() + ':' + this.getPort() + skipTrailingSlash(location.pathname) +
+    return location.protocol + '//' + this.getHost() + ':' + this.getPort() + '/api';
   };
 
-  var skipTrailingSlash = function(path) {
-    return path.replace(/\/$/, '');
-  };
+  // var skipTrailingSlash = function(path) {
+  //   return path.replace(/\/$/, '');
+  // };
 
   this.getHost = function() {
     return $rootScope.ticket.serverIP;
