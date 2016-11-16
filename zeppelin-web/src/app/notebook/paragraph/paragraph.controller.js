@@ -89,8 +89,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     'ace/mode/scala': /^%(\w*\.)?spark\s*$/,
     'ace/mode/r': /^%(\w*\.)?(r|sparkr|knitr)\s*$/,
     'ace/mode/sql': /^%(\w*\.)?\wql/,
-    'ace/mode/markdown': /^%md/
-    // 'ace/mode/sh': /^%sh/
+    'ace/mode/markdown': /^%md/,
+    'ace/mode/sh': /^%sh/
   };
 
   var countEditorMode = function(replName) {
@@ -284,9 +284,9 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       config.editorMode = countEditorMode($scope.paragraph.replName);
     }
 
-    if (config.title === undefined) {
-      config.title = true;
-    }
+    // if (config.title === undefined) {
+    //   config.title = true;
+    // }
 
     if (config.lineNumbers === undefined) {
       config.lineNumbers = true;
