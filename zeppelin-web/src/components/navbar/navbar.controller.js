@@ -111,8 +111,8 @@ angular.module('zeppelinWebApp')
   });
 
   /*
-   +    ** Performance optimization for Browser Render.
-   +    */
+   * Performance optimization for Browser Render.
+   */
   angular.element(document).ready(function() {
     angular.element('.notebook-list-dropdown').on('show.bs.dropdown', function() {
       $scope.isDrawNavbarNotebookList = true;

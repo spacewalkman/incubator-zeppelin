@@ -6,7 +6,6 @@
 angular.module('zeppelinWebApp').service('notePermission', [function() {
 
   this.countPermission = function(note) {
-
     return {
       remove: permissionJudge(note.permissionsMap, 'canDelete'),
       read: true,//后台返回的都是可以看的
