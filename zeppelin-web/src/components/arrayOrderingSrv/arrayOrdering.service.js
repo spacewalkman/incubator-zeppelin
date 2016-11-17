@@ -13,12 +13,12 @@
  */
 'use strict';
 
-angular.module('zeppelinWebApp').service('arrayOrderingSrv', function() {
+angular.module('zeppelinWebApp').service('arrayOrderingSrv', ['notePermission', function(notePermission) {
 
   var arrayOrderingSrv = this;
 
   this.notebookListOrdering = function(note) {
-    return arrayOrderingSrv.getNoteName(note);
+    return arrayOrderingSrv.getSorting(note);
   };
 
   this.getNoteName = function(note) {
@@ -29,4 +29,17 @@ angular.module('zeppelinWebApp').service('arrayOrderingSrv', function() {
     }
   };
 
-});
+  //将template置顶，剩下的note按照lastModifiedTime降序
+  this.getSorting = function(note) {
+    if (!note.lastModifiedTime) {
+      return Number.NEGATIVE_INFINITY;
+    }
+
+    if (notePermission.isTemplate(note.type)) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    return note.lastModifiedTime;
+  };
+
+}]);
