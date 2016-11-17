@@ -69,7 +69,7 @@ angular.module('zeppelinWebApp').controller('NotenameCtrl', function($scope, not
         }
       }
     });
-    return 'Untitled Note ' + newCount;
+    return '未命名算法' + newCount;
   };
 
 });
