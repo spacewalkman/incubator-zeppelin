@@ -19,6 +19,6 @@ angular.module('zeppelinWebApp')
   vm.showEditor = false;
 
   vm.canEditTitle = function(note) {
-    return note.type === 'normal';
+    return note && note.type === 'normal';
   };
 });
