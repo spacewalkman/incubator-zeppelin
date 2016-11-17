@@ -36,7 +36,7 @@
     </div>
 
     <div class="header-bar history-header-bar">
-      <a href="javascript:;" class="history" ng-click="sideBar.toggleHistory()">查看提交历史<i class="triangle"></i></a>
+      <a href="javascript:;" class="history" ng-click="sideBar.toggleHistory()">{{historyOrNotes}}<i class="triangle"></i></a>
     </div>
     <div class="history-list">
       <!--repeat start-->
@@ -46,7 +46,7 @@
         <a href="#/notebook/{{revision.noteId}}?v={{revision.id}}{{revision.isSubmitted? '&s=true' : '' }}"
            class="note-title text-ellipsis"
            title="{{revision.message}}">{{revision.message}}</a>
-        <p class="commit-time">{{revision.time | date:'yyyy-MM-dd HH:mm:ss '}}</p>
+        <p class="commit-time">{{revision.time | date:'yyyy-MM-dd HH:mm:ss'}}</p>
         <p class="commiter"><span class="name">{{revision.committer}}</span></p>
       </div>
       <!--repeat end-->

@@ -35,6 +35,7 @@ angular.module('zeppelinWebApp')
 
     $scope.listActive = true;
     $scope.historyActive = false;
+    $scope.historyOrNotes = '查看提交历史';
     $scope.adding = false;
     $scope.noteRevisions = [];
 
@@ -83,6 +84,11 @@ angular.module('zeppelinWebApp')
     function toggleHistory() {
       $scope.listActive = !$scope.listActive;
       $scope.historyActive = !$scope.historyActive;
+      if ($scope.listActive) {
+        $scope.historyOrNotes = '查看提交历史';
+      } else {
+        $scope.historyOrNotes = '查看算法列表';
+      }
     }
 
     function removeNote(noteId) {
