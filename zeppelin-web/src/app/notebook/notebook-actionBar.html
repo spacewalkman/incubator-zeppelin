@@ -23,11 +23,14 @@ limitations under the License.
                  ng-enter="sendNewName();input.showEditor = false;"
                  ng-escape="note.name = oldName; input.showEditor = false"
                  focus-if="input.showEditor"/>
-          <p class="form-control-static2"
-             ng-hide="input.showEditor">
+          <p class="form-control-static2" ng-hide="input.showEditor">
             <span class="value text-ellipsis"
                   title="{{noteName(note)}}"
-                  ng-click="input.showEditor = true; oldName = note.name">{{noteName(note)}}</span>
+                  ng-if="input.canEditTitle(note)"
+                  ng-click="input.showEditor = true; oldName = note.name;">{{noteName(note)}}</span>
+            <span class="value text-ellipsis"
+                  title="{{noteName(note)}}"
+                  ng-if="!input.canEditTitle(note)">{{noteName(note)}}</span>
             <span class="to-edit-events-btn"
                   type="button"
                   ng-if="note.permission.write && !input.showEditor"

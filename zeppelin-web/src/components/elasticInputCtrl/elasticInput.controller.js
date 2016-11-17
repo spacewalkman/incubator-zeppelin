@@ -17,4 +17,8 @@ angular.module('zeppelinWebApp')
 .controller('ElasticInputCtrl', function() {
   var vm = this;
   vm.showEditor = false;
+
+  vm.canEditTitle = function(note) {
+    return note.type === 'normal';
+  };
 });
