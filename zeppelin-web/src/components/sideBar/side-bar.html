@@ -20,7 +20,7 @@
       </div>
       <!--repeat start-->
       <div class="note-list-item"
-           ng-repeat="note in sideBar.notes.flatList | orderBy:sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
+           ng-repeat="note in sideBar.notes.flatList | orderBy:-sideBar.arrayOrderingSrv.notebookListOrdering track by $index"
            ng-class="{'active':sideBar.isActive(note.id),'locked':sideBar.readOnly(note),'last-child':$last}">
         <a ng-if="note.id"
            href="#/notebook/{{note.id}}"
