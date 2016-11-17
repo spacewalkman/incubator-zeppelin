@@ -944,10 +944,10 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   /**
-   * 是否是模板
+   * 是否是模板:判断逻辑——不属于任何组的note就为template
    */
   public boolean isTemplate() {
-    if ((this.getGroup() == null || this.getGroup().isEmpty()) && (this.getProjectId() != null && this.getProjectId().isEmpty())) {
+    if (this.getGroup() == null || this.getGroup().isEmpty()) {
       return true;
     }
 
