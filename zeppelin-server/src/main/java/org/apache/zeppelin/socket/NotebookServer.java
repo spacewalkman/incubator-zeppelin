@@ -258,7 +258,7 @@ public class NotebookServer extends WebSocketServlet implements
         case PARAGRAPH_CLEAR_OUTPUT:
           clearParagraphOutput(conn, subject, notebook, messagereceived);
           break;
-        case NOTE_UPDATE://set note级别的属性，例如修改title、config等 TODO:测试修改interpreter下拉列表走这个方法吗?
+        case NOTE_UPDATE://set note级别的属性，例如修改title、config等
           updateNote(conn, subject, notebook, messagereceived);
           break;
         case COMPLETION:
@@ -840,7 +840,7 @@ public class NotebookServer extends WebSocketServlet implements
    * 设置ide需要的前端的note type属性
    *
    * @param note 待设置type的note
-   * @param type 如果不为null，表明是指定了type类型；否则，通过note的group和projectId判断是否为template，或者是normal
+   * @param type 如果不为null，表明是指定了type类型；否则，note的team为null则为template（不属于任何组的note就是template），或者是normal
    */
   private void setNoteType(Note note, final String type) {
     if (type != null) {//只有在 revision时才出现
@@ -849,12 +849,11 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     note.setType(Note.NOTE_TYPE_NORMAL);//默认都是normal
-    if (note.getGroup() == null || note.getGroup().isEmpty()) {
-      if (note.getProjectId() != null && !note.getProjectId().isEmpty()) {
-        note.setType(Note.NOTE_TYPE_TEMPLATE);//projectId不为null，但是teamId为null的为模板，TODO：这里隐含限制，模板必须关联赛题
-      }
+    if (note.isTemplate()) {
+      note.setType(Note.NOTE_TYPE_TEMPLATE);//projectId不为null，但是teamId为null的为模板
     }
   }
+
 
   private void sendHomeNote(NotebookSocket conn, Subject subject,
                             Notebook notebook) throws IOException {
@@ -1123,6 +1122,7 @@ public class NotebookServer extends WebSocketServlet implements
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     Note newNote = notebook.cloneNote(noteId, name, userProfile.getUserName(), userProfile.getTeam(), userProfile.getProjectId());
+    this.setNoteType(newNote, null);
 
     this.addConnectionToNote(newNote.getId(), conn);
     conn.send(serializeMessageIncludePermissionAndType(new Message(OP.NEW_NOTE).put("note", newNote)));
