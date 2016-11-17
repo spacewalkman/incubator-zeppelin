@@ -36,8 +36,6 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.NotebookImportDeserializer;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.repo.commit.SubmitLeftOver;
-import org.apache.zeppelin.notebook.repo.commit.SubmitStrategy;
-import org.apache.zeppelin.notebook.repo.commit.SubmitStrategyFactory;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
