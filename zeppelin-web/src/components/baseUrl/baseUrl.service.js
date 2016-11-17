@@ -18,8 +18,8 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
   this.getPort = function() {
     var port = Number(location.port);
     if (!port) {
-      //port = 80;
-      port = 8080;
+      port = 80;
+      //port = 8080;
       if (location.protocol === 'https:') {
         port = 443;
       }
