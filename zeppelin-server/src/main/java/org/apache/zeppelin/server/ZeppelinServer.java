@@ -119,9 +119,10 @@ public class ZeppelinServer extends Application {
       }
     }
 
-    if (this.notebookIndex == null) {
-      this.notebookIndex = new LuceneSearch();
-    }
+    //TODO:这里禁用索引，稻田中暂时没有检索需求，配合pom.xml中关于lucene的optional配置，可以减少lib大小
+//    if (this.notebookIndex == null) {
+//      this.notebookIndex = new LuceneSearch();
+//    }
 
     this.notebookAuthorization = ShiroNotebookAuthorization.getInstance(); //授权换成singleton实现
     this.credentials = new Credentials(conf.credentialsPersist(), conf.getCredentialsPath());

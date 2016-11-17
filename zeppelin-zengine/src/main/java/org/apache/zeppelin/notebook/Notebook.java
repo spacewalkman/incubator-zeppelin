@@ -77,6 +77,7 @@ public class Notebook implements NoteEventListener {
   private SchedulerFactory schedulerFactory;
 
   private InterpreterFactory replFactory;
+
   /**
    * Keep the order.
    */
@@ -91,6 +92,18 @@ public class Notebook implements NoteEventListener {
   private final List<NotebookEventListener> notebookEventListeners =
           Collections.synchronizedList(new LinkedList<NotebookEventListener>());
   private Credentials credentials;
+
+  /**
+   * 重载的构造函数，主要是为了将ServiceService置为null，这样可以减少lib的大小，并且提高性能
+   */
+  public Notebook(ZeppelinConfiguration conf, NotebookRepo notebookRepo,
+                  SchedulerFactory schedulerFactory, InterpreterFactory replFactory,
+                  JobListenerFactory jobListenerFactory,
+                  NotebookAuthorizationAdaptor notebookAuthorization, Credentials credentials)
+          throws IOException, SchedulerException {
+    this(conf, notebookRepo, schedulerFactory, replFactory, jobListenerFactory, null, notebookAuthorization, credentials);
+  }
+
 
   /**
    * Main constructor \w manual Dependency Injection
@@ -260,7 +273,7 @@ public class Notebook implements NoteEventListener {
     }
 
     notebookAuthorization.addOwner(newNote.getId(), principal);
-    if (this.notebookRepo != this.notebookIndex) {//避免既实现了NotebookRepo接口又实现了SearchService接口的类重复add，例如ElasticSearchRepo
+    if (this.notebookIndex != null && this.notebookIndex != this.notebookRepo) {//避免既实现了NotebookRepo接口又实现了SearchService接口的类重复add，例如ElasticSearchRepo
       notebookIndex.addIndexDoc(newNote);
     }
 
@@ -331,7 +344,9 @@ public class Notebook implements NoteEventListener {
       note = notes.remove(id);
     }
     replFactory.removeNoteInterpreterSettingBinding(id);
-    notebookIndex.deleteIndexDocs(note);
+    if (this.notebookIndex != null) {
+      notebookIndex.deleteIndexDocs(note);
+    }
     notebookAuthorization.removeNote(id);
 
     // remove from all interpreter instance's angular object registry
@@ -905,7 +920,7 @@ public class Notebook implements NoteEventListener {
   public void close() {
     this.notebookRepo.close();
 
-    if (this.notebookRepo != this.notebookIndex) {//when elasticSearch as both repo and searchService,don't close twice
+    if (this.notebookIndex != null && this.notebookRepo != this.notebookIndex) {//when elasticSearch as both repo and searchService,don't close twice
       this.notebookIndex.close();
     }
   }
