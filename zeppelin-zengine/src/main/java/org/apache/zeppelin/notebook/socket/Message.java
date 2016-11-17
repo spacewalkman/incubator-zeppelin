@@ -23,7 +23,6 @@ import java.util.Map;
 /**
  * Zeppelin websocker massage template class.
  */
-//TODO:
 public class Message {
   /**
    * Representation of event type.

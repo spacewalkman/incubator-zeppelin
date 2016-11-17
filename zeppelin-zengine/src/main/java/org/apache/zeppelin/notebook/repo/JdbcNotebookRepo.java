@@ -122,6 +122,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
         note.setProjectId(projectId);
         note.setGroup(team);
 
+
         resultNotes.add(new NoteInfo(note));
       }
     } catch (SQLException e) {
