@@ -82,6 +82,9 @@
     </fileSet>
     <fileSet>
       <directory>../notebook</directory>
+      <excludes>
+        <exclude>*/**</exclude>
+      </excludes>
     </fileSet>
   </fileSets>
     <!--<fileSet>
