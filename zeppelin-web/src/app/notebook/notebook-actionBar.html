@@ -106,7 +106,7 @@ limitations under the License.
           <span type="button"
                 class="setting-btn"
                 tooltip-placement="bottom" tooltip="克隆算法"
-                ng-hide="!note.permission.read"
+                ng-hide="!note.permission.read || viewOnly"
                 data-toggle="modal"
                 data-target="#noteNameModal"
                 data-clone="true">
