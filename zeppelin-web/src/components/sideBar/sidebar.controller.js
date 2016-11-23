@@ -95,6 +95,8 @@ angular.module('zeppelinWebApp')
       BootstrapDialog.confirm({
         closable: true,
         title: '',
+        btnCancelLabel: '取消',
+        btnOKLabel: '确定',
         message: '是否确定删除算法?',
         callback: function(result) {
           if (result) {
