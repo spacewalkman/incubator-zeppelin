@@ -120,7 +120,7 @@
     var search = location.search ? location.search.substring(1) : '';
     var parts = search.split('&');
     for (var i = parts.length - 1; i >= 0; i--) {
-      if (parts[i].startsWith(name + '=')) {
+      if (parts[i].indexOf(name + '=') !== -1) {
         return parts[i].substring(name.length + 1);
       }
     }
