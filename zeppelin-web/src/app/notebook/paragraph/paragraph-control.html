@@ -16,7 +16,7 @@ limitations under the License.
      class="control"
      ng-show="!asIframe"
      ng-if="note.permission.exec || note.permission.write">
-  语言:
+  <span ng-hide="viewOnly">解释器:</span>
   <span class="btn-group group-language"
         ng-hide="viewOnly"
         ng-if="note.permission.write">
@@ -63,14 +63,14 @@ limitations under the License.
             class="btn btn-default btn-xs btn-move-up"
             ng-if="note.permission.write"
             ng-click="moveUp()"
-            ng-hide="$first"
+            ng-hide="$first || viewOnly"
             tooltip-placement="bottom" tooltip="向上移动"><span class="ico-placeholder"></span></button>
 
     <button type="button"
             class="btn btn-default btn-xs btn-move-down"
             ng-if="note.permission.write"
             ng-click="moveDown()"
-            ng-hide="$last"
+            ng-hide="$last || viewOnly"
             tooltip-placement="bottom" tooltip="向下移动"><span class="ico-placeholder"></span></button>
 
     <button type="button"
