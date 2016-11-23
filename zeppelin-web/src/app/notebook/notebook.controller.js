@@ -135,6 +135,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
+      btnCancelLabel: '取消',
+      btnOKLabel: '确定',
       message: '是否确定删除算法?',
       callback: function(result) {
         if (result) {
@@ -156,6 +158,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
+      btnCancelLabel: '取消',
+      btnOKLabel: '确定',
       message: '是否建立副本?',
       callback: function(result) {
         if (result) {
@@ -226,6 +230,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
+      btnCancelLabel: '取消',
+      btnOKLabel: '确定',
       message: '提交当前版本到组委会评测？本' + $scope.submitStrategyName + '还可以提交' + $scope.submitTimes + '次。',
       callback: function(result) {
         if (result) {
@@ -244,6 +250,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
+      btnCancelLabel: '取消',
+      btnOKLabel: '确定',
       message: '执行所有段落?',
       callback: function(result) {
         if (result) {
@@ -268,6 +276,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     BootstrapDialog.confirm({
       closable: true,
       title: '',
+      btnCancelLabel: '取消',
+      btnOKLabel: '确定',
       message: '确认清除算法输出?',
       callback: function(result) {
         if (result) {
