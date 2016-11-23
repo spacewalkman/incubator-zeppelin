@@ -18,7 +18,8 @@ angular.module('zeppelinWebApp').service('baseUrlSrv', ['$location', '$rootScope
   this.getPort = function() {
     var port = Number(location.port);
     if (!port) {
-      port = 80;
+      //后台固定ws监听端口为8888
+      port = 8888;
       //port = 8080;
       if (location.protocol === 'https:') {
         port = 443;
