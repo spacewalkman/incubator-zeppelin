@@ -283,7 +283,6 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * Add paragraph last.
    */
-
   public Paragraph addParagraph() {
     Paragraph p = new Paragraph(this, this, factory);
     setParagraphMagic(p, paragraphs.size());
@@ -548,7 +547,7 @@ public class Note implements Serializable, ParagraphJobListener {
   }
 
   /**
-   * 设置类型%md解释器标识
+   * 设置类似%md解释器标识
    */
   private void setParagraphMagic(Paragraph p, int index) {
     if (paragraphs.size() > 0) {
