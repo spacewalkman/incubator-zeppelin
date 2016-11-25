@@ -528,15 +528,15 @@ public class Notebook implements NoteEventListener {
     }
 
     //TODO:这里有必要触发sync吗？
-    if (notebookRepo instanceof NotebookRepoSync) {
-      NotebookRepoSync mainRepo = (NotebookRepoSync) notebookRepo;
-      if (mainRepo.getRepoCount() > 1) {
-        long startTime = System.currentTimeMillis();
-        mainRepo.sync();
-        long endTime = System.currentTimeMillis();
-        logger.debug("notes同步耗时:{} 秒", (endTime - startTime) / 1000.0);
-      }
-    }
+//    if (notebookRepo instanceof NotebookRepoSync) {
+//      NotebookRepoSync mainRepo = (NotebookRepoSync) notebookRepo;
+//      if (mainRepo.getRepoCount() > 1) {
+//        long startTime = System.currentTimeMillis();
+//        mainRepo.sync();
+//        long endTime = System.currentTimeMillis();
+//        logger.debug("notes同步耗时:{} 秒", (endTime - startTime) / 1000.0);
+//      }
+//    }
 
     List<NoteInfo> noteInfos = notebookRepo.list(principal);
     if (noteInfos != null && noteInfos.size() > 0) {
