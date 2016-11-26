@@ -90,6 +90,11 @@ public interface IShiroNotebookAuthorization {
   String ROLE_ADMIN = "admin";
 
   /**
+   * 读取所有模板的角色
+   */
+  String ROLE_TEMPLATE_READER = "template_reader";
+
+  /**
    * 是否是某个参赛队的队员
    *
    * @param subject shiro subject
@@ -162,6 +167,13 @@ public interface IShiroNotebookAuthorization {
    * 给user授权角色(批量),实现方需要处理判断去重
    */
   void grantRolesToUser(String userName, String... roleNames);
+
+  /**
+   * 给用户授予模板读取的角色
+   *
+   * @param userName 用户
+   */
+  void grantRoleTemplateReader(String userName);
 
   /**
    * 给角色添加权限(批量),实现方需要处理判断去重

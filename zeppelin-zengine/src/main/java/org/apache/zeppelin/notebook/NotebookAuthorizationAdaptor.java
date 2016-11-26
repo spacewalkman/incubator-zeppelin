@@ -73,6 +73,10 @@ public abstract class NotebookAuthorizationAdaptor implements IPosixLikeNotebook
   }
 
   @Override
+  public void grantRoleTemplateReader(String userName) {
+  }
+
+  @Override
   public void grantPermissionsToRole(String roleName, String... permissions) {
   }
 

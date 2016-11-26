@@ -180,7 +180,7 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
   //TODO:unique userName and roleName
   @Override
   public void addGroupMember(String groupId, String userName) {
-    //这里不需要判断同名用户存在不存在，稻田中user表zeppelin不维护
+    //这里不需要判断同名用户存在不存在，zeppelin不维护user信息，全部通过rest接口请求稻田端
     //    if (!userDAO.isUserExist(userName)) {
     //      LOG.warn("user: " + userName + " doesn't exist!");
     //      return;
@@ -202,6 +202,16 @@ public class ShiroNotebookAuthorization extends NotebookAuthorizationAdaptor {
     for (String roleName : roleNames) {
       userDAO.assignRoleToUser(userName, roleName);
     }
+  }
+
+  /**
+   * 为用户授予可以读取所有的template的角色
+   *
+   * @param userName 用户
+   */
+  @Override
+  public void grantRoleTemplateReader(String userName) {
+    userDAO.assignRoleToUser(userName, ROLE_TEMPLATE_READER);
   }
 
   /**
