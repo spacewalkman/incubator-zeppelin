@@ -27,7 +27,7 @@
         "envName": "SPARK_APP_NAME",
 
         "propertyName": "spark.app.name",
-        "defaultValue": "Zeppelin",
+        "defaultValue": "Ditech",
         "description": "The name of spark application."
       },
       "zeppelin.spark.printREPLOutput": {
