@@ -149,7 +149,9 @@ public class TicketContainer {
             continue;
           } else {//超时了
             iter.remove();
-            //subjectAndCheckTimeEntry.getSubject().logout();
+            //如果subject不logout，则会出现subject一直处于authorized状态，即使iter.remove()了，但是在执行subject = org.apache.shiro.SecurityUtils.getSubject();
+            // 然后再执行subject.isAuthenticated()判断的时候，依然会认为该用户是authorized，导致如下现象：即使稻田rest验证服务关闭，zeppelin过期的ticket一直可以get_note
+            subjectAndCheckTimeEntry.getSubject().logout();
           }
         }
 
