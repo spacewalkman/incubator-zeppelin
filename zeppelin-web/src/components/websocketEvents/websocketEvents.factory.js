@@ -36,7 +36,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       data.ip = $rootScope.ticket.serverIP;
       data.projectId = $rootScope.ticket.projectId;
 
-      console.log('Send >> %o, %o, %o, %o, %o', data.op, data.ticket, data.ip, data.projectId, data);
+      //console.log('Send >> %o, %o, %o, %o, %o', data.op, data.ticket, data.ip, data.projectId, data);
       websocketCalls.ws.send(JSON.stringify(data));
     };
 
@@ -49,7 +49,13 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       if (event.data) {
         payload = angular.fromJson(event.data);
       }
-      console.log('Receive << %o, %o', payload.op, payload);
+
+      if (payload.op === 'UNAUTHORIED') {
+        console.error('Receive << %o, %o', payload.op, payload);
+      } else {
+        //console.log('Receive << %o, %o', payload.op, payload);
+      }
+
       var op = payload.op;
       var data = payload.data;
       if (op === 'NOTE') {

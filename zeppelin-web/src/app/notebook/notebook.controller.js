@@ -56,7 +56,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     ];
 
     websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedInterpreterNames);
-    console.log('Interpreter bindings saved', selectedInterpreterNames);
+    //console.log('Interpreter bindings saved', selectedInterpreterNames);
   };
 
   // user auto complete related
@@ -879,7 +879,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     //type = 'template',必须viewOnly
     $scope.viewOnly = $scope.viewOnly || notePermission.isTemplate($scope.note.type);
 
-    console.log('right note', $scope.note);
+    //console.log('right note', $scope.note);
 
     //查询可提交次数
     if (notePermission.isRevision($scope.note.type)) {
