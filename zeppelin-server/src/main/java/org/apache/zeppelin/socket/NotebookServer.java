@@ -16,7 +16,6 @@
  */
 package org.apache.zeppelin.socket;
 
-import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -92,6 +91,7 @@ import javax.servlet.http.HttpServletRequest;
 public class NotebookServer extends WebSocketServlet implements
         NotebookSocketListener, JobListenerFactory, AngularObjectRegistryListener,
         RemoteInterpreterProcessListener, ApplicationEventListener {
+
   /**
    * Job manager service type
    */
@@ -359,6 +359,9 @@ public class NotebookServer extends WebSocketServlet implements
       } else {
         notebookAuthorization.addGroupMember(userProfile.getTeam(), userProfile.getUserName());//创建组成员，处理了重复创建问题
       }
+
+      //将template_reader角色授予新用户，这样可以读取所有的模板
+      notebookAuthorization.grantRoleTemplateReader(userProfile.getUserName());
     }
 
     return subject;
@@ -1092,7 +1095,7 @@ public class NotebookServer extends WebSocketServlet implements
     p.settings.setParams(params);
     p.setConfig(config);
     p.setTitle((String) fromMessage.get("title"));
-    p.setText(((String) fromMessage.get("paragraph")).trim());
+    p.setText(((String) fromMessage.get("paragraph")));
 
     //处理前后台paragraph magic不一致的地方
 
@@ -1507,6 +1510,13 @@ public class NotebookServer extends WebSocketServlet implements
 
     Paragraph p = note.getParagraph(paragraphId);
     p.abort();
+
+    //当backend R或者python进程终止，或者zeppelin重启之后，如果不加如下语句，paragraph的状态一直都是RUNNING
+    p.setStatus(Status.ABORT);
+
+    UserProfile userProfile = (UserProfile) (subject.getPrincipal());
+    note.persist(userProfile.getUserName());
+    broadcastNote(note);
   }
 
   private void runParagraph(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -1544,8 +1554,7 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     // if it's the last paragraph, let's add a new one
     boolean isTheLastParagraph = note.isLastParagraph(p.getId());
-    if (!(text.trim().equals(p.getMagic()) || Strings.isNullOrEmpty(text)) &&
-            isTheLastParagraph) {
+    if (isTheLastParagraph) {
       note.addParagraph();
     }
 
@@ -1918,8 +1927,7 @@ public class NotebookServer extends WebSocketServlet implements
     public void onProgressUpdate(Job job, int progress) {
       notebookServer.broadcast(
               note.getId(),
-              new Message(OP.PROGRESS).put("id", job.getId()).put("progress",
-                      job.progress()));
+              new Message(OP.PROGRESS).put("id", job.getId()).put("progress", job.progress()));
     }
 
     @Override
