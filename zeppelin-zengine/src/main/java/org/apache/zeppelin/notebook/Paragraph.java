@@ -130,7 +130,10 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   }
 
   public void setText(String newText) {
-    this.text = newText.trim();
+    if (newText != null) {
+      this.text = newText.trim();
+    }
+
     this.dateUpdated = new Date();
   }
 

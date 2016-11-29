@@ -306,10 +306,11 @@ public class NotebookServer extends WebSocketServlet implements
           saveInterpreterBindings(conn, messagereceived);
           break;
         default:
+          LOG.warn("消息格式不可识别:{}", messagereceived);
           break;
       }
     } catch (Exception e) {
-      LOG.error("消息格式不可识别", e);
+      LOG.error("服务器端处理客户端请求出错", e);
     }
   }
 
