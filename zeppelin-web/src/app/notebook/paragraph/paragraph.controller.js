@@ -2619,6 +2619,9 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       $scope.paragraph.status = data.paragraph.status;
       $scope.paragraph.result = data.paragraph.result;
       $scope.paragraph.settings = data.paragraph.settings;
+      //设置解释器下拉列表和aceeditor语法高亮
+      $scope.paragraph.replName = data.paragraph.replName;
+      $scope.paragraph.config.editorMode = countEditorMode(data.paragraph.replName);
       $scope.editor.setReadOnly($scope.isRunning());
 
       if (!$scope.asIframe) {
