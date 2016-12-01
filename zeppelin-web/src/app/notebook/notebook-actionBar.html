@@ -117,14 +117,14 @@ limitations under the License.
                 ng-click="console.error('暂无帮助手册')"
                 ng-hide="viewOnly"
                 tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
-          <span class="setting-btn btn-note-submit"
-                type="button"
-                ng-hide="viewOnly"
-                ng-if="note.permission.submit && !submited"
-                ng-class="{'disabled':submitTimes == 0}"
-                ng-click="submitNotebook()"
-                tooltip-placement="bottom">提交评测<i class="arrow-flag" tooltip-placement="left"
-                                                  tooltip="剩余提交评测次数">{{submitTimes}}</i></span>
+          <!--<span class="setting-btn btn-note-submit"-->
+                <!--type="button"-->
+                <!--ng-hide="viewOnly"-->
+                <!--ng-if="note.permission.submit && !submited"-->
+                <!--ng-class="{'disabled':submitTimes == 0}"-->
+                <!--ng-click="submitNotebook()"-->
+                <!--tooltip-placement="bottom">提交评测<i class="arrow-flag" tooltip-placement="left"-->
+                                                  <!--tooltip="剩余提交评测次数">{{submitTimes}}</i></span>-->
 
           <span class="commit-button-holder"
                 ng-if="note.permission.commit">
