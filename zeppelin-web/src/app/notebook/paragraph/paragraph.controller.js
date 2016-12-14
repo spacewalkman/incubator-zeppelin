@@ -577,7 +577,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
   $scope.aceChanged = function() {
     $scope.dirtyText = $scope.editor.getSession().getValue();
     $scope.startSaveTimer();
-    $scope.setParagraphMode($scope.editor.getSession(), $scope.dirtyText, $scope.editor.getCursorPosition());
+    //由于repl不再从paragraph的text中获取，所以不需要重新设置ace editor mode
+    //$scope.setParagraphMode($scope.editor.getSession(), $scope.dirtyText, $scope.editor.getCursorPosition());
   };
 
   $scope.aceLoaded = function(_editor) {
@@ -858,7 +859,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     }
     var pdata = $scope.paragraph;
     if (pdata.status === 'RUNNING') {
-      return $scope.getProgress();
+      return $scope.getProgress() + '%';
     }
     if ($scope.paragraphFocused) {
       return '系统会实时保存代码';
