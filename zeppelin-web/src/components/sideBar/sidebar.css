@@ -91,18 +91,10 @@
   position: relative;
   display: inline-block;
 }
-.note-list .note-list-item.locked .note-title{
+.note-list .note-list-item .locked .note-title{
   padding: 0 20px 0 0;
 }
-.note-list .note-list-item.locked .note-title .value:after{
-  content: '';
-  position: absolute;
-  right: 2px;
-  top: 7px;
-  width: 14px;
-  height: 16px;
-  background: url("lock.png");
-}
+
 .note-list .note-list-item .remove{
   position: absolute;
   top: 10px;
@@ -111,6 +103,17 @@
   height: 9px;
   background: url("close.png");
 }
+
+.note-list .note-list-item .locked{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  background: url("lock.png");
+  background-size: 9px 9px;
+}
+
 .note-list .note-list-item.last-child:after{
   content: '';
   display: block;

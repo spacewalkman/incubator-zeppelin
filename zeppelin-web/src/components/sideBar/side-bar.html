@@ -25,8 +25,11 @@
         <a ng-if="note.id"
            href="#/notebook/{{note.id}}"
            class="note-title text-ellipsis"
-           title="{{note.name}}"><span class="value">{{note.name}}</span></a>
-        <a href="javascript:;"
+           title="{{note.name}}">{{note.name}}</a>
+        <span ng-if="sideBar.readOnly(note)" class="locked" tooltip="模板"></span>
+
+        <a ng-if="!sideBar.readOnly(note)"
+           href="javascript:;"
            class="remove"
            title="删除"
            ng-show="sideBar.removeable(note)"
