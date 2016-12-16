@@ -445,6 +445,7 @@ module.exports = function(grunt) {
     htmlmin: {
       dist: {
         options: {
+          removeComments: true,
           collapseWhitespace: true,
           conservativeCollapse: true,
           collapseBooleanAttributes: true,
@@ -594,7 +595,7 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('build', [
-    // 'jscs',
+    //'jscs',
     'eslint',
     'htmlhint',
     'clean:dist',
@@ -610,10 +611,10 @@ module.exports = function(grunt) {
     'imagemin',
     'dataUri',
     'cssmin',
-    'usemin',
     'uglify:vendor',
     'uglify:scripts',
-    //'htmlmin',
+    'usemin',
+    'htmlmin',
     'cacheBust'
   ]);
 
