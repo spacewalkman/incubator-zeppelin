@@ -72,41 +72,6 @@ public class UserProfile {
     isLeader = leader;
   }
 
-  //相等性比较只取了userName和uuid ticket
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == null) {
-      return false;
-    }
-
-    if (!(obj instanceof UserProfile)) {
-      return false;
-    }
-
-    UserProfile other = (UserProfile) obj;
-    if (!this.getTicket().equals(other.getTicket())) {
-      return false;
-    }
-
-    if (this.getIp() == null || other.getIp() == null) {
-      return false;
-    }
-
-    if (this.getIp().startsWith("127.")) {
-      this.ip = "localhost";
-    }
-
-    if (other.getIp().startsWith("127.")) {
-      other.setIp("localhost");
-    }
-
-    if (!this.getIp().equals(other.getIp())) {
-      return false;
-    }
-
-    return true;
-  }
-
   /**
    * 比赛的题目，或者是众包的id，如果一个用户参参加了不同的比赛(projectId)，那么应该生成2个UserProfile实例，ticket也应该是不同的
    */
@@ -123,6 +88,14 @@ public class UserProfile {
     return this.getUserName().hashCode() << 1 + this.getTicket().hashCode() << 2;
   }
 
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("UserProfile:[");
@@ -137,11 +110,27 @@ public class UserProfile {
     return sb.toString();
   }
 
-  public String getIp() {
-    return ip;
+  //相等性比较只取了userName和uuid ticket
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+
+    if (!(obj instanceof UserProfile)) {
+      return false;
+    }
+
+    UserProfile other = (UserProfile) obj;
+    if (!this.getTicket().equals(other.getTicket())) {
+      return false;
+    }
+
+    if (this.getUserName() == null || other.getUserName() == null) {
+      return false;
+    }
+
+    return this.getUserName().equals(other.getUserName());
   }
 
-  public void setIp(String ip) {
-    this.ip = ip;
-  }
 }
