@@ -168,27 +168,30 @@ table.dataTable.table-condensed .sorting_desc:after {
   border-radius: 0;
 }
 
-.paragraph-col .control span {
-    /*margin-left: 4px;*/
-}
+.paragraph .control span {
+   /*margin-left: 4px;*/
+ }
 
-.paragraph-col .control {
+.paragraph .control {
   position: relative;
   padding: 4px 0 8px 0;
   margin: 1px 5px 0 0;
   clear: both;
   color: #999;
+  right: 15px;
+  top: 16px;
+  text-align: right;
   text-align: left;
   font-size: 12px;
 }
 
-.paragraph-col .control li {
+.paragraph .control li {
   font-size: 12px;
   margin-bottom: 4px;
   color: #333333;
 }
 
-.paragraph-col .control .tooltip {
+.paragraph .control .tooltip {
   z-index: 10003;
 }
 

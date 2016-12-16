@@ -16,12 +16,12 @@ limitations under the License.
      class="control"
      ng-show="!asIframe"
      ng-if="note.permission.exec || note.permission.write">
-  <span ng-hide="viewOnly">解释器:</span>
+  <span>解释器:</span>
   <span class="btn-group group-language"
-        ng-hide="viewOnly"
-        ng-if="note.permission.write">
+        ng-if="note.permission.read">
     <button type="button"
             class="btn btn-default btn-xs dropdown-toggle"
+            ng-class="{'disabled':viewOnly}"
             data-toggle="dropdown">
       <b>{{paragraph.replName}}</b> <span class="caret"></span>
     </button>
@@ -32,7 +32,7 @@ limitations under the License.
       </li>
     </ul>
   </span>
-  &nbsp;&nbsp;&nbsp;
+
   <!-- Run / Cancel button -->
   <span class="labelBtn btn-group">
     <button type="button"

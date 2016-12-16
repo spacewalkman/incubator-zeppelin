@@ -36,7 +36,7 @@ limitations under the License.
   </div>
 
   <div>
-    <div ng-show="!paragraph.config.editorHide && !viewOnly" style="margin-bottom:3px;">
+    <div ng-show="!paragraph.config.editorHide" style="margin-bottom:3px;">
       <div id="{{paragraph.id}}_editor"
            class="editor"
            ui-ace="{
@@ -44,7 +44,7 @@ limitations under the License.
                      require : ['ace/ext/language_tools']
                    }"
            ng-model="paragraph.text"
-           ng-class="{'paragraph-disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING',
+           ng-class="{'paragraph-disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING' || viewOnly,
            'paragraph-text--dirty' : dirtyText !== originalText && dirtyText !== undefined}">      </div>
     </div>
 

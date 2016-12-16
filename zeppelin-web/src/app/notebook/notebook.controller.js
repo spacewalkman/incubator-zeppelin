@@ -14,7 +14,7 @@
 'use strict';
 
 angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $route, $routeParams, $location,
-                                                                     $rootScope, $http, $timeout,
+                                                                     $rootScope, $http, $timeout, $window,
                                                                      ngToast, websocketMsgSrv, notePermission,
                                                                      baseUrlSrv, saveAsService,
                                                                      noteRevisionJudgement) {
@@ -38,7 +38,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
   //   {name: '1d', value: '0 0 0 * * ?'}
   // ];
 
-  $scope.interpreterBindings = ['r', 'python', 'spark', 'spark.r', 'spark.pyspark', 'spark.sql', 'md'];
+  $scope.interpreterBindings = ['python', 'spark', 'spark.r', 'spark.pyspark', 'spark.sql', 'md', 'angular'];
   $scope.isNoteDirty = null;
   $scope.saveTimer = null;
   $scope.interpreterSaved = false;
@@ -52,7 +52,8 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
     var selectedInterpreterNames = [
       'spark',
       'md',
-      'python'
+      'python',
+      'angular'
     ];
 
     websocketMsgSrv.saveInterpreterBindings($scope.note.id, selectedInterpreterNames);
@@ -719,6 +720,11 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', function($scope, $ro
         ]
       });
     });
+  };
+
+  $scope.showHelp = function() {
+      //$window.open('')
+      return;
   };
 
   $scope.togglePermissions = function() {

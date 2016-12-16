@@ -16,7 +16,7 @@
 angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $rootScope, $route, $window,
                                                                       $routeParams, $location, $timeout, $compile,
                                                                       $http, websocketMsgSrv, baseUrlSrv, ngToast,
-                                                                      saveAsService, esriLoader) {
+                                                                      saveAsService) {
   var ANGULAR_FUNCTION_OBJECT_NAME_PREFIX = '_Z_ANGULAR_FUNC_';
   $scope.parentNote = null;
   $scope.paragraph = null;
@@ -41,13 +41,13 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
             paragraph.config, paragraph.settings.params);
         } else {
           ngToast.danger({
-            content: 'Cannot find a paragraph with id \'' + paragraphId + '\'',
+            content: '找不到id为 \'' + paragraphId + '\'的段落',
             verticalPosition: 'top', dismissOnTimeout: false
           });
         }
       } else {
         ngToast.danger({
-          content: 'Please provide a \'paragraphId\' when calling z.runParagraph(paragraphId)',
+          content: '调用z.runParagraph(paragraphId)需要指定\'paragraphId\'',
           verticalPosition: 'top', dismissOnTimeout: false
         });
       }
@@ -74,8 +74,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
         websocketMsgSrv.clientUnbindAngularObject($routeParams.noteId, varName, paragraphId);
       } else {
         ngToast.danger({
-          content: 'Please provide a \'paragraphId\' when calling ' +
-          'z.angularUnbind(varName, \'PUT_HERE_PARAGRAPH_ID\')',
+          content: '调用z.angularUnbind(varName, \'PUT_HERE_PARAGRAPH_ID\')需要指定 \'paragraphId\'',
           verticalPosition: 'top', dismissOnTimeout: false
         });
       }
@@ -998,7 +997,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       if (!type || type === 'table') {
         setTable($scope.paragraph.result, refresh);
       } else if (type === 'map') {
-        setMap($scope.paragraph.result, refresh);
+        //setMap($scope.paragraph.result, refresh);
       } else {
         setD3Chart(type, $scope.paragraph.result, refresh);
       }
@@ -1238,229 +1237,6 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
           renderChart();
         } catch (err) {
           console.log('Chart drawing error %o', err);
-        }
-      } else {
-        $timeout(retryRenderer, 10);
-      }
-    };
-    $timeout(retryRenderer);
-  };
-
-  var setMap = function(data, refresh) {
-    var createPinMapLayer = function(pins, cb) {
-      esriLoader.require(['esri/layers/FeatureLayer'], function(FeatureLayer) {
-        var pinLayer = new FeatureLayer({
-          id: 'pins',
-          spatialReference: $scope.map.spatialReference,
-          geometryType: 'point',
-          source: pins,
-          fields: [],
-          objectIdField: '_ObjectID',
-          renderer: $scope.map.pinRenderer,
-          popupTemplate: {
-            title: '[{_lng}, {_lat}]',
-            content: [{
-              type: 'fields',
-              fieldInfos: []
-            }]
-          }
-        });
-
-        // add user-selected pin info fields to popup
-        var pinInfoCols = $scope.paragraph.config.graph.map.pinCols;
-        for (var i = 0; i < pinInfoCols.length; ++i) {
-          pinLayer.popupTemplate.content[0].fieldInfos.push({
-            fieldName: pinInfoCols[i].name,
-            visible: true
-          });
-        }
-        cb(pinLayer);
-      });
-    };
-
-    var getMapPins = function(cb) {
-      esriLoader.require(['esri/geometry/Point'], function(Point, FeatureLayer) {
-        var latCol = $scope.paragraph.config.graph.map.lat;
-        var lngCol = $scope.paragraph.config.graph.map.lng;
-        var pinInfoCols = $scope.paragraph.config.graph.map.pinCols;
-        var pins = [];
-
-        // construct objects for pins
-        if (latCol && lngCol && data.rows) {
-          for (var i = 0; i < data.rows.length; ++i) {
-            var row = data.rows[i];
-            var lng = row[lngCol.index];
-            var lat = row[latCol.index];
-            var pin = {
-              geometry: new Point({
-                longitude: lng,
-                latitude: lat,
-                spatialReference: $scope.map.spatialReference
-              }),
-              attributes: {
-                _ObjectID: i,
-                _lng: lng,
-                _lat: lat
-              }
-            };
-
-            // add pin info from user-selected columns
-            for (var j = 0; j < pinInfoCols.length; ++j) {
-              var col = pinInfoCols[j];
-              pin.attributes[col.name] = row[col.index];
-            }
-            pins.push(pin);
-          }
-        }
-        cb(pins);
-      });
-    };
-
-    var updateMapPins = function() {
-      var pinLayer = $scope.map.map.findLayerById('pins');
-      $scope.map.popup.close();
-      if (pinLayer) {
-        $scope.map.map.remove(pinLayer);
-      }
-
-      // add pins to map as layer
-      getMapPins(function(pins) {
-        createPinMapLayer(pins, function(pinLayer) {
-          $scope.map.map.add(pinLayer);
-          if (pinLayer.source.length > 0) {
-            $scope.map.goTo(pinLayer.source);
-          }
-        });
-      });
-    };
-
-    var createMap = function(mapdiv) {
-      // prevent zooming with the scroll wheel
-      var disableZoom = function(e) {
-        var evt = e || window.event;
-        evt.cancelBubble = true;
-        evt.returnValue = false;
-        if (evt.stopPropagation) {
-          evt.stopPropagation();
-        }
-      };
-      var eName = window.WheelEvent ? 'wheel' :  // Modern browsers
-        window.MouseWheelEvent ? 'mousewheel' :  // WebKit and IE
-          'DOMMouseScroll';  // Old Firefox
-      mapdiv.addEventListener(eName, disableZoom, true);
-
-      esriLoader.require(['esri/views/MapView',
-          'esri/Map',
-          'esri/renderers/SimpleRenderer',
-          'esri/symbols/SimpleMarkerSymbol'],
-        function(MapView, Map, SimpleRenderer, SimpleMarkerSymbol) {
-          $scope.map = new MapView({
-            container: mapdiv,
-            map: new Map({
-              basemap: $scope.paragraph.config.graph.map.baseMapType.toLowerCase()
-            }),
-            center: [-106.3468, 56.1304],  // Canada (lng, lat)
-            zoom: 2,
-            pinRenderer: new SimpleRenderer({
-              symbol: new SimpleMarkerSymbol({
-                'color': [255, 0, 0, 0.5],
-                'size': 16.5,
-                'outline': {
-                  'color': [0, 0, 0, 1],
-                  'width': 1.125,
-                },
-                // map pin SVG path
-                'path': 'M16,3.5c-4.142,0-7.5,3.358-7.5,7.5c0,4.143,7.5,18.121,7.5,' +
-                '18.121S23.5,15.143,23.5,11C23.5,6.858,20.143,3.5,16,3.5z ' +
-                'M16,14.584c-1.979,0-3.584-1.604-3.584-3.584S14.021,7.416,' +
-                '16,7.416S19.584,9.021,19.584,11S17.979,14.584,16,14.584z'
-              })
-            })
-          });
-
-          $scope.map.on('click', function() {
-            // ArcGIS JS API 4.0 does not account for scrolling or position
-            // changes by default (this is a bug, to be fixed in the upcoming
-            // version 4.1; see https://geonet.esri.com/thread/177238#comment-609681).
-            // This results in a misaligned popup.
-
-            // Workaround: manually set popup position to match position of selected pin
-            if ($scope.map.popup.selectedFeature) {
-              $scope.map.popup.location = $scope.map.popup.selectedFeature.geometry;
-            }
-          });
-          $scope.map.then(updateMapPins);
-        });
-    };
-
-    var checkMapOnline = function(cb) {
-      // are we able to get a response from the ArcGIS servers?
-      var callback = function(res) {
-        var online = (res.status > 0);
-        $scope.paragraph.config.graph.map.isOnline = online;
-        cb(online);
-      };
-      $http.head('//services.arcgisonline.com/arcgis/', {
-        timeout: 5000,
-        withCredentials: false
-      }).then(callback, callback);
-    };
-
-    var renderMap = function() {
-      var mapdiv = angular.element('#p' + $scope.paragraph.id + '_map')
-        .css('height', $scope.paragraph.config.graph.height)
-        .children('div').get(0);
-
-      // on chart type change, destroy map to force reinitialization.
-      if ($scope.map && !refresh) {
-        $scope.map.map.destroy();
-        $scope.map.pinRenderer = null;
-        $scope.map = null;
-      }
-
-      var requireMapCSS = function() {
-        var url = '//js.arcgis.com/4.0/esri/css/main.css';
-        if (!angular.element('link[href="' + url + '"]').length) {
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.type = 'text/css';
-          link.href = url;
-          angular.element('head').append(link);
-        }
-      };
-
-      var requireMapJS = function(cb) {
-        if (!esriLoader.isLoaded()) {
-          esriLoader.bootstrap({
-            url: '//js.arcgis.com/4.0'
-          }).then(cb);
-        } else {
-          cb();
-        }
-      };
-
-      checkMapOnline(function(online) {
-        // we need an internet connection to use the map
-        if (online) {
-          // create map if not exists.
-          if (!$scope.map) {
-            requireMapCSS();
-            requireMapJS(function() {
-              createMap(mapdiv);
-            });
-          } else {
-            updateMapPins();
-          }
-        }
-      });
-    };
-
-    var retryRenderer = function() {
-      if (angular.element('#p' + $scope.paragraph.id + '_map div').length) {
-        try {
-          renderMap();
-        } catch (err) {
-          console.log('Map drawing error %o', err);
         }
       } else {
         $timeout(retryRenderer, 10);

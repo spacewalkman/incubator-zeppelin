@@ -337,7 +337,7 @@ public class NotebookServer extends WebSocketServlet implements
       Date startTime = new Date();
       subject.login(token);
       Date endTime = new Date();
-      LOG.debug("REST身份鉴别接口耗时:{}秒", (endTime.getTime() - startTime.getTime()) / 1000.0);
+      LOG.info("REST身份鉴别接口耗时:{}秒", (endTime.getTime() - startTime.getTime()) / 1000.0);
 
       PrincipalCollection principalCollection = subject.getPrincipals();
       UserProfile userProfile = (UserProfile) principalCollection.getPrimaryPrincipal();
@@ -824,6 +824,10 @@ public class NotebookServer extends WebSocketServlet implements
 
     if (notebookAuthorization.isExecutor(subject, note.getGroup(), note.getId())) {
       if (!isRevision) {
+        permissionsMap.put(Note.EXECUTORABLE, true);
+      }
+    } else {
+      if (note.isTemplate() && !isRevision) {
         permissionsMap.put(Note.EXECUTORABLE, true);
       }
     }

@@ -106,7 +106,7 @@ limitations under the License.
           <span type="button"
                 class="setting-btn"
                 tooltip-placement="bottom" tooltip="克隆算法"
-                ng-hide="!note.permission.read || viewOnly"
+                ng-hide="!note.permission.read"
                 data-toggle="modal"
                 data-target="#noteNameModal"
                 data-clone="true">
@@ -114,7 +114,7 @@ limitations under the License.
           </span>
           <span class="setting-btn btn-help"
                 type="button"
-                ng-click="console.error('暂无帮助手册')"
+                ng-click="showHelp()"
                 ng-hide="viewOnly"
                 tooltip-placement="bottom" tooltip="帮助"><span class="ico-placeholder"></span></span>
           <!--<span class="setting-btn btn-note-submit"-->
