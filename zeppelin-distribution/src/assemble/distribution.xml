@@ -82,9 +82,12 @@
     </fileSet>
     <fileSet>
       <directory>../notebook</directory>
-      <excludes>
-        <exclude>*/**</exclude>
-      </excludes>
+      <includes>
+        <include>2C5ZBT5NT/note.json</include>
+      </includes>
+      <!--<excludes>-->
+        <!--<exclude>*/**</exclude>-->
+      <!--</excludes>-->
     </fileSet>
   </fileSets>
     <!--<fileSet>
