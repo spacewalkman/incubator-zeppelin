@@ -547,7 +547,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTEBOOK_AZURE_SHARE("zeppelin.notebook.azure.share", "zeppelin"),
     ZEPPELIN_NOTEBOOK_AZURE_USER("zeppelin.notebook.azure.user", "user"),
     ZEPPELIN_NOTEBOOK_STORAGE("zeppelin.notebook.storage", JdbcNotebookRepo.class.getName() + "," + GitNotebookRepo.class.getName()),
-    ZEPPELIN_NOTEBOOK_ONE_WAY_SYNC("zeppelin.notebook.one.way.sync", true),
+    ZEPPELIN_NOTEBOOK_ONE_WAY_SYNC("zeppelin.notebook.one.way.sync", false),
     ZEPPELIN_INTERPRETER_REMOTE_RUNNER("zeppelin.interpreter.remoterunner",
             System.getProperty("os.name")
                     .startsWith("Windows") ? "bin/interpreter.cmd" : "bin/interpreter.sh"),
@@ -579,8 +579,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTE_REPO_JDBC_HOST("zeppelin.note.repo.jdbc.host", "localhost"),
     ZEPPELIN_NOTE_REPO_JDBC_PORT("zeppelin.note.repo.jdbc.port", 3306),
     ZEPPELIN_NOTE_REPO_JDBC_DATABASE("zeppelin.note.repo.jdbc.database", "zeppelin"),
-    ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.note.repo.jdbc.username", "root"),
-    ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.note.repo.jdbc.password", "mysql"),
+    ZEPPELIN_NOTE_REPO_JDBC_USER_NAME("zeppelin.note.repo.jdbc.username", "zeppelin"),
+    ZEPPELIN_NOTE_REPO_JDBC_PASSWORD("zeppelin.note.repo.jdbc.password", "zeppelin"),
 
     /**
      * notebook storage的connection pool的min和max size

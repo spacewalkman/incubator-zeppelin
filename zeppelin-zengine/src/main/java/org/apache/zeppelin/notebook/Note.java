@@ -947,7 +947,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public boolean isTemplate() {
     if (this.getGroup() == null || this.getGroup().isEmpty()) {
-      return true;
+        return true;
     }
 
     return false;
