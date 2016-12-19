@@ -1,0 +1,509 @@
+{
+  "paragraphs": [
+    {
+      "title": null,
+      "text": "#该模板演示了稻田实验室基本的用法  \n用户可以直接__克隆__该模板，开发自己的算法。\n\n##1. 如何加载数据 \n本系统采用__HDFS__作为数据存储平台。用户数据经过\"上传“--\u003e\"系统审核\"--\u003e\"同步\"流程之后，数据最终会被同步到__/dt__目录下，系统为了避免多用户下的文件重名问题，对用户上传的文件做了__重命名__处理，映射关系如下： \n\n```   \n上传的文件名：文件名1.txt \n```\n```   \n同步之后的文件名：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_文件名1.txt，其中x为16进制数字。  \n```",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:02:08",
+      "replName": "md",
+      "paraIndex": 0,
+      "config": {
+        "lineNumbers": true,
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/markdown",
+        "editorHide": false,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435185_-1361130257",
+      "id": "20161215-151159_842617380",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch1\u003e该模板演示了稻田实验室基本的用法\u003c/h1\u003e\n\u003cp\u003e用户可以直接\u003cstrong\u003e克隆\u003c/strong\u003e该模板，开发自己的算法。\u003c/p\u003e\n\u003ch2\u003e1. 如何加载数据\u003c/h2\u003e\n\u003cp\u003e本系统采用\u003cstrong\u003eHDFS\u003c/strong\u003e作为数据存储平台。用户数据经过\"上传“\u0026ndash;\u003e\u0026ldquo;系统审核\u0026rdquo;\u0026ndash;\u003e\u0026ldquo;同步\"流程之后，数据最终会被同步到\u003cstrong\u003e/dt\u003c/strong\u003e目录下，系统为了避免多用户下的文件重名问题，对用户上传的文件做了\u003cstrong\u003e重命名\u003c/strong\u003e处理，映射关系如下：\u003c/p\u003e\n\u003cpre\u003e\u003ccode\u003e上传的文件名：文件名1.txt \n\u003c/code\u003e\u003c/pre\u003e\n\u003cpre\u003e\u003ccode\u003e同步之后的文件名：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx_文件名1.txt，其中x为16进制数字。  \n\u003c/code\u003e\u003c/pre\u003e\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:02:08",
+      "dateFinished": "2016-12-19 17:02:08",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "##2. 如何保存数据\n__稻田实验室__的HDFS文件系统的__/dt__目录对用户是可写的，故用户可以在该目录下保存分析过程中的中间数据、结果数据或者模型文件。但是需要注意的是：  \n稻田实验室是共享IDE环境，HDFS文件系统对当前用户所属的组织内部所有人员都是可写的。因此，为了避免多用户之间出现覆盖或者误删除的情况，请遵循如下\"最佳实践\":  \n\u003cdiv style\u003d\"color:red\"\u003e__永远在/dt目录下以自己的用户名创建2级子目录（或者更深的子目录）来保存自己的私有数据，仅删除自己用户名目录下的文件__。\u003cdiv\u003e",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:02:08",
+      "replName": "md",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/markdown",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435186_-1359976010",
+      "id": "20161215-175331_1762604087",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch2\u003e2. 如何保存数据\u003c/h2\u003e\n\u003cp\u003e\u003cstrong\u003e稻田实验室\u003c/strong\u003e的HDFS文件系统的\u003cstrong\u003e/dt\u003c/strong\u003e目录对用户是可写的，故用户可以在该目录下保存分析过程中的中间数据、结果数据或者模型文件。但是需要注意的是：\n\u003cbr  /\u003e稻田实验室是共享IDE环境，HDFS文件系统对当前用户所属的组织内部所有人员都是可写的。因此，为了避免多用户之间出现覆盖或者误删除的情况，请遵循如下\"最佳实践\u0026rdquo;:\n\u003cbr  /\u003e\u003cdiv style\u003d\"color:red\"\u003e\u003cstrong\u003e永远在/dt目录下以自己的用户名创建2级子目录（或者更深的子目录）来保存自己的私有数据，仅删除自己用户名目录下的文件\u003c/strong\u003e。\u003cdiv\u003e\u003c/p\u003e\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:02:08",
+      "dateFinished": "2016-12-19 17:02:08",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "##3. 使用选定的开发语言加载HDFS数据\n如下演示使用scala(spark)来加载hdfs数据的过程，其中__iris__为经典的机器学习数据集",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:03:41",
+      "replName": "md",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/markdown",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435186_-1359976010",
+      "id": "20161215-180948_527050448",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch2\u003e3. 使用选定的开发语言加载HDFS数据\u003c/h2\u003e\n\u003cp\u003e如下演示使用scala(spark)来加载hdfs数据的过程，其中\u003cstrong\u003eiris\u003c/strong\u003e为经典的机器学习数据集\u003c/p\u003e\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:03:41",
+      "dateFinished": "2016-12-19 17:03:41",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "//使用scala，从hdfs直接加载csv文件，注册成Table，供后续sparkQL检索\r\nval df \u003d sqlContext.read\r\n    .format(\"com.databricks.spark.csv\")\r\n    .option(\"header\", \"true\") //首行为header\r\n    .option(\"inferSchema\", \"true\") //自动推断数据类型\r\n    .load(\"/dt/iris.csv\")\r\ndf.toDF().registerTempTable(\"df\")\r\nprintln(df.count())",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:06:01",
+      "replName": "spark",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435187_-1360360759",
+      "id": "20161215-151339_807776562",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "\ndf: org.apache.spark.sql.DataFrame \u003d [sepal_length: double, sepal_width: double, petal_length: double, petal_width: double, species: string]\n150\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:06:01",
+      "dateFinished": "2016-12-19 17:06:02",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "select species, avg(sepal_length) from df group by species",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:02:09",
+      "replName": "spark.sql",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "pieChart",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "species",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [
+            {
+              "name": "_c1",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          ],
+          "groups": [],
+          "scatter": {
+            "xAxis": {
+              "name": "species",
+              "index": 0.0,
+              "aggr": "sum"
+            },
+            "yAxis": {
+              "name": "_c1",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          },
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true,
+        "helium": {}
+      },
+      "settings": {
+        "params": {
+          "species": "\u0027versicolor\u0027"
+        },
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435187_-1360360759",
+      "id": "20161215-162126_307886885",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "species\t_c1\nversicolor\t5.935999999999999\nsetosa\t5.005999999999999\nvirginica\t6.587999999999998\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:02:09",
+      "dateFinished": "2016-12-19 17:02:11",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "select species, sepal_length from df \r\nwhere species \u003d  ${species \u003d \u0027versicolor\u0027, \u0027setosa\u0027|\u0027versicolor\u0027|\u0027virginica\u0027} and sepal_length \u003c ${sepal_length\u003d5.0}",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:07:33",
+      "replName": "spark.sql",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "species",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [
+            {
+              "name": "sepal_length",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          ],
+          "groups": [],
+          "scatter": {
+            "xAxis": {
+              "name": "species",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          },
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true,
+        "helium": {}
+      },
+      "settings": {
+        "params": {
+          "species": " \u0027setosa\u0027",
+          "sepal_length": "5.2"
+        },
+        "forms": {
+          "species": {
+            "name": "species",
+            "displayName": null,
+            "argument": null,
+            "defaultValue": " \u0027versicolor\u0027",
+            "options": [
+              {
+                "value": " \u0027setosa\u0027",
+                "displayName": null
+              },
+              {
+                "value": "\u0027versicolor\u0027",
+                "displayName": null
+              },
+              {
+                "value": "\u0027virginica\u0027",
+                "displayName": null
+              }
+            ],
+            "hidden": false
+          },
+          "sepal_length": {
+            "name": "sepal_length",
+            "displayName": null,
+            "argument": null,
+            "defaultValue": "5.0",
+            "options": null,
+            "hidden": false
+          }
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435187_-1360360759",
+      "id": "20161215-195806_1113503917",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "species\tsepal_length\nsetosa\t5.1\nsetosa\t4.9\nsetosa\t4.7\nsetosa\t4.6\nsetosa\t5.0\nsetosa\t4.6\nsetosa\t5.0\nsetosa\t4.4\nsetosa\t4.9\nsetosa\t4.8\nsetosa\t4.8\nsetosa\t4.3\nsetosa\t5.1\nsetosa\t5.1\nsetosa\t5.1\nsetosa\t4.6\nsetosa\t5.1\nsetosa\t4.8\nsetosa\t5.0\nsetosa\t5.0\nsetosa\t4.7\nsetosa\t4.8\nsetosa\t4.9\nsetosa\t5.0\nsetosa\t4.9\nsetosa\t4.4\nsetosa\t5.1\nsetosa\t5.0\nsetosa\t4.5\nsetosa\t4.4\nsetosa\t5.0\nsetosa\t5.1\nsetosa\t4.8\nsetosa\t5.1\nsetosa\t4.6\nsetosa\t5.0\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:02:10",
+      "dateFinished": "2016-12-19 17:02:11",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "##4.使用spark MLlib来建模",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:02:09",
+      "replName": "md",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/markdown",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435187_-1360360759",
+      "id": "20161215-201139_33117551",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch2\u003e4.使用spark MLlib来建模\u003c/h2\u003e\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:02:09",
+      "dateFinished": "2016-12-19 17:02:09",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "import org.apache.spark.ml.Pipeline\nimport org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}\nimport org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator\nimport org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}\n\n//从hdfs加载libsvm格式的数据\nval data \u003d sqlContext.read.format(\"libsvm\").load(\"/dt/iris.scale\")\n\n// Index labels, adding metadata to the label column.\n// Fit on whole dataset to include all labels in index.\nval labelIndexer \u003d new StringIndexer()\n  .setInputCol(\"label\")\n  .setOutputCol(\"indexedLabel\")\n  .fit(data)\n// Automatically identify categorical features, and index them.\n// Set maxCategories so features with \u003e 4 distinct values are treated as continuous.\nval featureIndexer \u003d new VectorIndexer()\n  .setInputCol(\"features\")\n  .setOutputCol(\"indexedFeatures\")\n  .setMaxCategories(4)\n  .fit(data)\n\n// Split the data into training and test sets (30% held out for testing)\nval Array(trainingData, testData) \u003d data.randomSplit(Array(0.7, 0.3))\n\n// Train a RandomForest model.\nval rf \u003d new RandomForestClassifier()\n  .setLabelCol(\"indexedLabel\")\n  .setFeaturesCol(\"indexedFeatures\")\n  .setNumTrees(10)\n\n// Convert indexed labels back to original labels.\nval labelConverter \u003d new IndexToString()\n  .setInputCol(\"prediction\")\n  .setOutputCol(\"predictedLabel\")\n  .setLabels(labelIndexer.labels)\n\n// Chain indexers and forest in a Pipeline\nval pipeline \u003d new Pipeline()\n  .setStages(Array(labelIndexer, featureIndexer, rf, labelConverter))\n\n// Train model.  This also runs the indexers.\nval model \u003d pipeline.fit(trainingData)\n\n// Make predictions.\nval predictions \u003d model.transform(testData)\n\n// Select example rows to display.\npredictions.select(\"predictedLabel\", \"label\", \"features\").show(5)\n\n// Select (prediction, true label) and compute test error\nval evaluator \u003d new MulticlassClassificationEvaluator()\n  .setLabelCol(\"indexedLabel\")\n  .setPredictionCol(\"prediction\")\n  .setMetricName(\"precision\")\nval accuracy \u003d evaluator.evaluate(predictions)\nprintln(\"Test Error \u003d \" + (1.0 - accuracy))\n\nval rfModel \u003d model.stages(2).asInstanceOf[RandomForestClassificationModel]\nprintln(\"Learned classification forest model:\\n\" + rfModel.toDebugString)",
+      "user": "admin",
+      "dateUpdated": "2016-12-19 17:06:52",
+      "replName": "spark",
+      "paraIndex": 0,
+      "config": {
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "lineNumbers": true,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482130435188_-1362284503",
+      "id": "20161215-200846_1651478021",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "\nimport org.apache.spark.ml.Pipeline\n\nimport org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}\n\nimport org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator\n\nimport org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}\n\ndata: org.apache.spark.sql.DataFrame \u003d [label: double, features: vector]\n\nlabelIndexer: org.apache.spark.ml.feature.StringIndexerModel \u003d strIdx_7d37e1e61bc3\n\nfeatureIndexer: org.apache.spark.ml.feature.VectorIndexerModel \u003d vecIdx_8dfc6825e5ff\n\n\ntrainingData: org.apache.spark.sql.DataFrame \u003d [label: double, features: vector]\ntestData: org.apache.spark.sql.DataFrame \u003d [label: double, features: vector]\n\nrf: org.apache.spark.ml.classification.RandomForestClassifier \u003d rfc_da67dcbc0966\n\nlabelConverter: org.apache.spark.ml.feature.IndexToString \u003d idxToStr_2c3779a521f5\n\npipeline: org.apache.spark.ml.Pipeline \u003d pipeline_8ad933366e14\n\nmodel: org.apache.spark.ml.PipelineModel \u003d pipeline_8ad933366e14\n\npredictions: org.apache.spark.sql.DataFrame \u003d [label: double, features: vector, indexedLabel: double, indexedFeatures: vector, rawPrediction: vector, probability: vector, prediction: double, predictedLabel: string]\n+--------------+-----+--------------------+\n|predictedLabel|label|            features|\n+--------------+-----+--------------------+\n|           1.0|  1.0|(4,[0,1,2,3],[-0....|\n|           1.0|  1.0|(4,[0,1,2,3],[-0....|\n|           1.0|  1.0|(4,[0,1,2,3],[-0....|\n|           1.0|  1.0|(4,[0,1,2,3],[-0....|\n|           1.0|  1.0|(4,[0,1,2,3],[-0....|\n+--------------+-----+--------------------+\nonly showing top 5 rows\n\n\nevaluator: org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator \u003d mcEval_b1e43c9476dc\n\naccuracy: Double \u003d 0.9302325581395349\nTest Error \u003d 0.06976744186046513\n\nrfModel: org.apache.spark.ml.classification.RandomForestClassificationModel \u003d RandomForestClassificationModel (uid\u003drfc_210f7586c6f3) with 10 trees\nLearned classification forest model:\nRandomForestClassificationModel (uid\u003drfc_210f7586c6f3) with 10 trees\n  Tree 0 (weight 1.0):\n    If (feature 2 \u003c\u003d -0.762712)\n     Predict: 1.0\n    Else (feature 2 \u003e -0.762712)\n     If (feature 2 \u003c\u003d 0.254237)\n      If (feature 2 \u003c\u003d 0.152542)\n       Predict: 0.0\n      Else (feature 2 \u003e 0.152542)\n       If (feature 3 \u003c\u003d 0.25)\n        Predict: 0.0\n       Else (feature 3 \u003e 0.25)\n        Predict: 2.0\n     Else (feature 2 \u003e 0.254237)\n      Predict: 2.0\n  Tree 1 (weight 1.0):\n    If (feature 3 \u003c\u003d -0.666667)\n     Predict: 1.0\n    Else (feature 3 \u003e -0.666667)\n     If (feature 2 \u003c\u003d 0.254237)\n      If (feature 3 \u003c\u003d 0.25)\n       Predict: 0.0\n      Else (feature 3 \u003e 0.25)\n       Predict: 2.0\n     Else (feature 2 \u003e 0.254237)\n      If (feature 3 \u003c\u003d 0.166667)\n       If (feature 2 \u003c\u003d 0.322034)\n        Predict: 0.0\n       Else (feature 2 \u003e 0.322034)\n        Predict: 2.0\n      Else (feature 3 \u003e 0.166667)\n       If (feature 1 \u003c\u003d -0.0833334)\n        Predict: 2.0\n       Else (feature 1 \u003e -0.0833334)\n        If (feature 2 \u003c\u003d 0.288136)\n         Predict: 0.0\n        Else (feature 2 \u003e 0.288136)\n         Predict: 2.0\n  Tree 2 (weight 1.0):\n    If (feature 2 \u003c\u003d -0.694915)\n     Predict: 1.0\n    Else (feature 2 \u003e -0.694915)\n     If (feature 2 \u003c\u003d 0.254237)\n      If (feature 0 \u003c\u003d -0.666667)\n       Predict: 2.0\n      Else (feature 0 \u003e -0.666667)\n       Predict: 0.0\n     Else (feature 2 \u003e 0.254237)\n      If (feature 2 \u003c\u003d 0.322034)\n       If (feature 1 \u003c\u003d -0.166667)\n        Predict: 2.0\n       Else (feature 1 \u003e -0.166667)\n        Predict: 0.0\n      Else (feature 2 \u003e 0.322034)\n       Predict: 2.0\n  Tree 3 (weight 1.0):\n    If (feature 2 \u003c\u003d 0.254237)\n     If (feature 3 \u003c\u003d -0.666667)\n      Predict: 1.0\n     Else (feature 3 \u003e -0.666667)\n      Predict: 0.0\n    Else (feature 2 \u003e 0.254237)\n     If (feature 3 \u003c\u003d 0.166667)\n      Predict: 0.0\n     Else (feature 3 \u003e 0.166667)\n      If (feature 2 \u003c\u003d 0.288136)\n       If (feature 0 \u003c\u003d -0.111111)\n        Predict: 0.0\n       Else (feature 0 \u003e -0.111111)\n        Predict: 2.0\n      Else (feature 2 \u003e 0.288136)\n       Predict: 2.0\n  Tree 4 (weight 1.0):\n    If (feature 2 \u003c\u003d -0.694915)\n     Predict: 1.0\n    Else (feature 2 \u003e -0.694915)\n     If (feature 3 \u003c\u003d 0.25)\n      If (feature 2 \u003c\u003d 0.322034)\n       Predict: 0.0\n      Else (feature 2 \u003e 0.322034)\n       Predict: 2.0\n     Else (feature 3 \u003e 0.25)\n      If (feature 2 \u003c\u003d 0.288136)\n       If (feature 1 \u003c\u003d -0.333333)\n        Predict: 2.0\n       Else (feature 1 \u003e -0.333333)\n        Predict: 0.0\n      Else (feature 2 \u003e 0.288136)\n       Predict: 2.0\n  Tree 5 (weight 1.0):\n    If (feature 2 \u003c\u003d -0.762712)\n     Predict: 1.0\n    Else (feature 2 \u003e -0.762712)\n     If (feature 3 \u003c\u003d 0.166667)\n      Predict: 0.0\n     Else (feature 3 \u003e 0.166667)\n      If (feature 2 \u003c\u003d 0.186441)\n       If (feature 3 \u003c\u003d 0.25)\n        Predict: 0.0\n       Else (feature 3 \u003e 0.25)\n        Predict: 2.0\n      Else (feature 2 \u003e 0.186441)\n       Predict: 2.0\n  Tree 6 (weight 1.0):\n    If (feature 3 \u003c\u003d 0.25)\n     If (feature 2 \u003c\u003d -0.694915)\n      Predict: 1.0\n     Else (feature 2 \u003e -0.694915)\n      If (feature 3 \u003c\u003d 0.0833333)\n       Predict: 0.0\n      Else (feature 3 \u003e 0.0833333)\n       If (feature 2 \u003c\u003d 0.322034)\n        Predict: 0.0\n       Else (feature 2 \u003e 0.322034)\n        Predict: 2.0\n    Else (feature 3 \u003e 0.25)\n     Predict: 2.0\n  Tree 7 (weight 1.0):\n    If (feature 3 \u003c\u003d -0.666667)\n     Predict: 1.0\n    Else (feature 3 \u003e -0.666667)\n     If (feature 2 \u003c\u003d 0.254237)\n      If (feature 3 \u003c\u003d 0.25)\n       Predict: 0.0\n      Else (feature 3 \u003e 0.25)\n       Predict: 2.0\n     Else (feature 2 \u003e 0.254237)\n      If (feature 3 \u003c\u003d 0.166667)\n       If (feature 1 \u003c\u003d -0.833333)\n        Predict: 2.0\n       Else (feature 1 \u003e -0.833333)\n        Predict: 0.0\n      Else (feature 3 \u003e 0.166667)\n       If (feature 0 \u003c\u003d -0.111111)\n        If (feature 0 \u003c\u003d -0.222222)\n         Predict: 2.0\n        Else (feature 0 \u003e -0.222222)\n         Predict: 0.0\n       Else (feature 0 \u003e -0.111111)\n        Predict: 2.0\n  Tree 8 (weight 1.0):\n    If (feature 3 \u003c\u003d 0.25)\n     If (feature 2 \u003c\u003d -0.694915)\n      Predict: 1.0\n     Else (feature 2 \u003e -0.694915)\n      Predict: 0.0\n    Else (feature 3 \u003e 0.25)\n     Predict: 2.0\n  Tree 9 (weight 1.0):\n    If (feature 3 \u003c\u003d -0.666667)\n     Predict: 1.0\n    Else (feature 3 \u003e -0.666667)\n     If (feature 3 \u003c\u003d 0.25)\n      If (feature 0 \u003c\u003d 0.444444)\n       If (feature 2 \u003c\u003d 0.322034)\n        Predict: 0.0\n       Else (feature 2 \u003e 0.322034)\n        Predict: 2.0\n      Else (feature 0 \u003e 0.444444)\n       Predict: 2.0\n     Else (feature 3 \u003e 0.25)\n      If (feature 0 \u003c\u003d -0.111111)\n       If (feature 3 \u003c\u003d 0.416667)\n        If (feature 3 \u003c\u003d 0.333333)\n         Predict: 2.0\n        Else (feature 3 \u003e 0.333333)\n         Predict: 0.0\n       Else (feature 3 \u003e 0.416667)\n        Predict: 2.0\n      Else (feature 0 \u003e -0.111111)\n       Predict: 2.0\n\n"
+      },
+      "dateCreated": "2016-12-19 14:53:55",
+      "dateStarted": "2016-12-19 17:06:52",
+      "dateFinished": "2016-12-19 17:07:00",
+      "status": "FINISHED",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": null,
+      "text": "",
+      "user": null,
+      "dateUpdated": "2016-12-19 15:04:29",
+      "replName": "spark",
+      "paraIndex": 9,
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {},
+          "map": {
+            "baseMapType": "Streets",
+            "isOnline": true,
+            "pinCols": []
+          }
+        },
+        "enabled": true,
+        "editorMode": "ace/mode/scala",
+        "lineNumbers": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1482131059203_-866483854",
+      "id": "20161219-150419_1549817299",
+      "result": null,
+      "dateCreated": "2016-12-19 15:04:19",
+      "dateStarted": null,
+      "dateFinished": null,
+      "status": "READY",
+      "errorMessage": null,
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "数据分析模板",
+  "id": "2C5ZBT5NT",
+  "createdBy": "admin",
+  "group": null,
+  "tags": null,
+  "projectId": null,
+  "topic": null,
+  "lastUpdated": "2016-12-19 14:53:55",
+  "angularObjects": {
+    "2C4JWH1K8:shared_process": [],
+    "2C66Y7BQJ:shared_process": [],
+    "2C5JT48WX:shared_process": [],
+    "2C2DW1AY4:shared_process": []
+  },
+  "config": {},
+  "info": {}
+}
