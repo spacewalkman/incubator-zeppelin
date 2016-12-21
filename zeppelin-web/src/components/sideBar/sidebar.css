@@ -39,7 +39,6 @@
   border-bottom: 1px solid #3a3a52;
 }
 
-
 /* note list */
 .header-bar .back{
   display: none;
@@ -109,7 +108,7 @@
   top: 10px;
   right: 10px;
   width: 12px;
-  height: 15px;
+  height: 14px;
   background: url("lock.png") no-repeat center;
   background-size: 12px 14px;
 }
