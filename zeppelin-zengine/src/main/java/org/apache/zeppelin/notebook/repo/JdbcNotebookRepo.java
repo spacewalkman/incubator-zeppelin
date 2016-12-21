@@ -178,6 +178,7 @@ public class JdbcNotebookRepo implements NotebookRepo {
       return;
     }
 
+    long startTime = System.currentTimeMillis();
     boolean isExist = isNoteExists(note.getId(), principal);
     PreparedStatement ps = null;
     Connection connection = null;
@@ -202,7 +203,8 @@ public class JdbcNotebookRepo implements NotebookRepo {
       }
 
       int result = ps.executeUpdate();
-      LOG.debug("saved {}", result == 1 ? "success" : "failed");
+      long endTime = System.currentTimeMillis();
+      LOG.debug("JDBC Repo保存note id={}，状态:{},耗时:{}", note.getId(), result == 1 ? "success" : "failed", (endTime - startTime) / 1000.0);
     } catch (SQLException e) {
       LOG.error("error when save note!", e);
     } finally {

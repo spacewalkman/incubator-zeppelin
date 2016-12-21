@@ -141,7 +141,7 @@ public class NotebookRepoSync implements NotebookRepo {
     long startTime = System.currentTimeMillis();
     Note note = getRepo(0).get(noteId, principal);
     long endTime = System.currentTimeMillis();
-    LOG.debug("notes同步耗时:{} 秒", (endTime - startTime) / 1000.0);
+    LOG.debug("获取note:{}，耗时{} 秒", noteId, (endTime - startTime) / 1000.0);
 
     return note;
   }
