@@ -137,7 +137,7 @@ public class Message {
     APP_LOAD,               // [s-c] on app load
     APP_STATUS_CHANGE,      // [s-c] on app status change
 
-    LIST_NOTEBOOK_JOBS,     // [c-s] get notebook job management infomations
+    LIST_NOTE_JOBS,     // [c-s] get notebook job management infomations
     LIST_UPDATE_NOTEBOOK_JOBS, // [s-c] get job management informations
     UNSUBSCRIBE_UPDATE_NOTEBOOK_JOBS, // [c-s] unsubscribe job information for job management
     GET_INTERPRETER_BINDINGS, // [c-s] get interpreter bindings
@@ -152,7 +152,14 @@ public class Message {
     ACK_SUBMIT_TIME,//[s-c] 响应QUERY_SUBMIT_TIME查询请求，当前参赛队已经提交的次数
     NO_CHANGE_FOUND, //[s-c]当checkpoint时，由于sha1没有变化，即：没有diff，提示客户端
 
-    UNAUTHORIED //[s-c] 未授权的用户
+    UNAUTHORIED, //[s-c] 未授权的用户
+
+    ERROR_INFO,                   // [s-c] error information to be sent
+    WATCHER,                      // [s-c] Change websocket to watcher mode.
+    PARAGRAPH_ADDED,              // [s-c] paragraph is added
+    PARAGRAPH_REMOVED,            // [s-c] paragraph deleted
+    PARAGRAPH_MOVED,              // [s-c] paragraph moved
+    NOTE_UPDATED                  // [s-c] paragraph updated(name, config)
   }
 
   public OP op;

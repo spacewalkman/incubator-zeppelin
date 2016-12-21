@@ -19,8 +19,8 @@ limitations under the License.
           <input type="text" pu-elastic-input class="form-control2" placeholder="{{noteName(note)}}"
                  style="min-width: 0; max-width: 95%;"
                  ng-if="note.permission.write && input.showEditor" ng-model="note.name"
-                 ng-blur="sendNewName();input.showEditor = false;"
-                 ng-enter="sendNewName();input.showEditor = false;"
+                 ng-blur="updateNoteName(input.value);input.showEditor = false;"
+                 ng-enter="updateNoteName(input.value);input.showEditor = false;"
                  ng-escape="note.name = oldName; input.showEditor = false"
                  focus-if="input.showEditor"/>
           <p class="form-control-static2" ng-hide="input.showEditor">

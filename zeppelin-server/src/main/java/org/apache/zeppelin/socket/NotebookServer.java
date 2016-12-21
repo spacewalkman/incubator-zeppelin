@@ -16,6 +16,7 @@
  */
 package org.apache.zeppelin.socket;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -214,7 +215,7 @@ public class NotebookServer extends WebSocketServlet implements
       /** Lets be elegant here */
       switch (messagereceived.op) {
         case LIST_NOTES://显示note列表
-          unicastNoteList(conn, subject, true);
+          unicastNoteList(conn, subject, false);
           break;
         case RELOAD_NOTES_FROM_REPO://点击reload noteinfos按钮
           unicastNoteList(conn, subject, true);
@@ -293,7 +294,7 @@ public class NotebookServer extends WebSocketServlet implements
         case QUERY_SUBMIT_TIME://查询已经提交的次数
           currentSubmitTimes(conn, subject, notebook);
           break;
-        case LIST_NOTEBOOK_JOBS:
+        case LIST_NOTE_JOBS:
           unicastNotebookJobInfo(conn, subject);
           break;
         case UNSUBSCRIBE_UPDATE_NOTEBOOK_JOBS:
@@ -517,16 +518,16 @@ public class NotebookServer extends WebSocketServlet implements
     this.addConnectionToNote(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(), conn);
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
-    List<Map<String, Object>> notebookJobs = notebook()
+    List<Map<String, Object>> noteJobs = notebook()
             .getJobListByUnixTime(false, 0, userProfile.getUserName());
 
     Map<String, Object> response = new HashMap<>();
 
     response.put("lastResponseUnixTime", System.currentTimeMillis());
-    response.put("jobs", notebookJobs);
+    response.put("jobs", noteJobs);
 
-    conn.send(serializeMessage(new Message(OP.LIST_NOTEBOOK_JOBS)
-            .put("notebookJobs", response)));
+    conn.send(serializeMessage(new Message(OP.LIST_NOTE_JOBS)
+            .put("noteJobs", response)));
   }
 
   public void broadcastUpdateNotebookJobInfo(long lastUpdateUnixTime) throws IOException {
@@ -704,6 +705,20 @@ public class NotebookServer extends WebSocketServlet implements
     }
   }
 
+  public void broadcastParagraph(Note note, Paragraph p) {
+    broadcast(note.getId(), new Message(OP.PARAGRAPH).put("paragraph", p));
+  }
+
+  private void broadcastNewParagraph(Note note, Paragraph para) {
+    LOG.info("Broadcasting paragraph on run call instead of note.");
+    int paraIndex = note.getParagraphs().indexOf(para);
+    broadcast(
+            note.getId(),
+            new Message(OP.PARAGRAPH_ADDED)
+                    .put("paragraph", para)
+                    .put("index", paraIndex));
+  }
+
   /**
    * get all existing notes, filter by userAndRoles
    */
@@ -759,7 +774,7 @@ public class NotebookServer extends WebSocketServlet implements
   void permissionError(NotebookSocket conn, Subject subject, String op, String group,
                        String noteId) throws IOException {
     conn.send(serializeMessage(new Message(OP.AUTH_INFO).put("info",
-            "权限不足:用户[" + ((UserProfile) (subject.getPrincipal())).getUserName() + "]不能" + op + "算法:[" + noteId + "],参赛队:[" + group + "]")));
+            "权限不足:用户[" + ((UserProfile) (subject.getPrincipal())).getUserName() + "]不能" + op + "算法:[" + noteId + "]")));
   }
 
   private void sendNote(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -1119,7 +1134,8 @@ public class NotebookServer extends WebSocketServlet implements
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     note.persist(userProfile.getUserName());
-    broadcast(note.getId(), new Message(OP.PARAGRAPH).put("paragraph", p));
+    //broadcast(note.getId(), new Message(OP.PARAGRAPH).put("paragraph", p));
+    broadcastParagraph(note, p);
   }
 
   private void cloneNote(NotebookSocket conn, Subject subject,
@@ -1177,9 +1193,13 @@ public class NotebookServer extends WebSocketServlet implements
     String userName = userProfile.getUserName();
     /** We dont want to remove the last paragraph */
     if (!note.isLastParagraph(paragraphId)) {
+      Paragraph para = note.removeParagraph(paragraphId);
       note.removeParagraph(paragraphId);
       note.persist(userName);
-      broadcastNote(note);
+      if (para != null) {
+        broadcast(note.getId(), new Message(OP.PARAGRAPH_REMOVED).
+                put("id", para.getId()));
+      }
     }
   }
 
@@ -1199,7 +1219,9 @@ public class NotebookServer extends WebSocketServlet implements
     }
 
     note.clearParagraphOutput(paragraphId);
-    broadcastNote(note);
+    //broadcastNote(note);
+    Paragraph paragraph = note.getParagraph(paragraphId);
+    broadcastParagraph(note, paragraph);
   }
 
   private void completion(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -1491,11 +1513,13 @@ public class NotebookServer extends WebSocketServlet implements
       return;
     }
 
-    note.insertParagraph(index);
+    //note.insertParagraph(index);
+    Paragraph newPara = note.insertParagraph(index);
 
     UserProfile userProfile = (UserProfile) (subject.getPrincipal());
     note.persist(userProfile.getUserName());
-    broadcastNote(note);
+    //broadcastNote(note);
+    broadcastNewParagraph(note, newPara);
   }
 
   private void cancelParagraph(NotebookSocket conn, Subject subject, Notebook notebook,
@@ -1559,8 +1583,11 @@ public class NotebookServer extends WebSocketServlet implements
     p.setConfig(config);
     // if it's the last paragraph, let's add a new one
     boolean isTheLastParagraph = note.isLastParagraph(p.getId());
-    if (isTheLastParagraph) {
-      note.addParagraph();
+    if (!(text.trim().equals(p.getMagic()) || Strings.isNullOrEmpty(text)) &&
+            isTheLastParagraph) {
+      //note.addParagraph();
+      Paragraph newPara = note.addParagraph();
+      broadcastNewParagraph(note, newPara);
     }
 
     note.persist(userProfile.getUserName()); //p.setText(text) will update lastUpdated time,so note must updated too,not only paragraph
@@ -1956,7 +1983,10 @@ public class NotebookServer extends WebSocketServlet implements
           LOG.error(e.toString(), e);
         }
       }
-      notebookServer.broadcastNote(note);
+      //notebookServer.broadcastNote(note);
+      if (job instanceof Paragraph) {
+        notebookServer.broadcastParagraph(note, (Paragraph) job);
+      }
 
       try {
         notebookServer.broadcastUpdateNotebookJobInfo(System.currentTimeMillis() - 5000);

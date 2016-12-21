@@ -173,14 +173,16 @@ table.dataTable.table-condensed .sorting_desc:after {
  }
 
 .paragraph .control {
-  position: relative;
-  padding: 4px 0 8px 0;
-  margin: 1px 5px 0 0;
+  background: rgba(255,255,255,0.85);
+  float: right;
+  color: #999;
+  margin-top: 1px;
+  margin-right: 5px;
+  position: absolute;
   clear: both;
   color: #999;
   right: 15px;
   top: 16px;
-  text-align: right;
   text-align: left;
   font-size: 12px;
 }

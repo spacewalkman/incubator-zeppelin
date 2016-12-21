@@ -51,7 +51,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
       }
 
       if (payload.op === 'UNAUTHORIED') {
-        console.error('Receive << %o, %o', payload.op, payload);
+        console.error('未授权操作 << %o, %o', payload.op, payload);
       } else {
         //console.log('Receive << %o, %o', payload.op, payload);
       }
@@ -64,10 +64,24 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         $location.path('/notebook/' + data.note.id);
       } else if (op === 'NOTES_INFO') {
         $rootScope.$broadcast('setNoteMenu', data.notes);
-      } else if (op === 'LIST_NOTEBOOK_JOBS') {
-        $rootScope.$broadcast('setNotebookJobs', data.notebookJobs);
-      } else if (op === 'LIST_UPDATE_NOTEBOOK_JOBS') {
-        $rootScope.$broadcast('setUpdateNotebookJobs', data.notebookRunningJobs);
+      } else if (op === 'LIST_NOTE_JOBS') {
+        $rootScope.$broadcast('setNoteJobs', data.noteJobs);
+      } else if (op === 'LIST_UPDATE_NOTE_JOBS') {
+        $rootScope.$broadcast('setUpdateNoteJobs', data.noteRunningJobs);
+      } else if (op === 'AUTH_INFO') {
+        BootstrapDialog.show({
+          closable: false,
+          title: '权限不足',
+          closeByBackdrop: false,
+          closeByKeyboard: false,
+          message: data.info.toString(),
+          buttons: [{
+            label: '确定',
+            action: function(dialog) {
+              dialog.close();
+            }
+          }]
+        });
       } else if (op === 'NO_CHANGE_FOUND') {
         BootstrapDialog.show({
           closable: false,
@@ -76,7 +90,7 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
           closeByKeyboard: false,
           message: data.info.toString(),
           buttons: [{
-            label: 'OK',
+            label: '确定',
             action: function(dialog) {
               dialog.close();
             }
@@ -96,6 +110,8 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         $rootScope.$broadcast('updateProgress', data);
       } else if (op === 'COMPLETION_LIST') {
         $rootScope.$broadcast('completionList', data);
+      } else if (op === 'EDITOR_SETTING') {
+        $rootScope.$broadcast('editorSetting', data);
       } else if (op === 'ANGULAR_OBJECT_UPDATE') {
         $rootScope.$broadcast('angularObjectUpdate', data);
       } else if (op === 'ANGULAR_OBJECT_REMOVE') {
@@ -114,6 +130,35 @@ angular.module('zeppelinWebApp').factory('websocketEvents',
         $rootScope.$broadcast('noteRevision', data);
       } else if (op === 'INTERPRETER_BINDINGS') {
         $rootScope.$broadcast('interpreterBindings', data);
+      } else if (op === 'ERROR_INFO') {
+        BootstrapDialog.show({
+          closable: false,
+          closeByBackdrop: false,
+          closeByKeyboard: false,
+          title: '错误',
+          message: data.info.toString(),
+          buttons: [{
+            // close all the dialogs when there are error on running all paragraphs
+            label: '关闭',
+            action: function() {
+              BootstrapDialog.closeAll();
+            }
+          }]
+        });
+      } else if (op === 'CONFIGURATIONS_INFO') {
+        $rootScope.$broadcast('configurationsInfo', data);
+      } else if (op === 'INTERPRETER_SETTINGS') {
+        $rootScope.$broadcast('interpreterSettings', data);
+      } else if (op === 'PARAGRAPH_ADDED') {
+        $rootScope.$broadcast('addParagraph', data.paragraph, data.index);
+      } else if (op === 'PARAGRAPH_REMOVED') {
+        $rootScope.$broadcast('removeParagraph', data.id);
+      } else if (op === 'PARAGRAPH_MOVED') {
+        $rootScope.$broadcast('moveParagraph', data.id, data.index);
+      } else if (op === 'NOTE_UPDATED') {
+        $rootScope.$broadcast('updateNote', data.name, data.config, data.info);
+      } else if (op === 'SET_NOTE_REVISION') {
+        $rootScope.$broadcast('setNoteRevisionResult', data);
       }
     });
 
