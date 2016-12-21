@@ -573,8 +573,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     }
   };
 
-  $scope.aceChanged = function() {
-    $scope.dirtyText = $scope.editor.getSession().getValue();
+  $scope.aceChanged = function(_, editor) {
+    $scope.dirtyText = editor.getSession().getValue();
     $scope.startSaveTimer();
     //由于repl不再从paragraph的text中获取，所以不需要重新设置ace editor mode
     //$scope.setParagraphMode($scope.editor.getSession(), $scope.dirtyText, $scope.editor.getCursorPosition());
@@ -599,13 +599,12 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
 
       if ($scope.paragraphFocused) {
         $scope.editor.focus();
-        $scope.goToEnd();
+        $scope.goToEnd($scope.editor);
       }
 
-      autoAdjustEditorHeight(_editor.container.id);
-
+      autoAdjustEditorHeight(_editor);
       angular.element(window).resize(function() {
-        autoAdjustEditorHeight(_editor.container.id);
+        autoAdjustEditorHeight(_editor);
       });
 
       if (navigator.appVersion.indexOf('Mac') !== -1) {
@@ -648,7 +647,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
 
       var remoteCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
-          if (!$scope.editor.isFocused()) {
+          if (!editor.isFocused()) {
             return;
           }
 
@@ -703,7 +702,7 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
       });
 
       $scope.editor.getSession().on('change', function(e, editSession) {
-        autoAdjustEditorHeight(_editor.container.id);
+        autoAdjustEditorHeight(_editor);
       });
 
       $scope.setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
@@ -781,12 +780,13 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     }
   };
 
-  var autoAdjustEditorHeight = function(id) {
-    var editor = $scope.editor;
-    var height = editor.getSession().getScreenLength() * editor.renderer.lineHeight +
-      editor.renderer.scrollBar.getWidth();
+  var autoAdjustEditorHeight = function(editor) {
+    var height =
+          editor.getSession().getScreenLength() *
+          editor.renderer.lineHeight +
+          editor.renderer.scrollBar.getWidth();
 
-    angular.element('#' + id).height(height.toString() + 'px');
+    angular.element('#' + editor.container.id).height(height.toString() + 'px');
     editor.resize();
   };
 
@@ -895,8 +895,8 @@ angular.module('zeppelinWebApp').controller('ParagraphCtrl', function($scope, $r
     return false;
   };
 
-  $scope.goToEnd = function() {
-    $scope.editor.navigateFileEnd();
+  $scope.goToEnd = function(editor) {
+    editor.navigateFileEnd();
   };
 
   $scope.getResultType = function(paragraph) {
