@@ -566,19 +566,17 @@ public class Note implements Serializable, ParagraphJobListener {
   /**
    * Run all paragraphs sequentially.
    */
-  public void runAll() {
+  public synchronized void runAll() {
     String cronExecutingUser = (String) getConfig().get("cronExecutingUser");//TODO:这里A能impersonate B用户执行吗?
-    synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
-        if (!p.isEnabled()) {
-          continue;
-        }
-
-        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
-        authenticationInfo.setUser(cronExecutingUser);
-        p.setAuthenticationInfo(authenticationInfo);//这里由于要跨越thrift，所以要传递pojo，而不是Subject
-        run(p.getId());
+    for (Paragraph p : paragraphs) {
+      if (!p.isEnabled()) {
+        continue;
       }
+
+      AuthenticationInfo authenticationInfo = new AuthenticationInfo();
+      authenticationInfo.setUser(cronExecutingUser);
+      p.setAuthenticationInfo(authenticationInfo);//这里由于要跨越thrift，所以要传递pojo，而不是Subject
+      run(p.getId());
     }
   }
 
@@ -947,7 +945,7 @@ public class Note implements Serializable, ParagraphJobListener {
    */
   public boolean isTemplate() {
     if (this.getGroup() == null || this.getGroup().isEmpty()) {
-        return true;
+      return true;
     }
 
     return false;
